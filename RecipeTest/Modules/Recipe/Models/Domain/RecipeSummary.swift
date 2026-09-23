@@ -13,7 +13,7 @@ import Foundation
 /// Separate from `Recipe` rather than one type with the detail fields left optional: a
 /// list cell then cannot reach for steps that were never fetched, and `Recipe` has no
 /// optionals that are "only nil in list context".
-nonisolated struct RecipeSummary: Equatable, Identifiable {
+nonisolated struct RecipeSummary: Equatable, Hashable, Identifiable {
   let id: String
   let title: String
   let shortDescription: String
