@@ -22,7 +22,7 @@ struct RecipeCard: View {
       .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
       .overlay {
         RoundedRectangle(cornerRadius: Self.cornerRadius)
-          .stroke(theme.color.bordersDefault.color, lineWidth: 1)
+          .stroke(theme.color.bordersDefault.color, lineWidth: Self.borderWidth)
       }
       // One element, not three. Without this, VoiceOver stops on the image, the title and
       // the description separately for every card in a 36-row list.
@@ -34,60 +34,80 @@ struct RecipeCard: View {
 // MARK: - Subviews
 
 private extension RecipeCard {
-  @ViewBuilder
+  /// `AnyLayout`, not a `switch` returning two stacks: separate branches would give the
+  /// arms separate structural identity, so toggling list↔grid would tear down and rebuild
+  /// every card rather than transition it.
   var content: some View {
-    switch layout {
-    case .list:
-      HStack(alignment: .top, spacing: Self.padding) {
-        image
+    cardLayout {
+      image
 
-        text
-      }
-
-    case .grid:
-      VStack(alignment: .leading, spacing: Self.padding) {
-        image
-
-        text
-      }
+      text
     }
   }
 
   /// Fixed frames in both axes prevent images from sizing themselves as they download,
   /// which would reflow the entire grid.
-  @ViewBuilder
   var image: some View {
-    switch layout {
-    case .list:
-      CachedAsyncImage(url: recipe.heroImageURL)
-        .aspectRatio(contentMode: .fill)
-        .frame(width: Self.listImageSide, height: Self.listImageSide)
-        .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: Self.imageCornerRadius))
-
-    case .grid:
-      CachedAsyncImage(url: recipe.heroImageURL)
-        .aspectRatio(contentMode: .fill)
-        .frame(height: Self.gridImageHeight)
-        .frame(maxWidth: .infinity)
-        .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: Self.imageCornerRadius))
-    }
+    CachedAsyncImage(url: recipe.heroImageURL)
+      .scaledToFill()
+      .frame(width: imageWidth, height: imageHeight)
+      .frame(maxWidth: imageMaxWidth)
+      .clipped()
+      .clipShape(RoundedRectangle(cornerRadius: Self.imageCornerRadius))
   }
 
   var text: some View {
-    VStack(alignment: .leading, spacing: 4) {
+    VStack(alignment: .leading, spacing: Self.textSpacing) {
       Text(recipe.title)
         .font(theme.textStyle.bodySemibold.font)
         .foregroundStyle(theme.color.textPrimary.color)
-        .lineLimit(2)
+        .lineLimit(Self.titleLineLimit)
 
       Text(recipe.shortDescription)
         .font(theme.textStyle.subheadlineRegular.font)
         .foregroundStyle(theme.color.textSecondary.color)
-        .lineLimit(layout == .list ? 2 : 3)
+        .lineLimit(descriptionLineLimit)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
+  }
+}
+
+// MARK: - Getters
+
+private extension RecipeCard {
+  var cardLayout: AnyLayout {
+    switch layout {
+    case .list: AnyLayout(HStackLayout(alignment: .top, spacing: Self.padding))
+    case .grid: AnyLayout(VStackLayout(alignment: .leading, spacing: Self.padding))
+    }
+  }
+
+  var imageWidth: CGFloat? {
+    switch layout {
+    case .list: Self.listImageSide
+    case .grid: nil
+    }
+  }
+
+  var imageHeight: CGFloat {
+    switch layout {
+    case .list: Self.listImageSide
+    case .grid: Self.gridImageHeight
+    }
+  }
+
+  var imageMaxWidth: CGFloat? {
+    switch layout {
+    case .list: nil
+    case .grid: .infinity
+    }
+  }
+
+  var descriptionLineLimit: Int {
+    switch layout {
+    case .list: Self.listDescriptionLineLimit
+    case .grid: Self.gridDescriptionLineLimit
+    }
   }
 }
 
@@ -98,6 +118,10 @@ private extension RecipeCard {
     12
   }
 
+  static var textSpacing: CGFloat {
+    4
+  }
+
   static var cornerRadius: CGFloat {
     12
   }
@@ -106,12 +130,28 @@ private extension RecipeCard {
     8
   }
 
+  static var borderWidth: CGFloat {
+    1
+  }
+
   static var listImageSide: CGFloat {
     96
   }
 
   static var gridImageHeight: CGFloat {
     120
+  }
+
+  static var titleLineLimit: Int {
+    2
+  }
+
+  static var listDescriptionLineLimit: Int {
+    2
+  }
+
+  static var gridDescriptionLineLimit: Int {
+    3
   }
 }
 
