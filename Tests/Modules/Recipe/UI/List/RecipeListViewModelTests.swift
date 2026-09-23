@@ -33,8 +33,6 @@ struct RecipeListViewModelTests {
     #expect(service.recipes.lastRequest == Page(index: 1, size: 25))
   }
 
-  /// No rows is a legitimate answer, not a failure. It has to land on `.loaded` so the
-  /// screen shows the empty state rather than an error with a Retry button.
   @Test
   func loadFirstPage_withNoRows_isLoadedAndEmpty() async {
     let service = MockRecipeService(page: .dummy(ids: []))
@@ -58,9 +56,7 @@ struct RecipeListViewModelTests {
     #expect(sut.loadState == .failed(AppError.noInternetConnection.localizedDescription))
   }
 
-  /// REVIEW FOCUS 3. The service can propagate anything. A plain `Error` has no
-  /// `errorDescription`, and a view model reading that directly would put an empty string
-  /// on screen — an error state with no error in it.
+  /// A plain `Error` has no `errorDescription`; must not render as an empty message.
   @Test
   func loadFirstPage_whenTheErrorIsNotLocalized_stillShowsSomething() async {
     struct Unhelpful: Error {}
@@ -79,10 +75,7 @@ struct RecipeListViewModelTests {
     #expect(!message.isEmpty)
   }
 
-  /// REVIEW FOCUS 1. SwiftUI cancels a `.task` when the view disappears, so navigating
-  /// away mid-load throws. Showing that as a server failure is wrong, and leaving
-  /// `.failed` behind means coming back never retries — `.task` re-fires but
-  /// `loadFirstPage` would see a state it treats as terminal.
+  /// A torn-down `.task` throws; that isn't a real failure and must stay retryable.
   @Test
   func loadFirstPage_whenCancelled_reportsNoErrorAndStaysRetryable() async {
     let service = MockRecipeService()
@@ -95,9 +88,7 @@ struct RecipeListViewModelTests {
     #expect(sut.recipes.isEmpty)
   }
 
-  /// `.task` fires again every time the view reappears — returning from the detail push,
-  /// for instance. A second call must not refetch, because that would also reset the
-  /// user's scroll position to the top of a freshly replaced array.
+  /// `.task` re-fires on reappearance; refetching would reset the user's scroll position.
   @Test
   func loadFirstPage_calledTwice_onlyFetchesOnce() async {
     let service = MockRecipeService()
@@ -109,8 +100,6 @@ struct RecipeListViewModelTests {
     #expect(service.recipes.callCount == 1)
   }
 
-  /// ...but a *failed* first load must stay retryable, which is what the error state's
-  /// Retry button calls.
   @Test
   func loadFirstPage_afterAFailure_fetchesAgain() async {
     let service = MockRecipeService()
@@ -143,8 +132,6 @@ struct RecipeListViewModelTests {
     #expect(service.recipes.requests.map(\.index) == [1, 2])
   }
 
-  /// Without this the pager asks for page 5, page 6, page 7... forever, because a real
-  /// backend answers a page past the end with an empty slice rather than an error.
   @Test
   func loadNextPage_onTheLastPage_doesNotAsk() async {
     let service = MockRecipeService(page: .dummy(ids: ["rcp-001"], total: 1, perPage: 10, currentPage: 1, lastPage: 1))
@@ -157,9 +144,7 @@ struct RecipeListViewModelTests {
     #expect(service.recipes.callCount == 1)
   }
 
-  /// REVIEW FOCUS 4. Seven rows for a `perPage` of ten, but `currentPage` is still below
-  /// `lastPage`. Inferring "done" from a short page stops here and silently hides the
-  /// rest of the catalogue — only the meta gets to decide.
+  /// A short page isn't necessarily the last one; only the pagination meta says so.
   @Test
   func loadNextPage_afterAShortPageThatIsNotTheLast_keepsGoing() async {
     let service = MockRecipeService(
@@ -182,8 +167,6 @@ struct RecipeListViewModelTests {
     #expect(service.recipes.requests.map(\.index) == [1, 2])
   }
 
-  /// A failed page three leaves the user's rows alone. Taking the screen away because the
-  /// bottom edge failed would be a far worse trade than a retry button in the footer.
   @Test
   func loadNextPage_whenItFails_keepsTheRowsAndReportsInTheFooter() async {
     let service = MockRecipeService()
@@ -223,9 +206,7 @@ struct RecipeListViewModelTests {
     #expect(sut.nextPageError == nil)
   }
 
-  /// A `ForEach` over duplicated `Identifiable` ids misbehaves visibly. The mock backend
-  /// cannot produce one, but a real paginated backend whose underlying rows shift between
-  /// requests absolutely can.
+  /// Duplicate ids break `ForEach` identity; a real backend can repeat one across pages.
   @Test
   func loadNextPage_withARepeatedId_keepsOnlyTheFirst() async {
     let service = MockRecipeService()
@@ -252,8 +233,7 @@ struct RecipeListViewModelTests {
     #expect(service.recipes.wasCalled == false)
   }
 
-  /// REVIEW FOCUS 5. The toggle is a pure view concern. Touching paging state here either
-  /// double-requests a page or wedges the footer's spinner on forever.
+  /// `select(layout:)` is view-only; touching paging state here could double-request or wedge the spinner.
   @Test
   func select_doesNotDisturbPaging() async {
     let service = MockRecipeService(page: .dummy(ids: ["rcp-001"], total: 4, perPage: 1, currentPage: 1, lastPage: 4))

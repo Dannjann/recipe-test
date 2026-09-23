@@ -21,8 +21,6 @@ struct RecipeListLayoutTests {
     #expect(RecipeListLayout.grid.columns.count == 2)
   }
 
-  /// The toolbar button shows the layout you would switch *to*, so this has to be an
-  /// involution — toggling twice is the identity.
   @Test
   func toggled_roundTripsBackToItself() {
     #expect(RecipeListLayout.list.toggled == .grid)

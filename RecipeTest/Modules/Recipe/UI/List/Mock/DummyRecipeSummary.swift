@@ -10,11 +10,7 @@ import Foundation
 
 #if DEBUG
 
-  /// Sample rows for previews and tests.
-  ///
-  /// In the app target rather than `Tests/` because a SwiftUI preview cannot import the
-  /// test target — the same reason `MockURLProtocol` and `MockAPIRouter` are app-target
-  /// types. `#if DEBUG` keeps all of it out of a release build.
+  /// In the app target, not `Tests/`, because a SwiftUI preview cannot import the test target.
   nonisolated extension RecipeSummary {
     static func dummy(
       id: String = "rcp-001",

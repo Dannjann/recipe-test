@@ -10,9 +10,8 @@ import Foundation
 
 #if DEBUG
 
+  /// In the app target, not `Tests/`, because a SwiftUI preview cannot import the test target.
   nonisolated extension RecipeListPage {
-    /// Builds a page from ids alone, with the meta a real backend would send alongside
-    /// them. `total` and `lastPage` default to "this is the only page".
     static func dummy(
       ids: [String] = ["rcp-001", "rcp-002", "rcp-003"],
       total: Int? = nil,
