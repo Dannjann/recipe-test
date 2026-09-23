@@ -35,6 +35,26 @@ import Foundation
         tags: tags
       )
     }
+
+    /// Six rows with distinct titles and hero URLs, so a grid preview shows variety rather than the same card six times.
+    static func dummyList(count: Int = 6) -> [Self] {
+      let titles = [
+        "Spaghetti alla Carbonara",
+        "Miso-Glazed Aubergine",
+        "Shakshuka with Feta",
+        "Lemon and Herb Roast Chicken",
+        "Black Bean and Sweetcorn Tacos",
+        "Dark Chocolate and Olive Oil Cake",
+      ]
+
+      return (0 ..< count).map { index in
+        .dummy(
+          id: String(format: "rcp-%03d", index + 1),
+          title: titles[index % titles.count],
+          heroImageURL: URL(string: "https://api.example.com/api/v1/images/dummy-\(index).png")
+        )
+      }
+    }
   }
 
 #endif
