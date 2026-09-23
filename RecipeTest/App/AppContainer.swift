@@ -69,12 +69,7 @@ final class AppContainer {
 
   // MARK: Feature services
 
-  // Each feature's service is declared here, protocol-typed and lazy, e.g.
-  //
-  //     private(set) lazy var catalogService: CatalogServiceProtocol = CatalogService(
-  //       api: api,
-  //       pageSize: config.defaultPageSize
-  //     )
+  private(set) lazy var recipeService: RecipeServiceProtocol = RecipeService(api: api)
 
   private init() {
     debugLog("env: \(AppContainer.environment.rawValue)")
