@@ -9,6 +9,8 @@
 import SwiftUI
 
 struct RecipeListView: View {
+  @Environment(\.theme) var theme: any ThemeProtocol
+
   let viewModel: any RecipeListViewModelProtocol
   var onRecipeTap: SingleResult<RecipeSummary> = DefaultClosure.singleResult()
 
@@ -21,7 +23,7 @@ struct RecipeListView: View {
       content
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.themeColor(.surfacesBackground))
+    .background(theme.color.surfacesBackground.color)
     .navigationTitle(Text(String(localized: .Recipe.recipeListTitle)))
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
@@ -114,14 +116,14 @@ private extension RecipeListView {
     } else if let nextPageError = viewModel.nextPageError {
       VStack(spacing: 8) {
         Text(nextPageError)
-          .themeTextStyle(.footnoteRegular)
-          .themeColor(.textSecondary)
+          .font(theme.textStyle.footnoteRegular.font)
+          .foregroundStyle(theme.color.textSecondary.color)
           .multilineTextAlignment(.center)
 
         Button(String(localized: .Recipe.recipeListErrorRetry)) {
           Task { await viewModel.loadNextPage() }
         }
-        .themeTextStyle(.bodySemibold)
+        .font(theme.textStyle.bodySemibold.font)
       }
       .padding(.vertical, RecipeListLayout.spacing)
     } else {
@@ -140,14 +142,14 @@ private extension RecipeListView {
   ) -> some View {
     VStack(spacing: 8) {
       Text(title)
-        .themeTextStyle(.bodySemibold)
-        .themeColor(.textPrimary)
+        .font(theme.textStyle.bodySemibold.font)
+        .foregroundStyle(theme.color.textPrimary.color)
         .multilineTextAlignment(.center)
 
       if let detail {
         Text(detail)
-          .themeTextStyle(.subheadlineRegular)
-          .themeColor(.textSecondary)
+          .font(theme.textStyle.subheadlineRegular.font)
+          .foregroundStyle(theme.color.textSecondary.color)
           .multilineTextAlignment(.center)
       }
 
@@ -155,7 +157,7 @@ private extension RecipeListView {
         Button(String(localized: .Recipe.recipeListErrorRetry)) {
           Task { await retry() }
         }
-        .themeTextStyle(.bodySemibold)
+        .font(theme.textStyle.bodySemibold.font)
         .padding(.top, 4)
       }
     }

@@ -9,6 +9,8 @@
 import SwiftUI
 
 struct RecipeLayoutToggle: View {
+  @Environment(\.theme) var theme: any ThemeProtocol
+
   let layout: RecipeListLayout
   let onSelect: SingleResult<RecipeListLayout>
 
@@ -17,7 +19,7 @@ struct RecipeLayoutToggle: View {
       onSelect(layout.toggled)
     } label: {
       Image(systemName: iconName)
-        .foregroundStyle(Color.themeColor(.iconsDefault))
+        .foregroundStyle(theme.color.iconsDefault.color)
     }
     .accessibilityLabel(Text(accessibilityLabel))
     .accessibilityIdentifier("recipeList.layoutToggle")

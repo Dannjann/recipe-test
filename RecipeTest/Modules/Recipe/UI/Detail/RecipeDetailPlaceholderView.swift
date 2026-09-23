@@ -9,23 +9,25 @@
 import SwiftUI
 
 struct RecipeDetailPlaceholderView: View {
+  @Environment(\.theme) var theme: any ThemeProtocol
+
   let recipe: RecipeSummary
 
   var body: some View {
     VStack(spacing: 12) {
       Text(recipe.title)
-        .themeTextStyle(.title2)
-        .themeColor(.textPrimary)
+        .font(theme.textStyle.title2.font)
+        .foregroundStyle(theme.color.textPrimary.color)
         .multilineTextAlignment(.center)
 
       Text(String(localized: .Recipe.recipeDetailPlaceholderMessage))
-        .themeTextStyle(.bodyRegular)
-        .themeColor(.textSecondary)
+        .font(theme.textStyle.bodyRegular.font)
+        .foregroundStyle(theme.color.textSecondary.color)
         .multilineTextAlignment(.center)
     }
     .padding()
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.themeColor(.surfacesBackground))
+    .background(theme.color.surfacesBackground.color)
     .navigationTitle(Text(recipe.title))
     .navigationBarTitleDisplayMode(.inline)
   }

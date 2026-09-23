@@ -10,20 +10,22 @@ import SwiftUI
 
 /// Purely presentational — will be wrapped in a Button when search is wired.
 struct RecipeSearchBar: View {
+  @Environment(\.theme) var theme: any ThemeProtocol
+
   var body: some View {
     HStack(spacing: Self.iconTextSpacing) {
       Image(systemName: "magnifyingglass")
-        .foregroundStyle(Color.themeColor(.iconsSecondary))
+        .foregroundStyle(theme.color.iconsSecondary.color)
 
       Text(String(localized: .Recipe.recipeListSearchPlaceholder))
-        .themeTextStyle(.bodyRegular)
-        .themeColor(.textTertiary)
+        .font(theme.textStyle.bodyRegular.font)
+        .foregroundStyle(theme.color.textTertiary.color)
 
       Spacer(minLength: 0)
     }
     .padding(.horizontal, Self.horizontalPadding)
     .frame(height: Self.height)
-    .background(Color.themeColor(.surfacesFieldsAndTags))
+    .background(theme.color.surfacesFieldsAndTags.color)
     .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
     .accessibilityElement(children: .combine)
     .accessibilityIdentifier("recipeList.searchBar")
@@ -57,7 +59,7 @@ private extension RecipeSearchBar {
   #Preview {
     RecipeSearchBar()
       .padding()
-      .background(Color.themeColor(.surfacesBackground))
+      .background(DefaultTheme().color.surfacesBackground.color)
   }
 
 #endif

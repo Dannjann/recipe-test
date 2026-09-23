@@ -9,6 +9,8 @@
 import SwiftUI
 
 struct RecipeCard: View {
+  @Environment(\.theme) var theme: any ThemeProtocol
+
   let recipe: RecipeSummary
   let layout: RecipeListLayout
 
@@ -16,11 +18,11 @@ struct RecipeCard: View {
     content
       .padding(Self.padding)
       .frame(maxWidth: .infinity, alignment: .leading)
-      .background(Color.themeColor(.surfacesBackground2))
+      .background(theme.color.surfacesBackground2.color)
       .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
       .overlay {
         RoundedRectangle(cornerRadius: Self.cornerRadius)
-          .stroke(Color.themeColor(.bordersDefault), lineWidth: 1)
+          .stroke(theme.color.bordersDefault.color, lineWidth: 1)
       }
       // One element, not three. Without this, VoiceOver stops on the image, the title and
       // the description separately for every card in a 36-row list.
@@ -76,13 +78,13 @@ private extension RecipeCard {
   var text: some View {
     VStack(alignment: .leading, spacing: 4) {
       Text(recipe.title)
-        .themeTextStyle(.bodySemibold)
-        .themeColor(.textPrimary)
+        .font(theme.textStyle.bodySemibold.font)
+        .foregroundStyle(theme.color.textPrimary.color)
         .lineLimit(2)
 
       Text(recipe.shortDescription)
-        .themeTextStyle(.subheadlineRegular)
-        .themeColor(.textSecondary)
+        .font(theme.textStyle.subheadlineRegular.font)
+        .foregroundStyle(theme.color.textSecondary.color)
         .lineLimit(layout == .list ? 2 : 3)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -120,7 +122,7 @@ private extension RecipeCard {
   #Preview("List") {
     RecipeCard(recipe: .dummy(), layout: .list)
       .padding()
-      .background(Color.themeColor(.surfacesBackground))
+      .background(DefaultTheme().color.surfacesBackground.color)
   }
 
   #Preview("Grid") {
@@ -129,7 +131,7 @@ private extension RecipeCard {
       RecipeCard(recipe: .dummy(id: "rcp-002", title: "Miso-Glazed Aubergine"), layout: .grid)
     }
     .padding()
-    .background(Color.themeColor(.surfacesBackground))
+    .background(DefaultTheme().color.surfacesBackground.color)
   }
 
   #Preview("Long title and description") {
@@ -141,7 +143,7 @@ private extension RecipeCard {
       layout: .list
     )
     .padding()
-    .background(Color.themeColor(.surfacesBackground))
+    .background(DefaultTheme().color.surfacesBackground.color)
   }
 
 #endif
