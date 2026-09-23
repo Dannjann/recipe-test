@@ -10,7 +10,9 @@ import Foundation
 import SwiftUI
 
 struct ThemeModifier: ViewModifier {
-  @ObservedObject var themeManager = ThemeManager.shared
+  /// A plain `let`, not `@State`: the modifier does not own the manager, and `@Observable`
+  /// tracks the read of `activeTheme` below on its own.
+  private let themeManager = ThemeManager.shared
 
   func body(content: Content) -> some View {
     content.environment(\.theme, themeManager.activeTheme)
