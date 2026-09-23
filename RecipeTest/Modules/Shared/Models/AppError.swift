@@ -30,7 +30,8 @@ nonisolated extension AppError: LocalizedError {
 
   var failureReason: String? {
     switch self {
-    case let .unauthorized(reason):
+    case let .unauthorized(reason),
+         let .abnormalState(reason):
       reason
     default:
       String(localized: .Shared.sharedErrorUnknown)
