@@ -21,10 +21,8 @@ nonisolated extension RecipeListLayout {
     case .list:
       [GridItem(.flexible(), spacing: Self.spacing)]
     case .grid:
-      [
-        GridItem(.flexible(), spacing: Self.spacing),
-        GridItem(.flexible(), spacing: Self.spacing),
-      ]
+      // Adaptive rather than two fixed columns, which leave cards far too wide on an iPad.
+      [GridItem(.adaptive(minimum: Self.gridMinimumCardWidth), spacing: Self.spacing)]
     }
   }
 
@@ -37,5 +35,10 @@ nonisolated extension RecipeListLayout {
 
   static var spacing: CGFloat {
     12
+  }
+
+  /// Small enough that the narrowest supported phone still fits two columns.
+  static var gridMinimumCardWidth: CGFloat {
+    140
   }
 }

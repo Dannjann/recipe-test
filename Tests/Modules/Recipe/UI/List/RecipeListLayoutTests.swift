@@ -8,6 +8,7 @@
 
 import Foundation
 @testable import RecipeTest
+import SwiftUI
 import Testing
 
 struct RecipeListLayoutTests {
@@ -17,8 +18,28 @@ struct RecipeListLayoutTests {
   }
 
   @Test
-  func grid_isTwoColumns() {
-    #expect(RecipeListLayout.grid.columns.count == 2)
+  func grid_isOneAdaptiveColumnAtTheMinimumCardWidth() {
+    let columns = RecipeListLayout.grid.columns
+
+    #expect(columns.count == 1)
+
+    guard case let .adaptive(minimum, _) = columns.first?.size else {
+      Issue.record("Expected the grid to be laid out adaptively")
+
+      return
+    }
+
+    #expect(minimum == RecipeListLayout.gridMinimumCardWidth)
+  }
+
+  /// The toggle is meaningless if the narrowest phone we support cannot fit two cards.
+  @Test
+  func grid_fitsTwoColumnsOnTheNarrowestSupportedWidth() {
+    let narrowestScreenWidth: CGFloat = 320
+    let available = narrowestScreenWidth - RecipeListLayout.spacing * 2
+    let twoColumns = RecipeListLayout.gridMinimumCardWidth * 2 + RecipeListLayout.spacing
+
+    #expect(twoColumns <= available)
   }
 
   @Test
