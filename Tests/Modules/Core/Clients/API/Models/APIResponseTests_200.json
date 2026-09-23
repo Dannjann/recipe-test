@@ -1,0 +1,17 @@
+{
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTUxNjIzOTAyMn0.placeholder-signature-not-a-real-token",
+    "token_type": "bearer",
+    "expires_in": "2026-03-05T01:21:42.420607Z",
+    "item": {
+      "id": 1,
+      "title": "First item",
+      "description": "An example record returned by the sample endpoint.",
+      "created_at": "2026-01-07T14:11:13.000000Z",
+      "updated_at": "2026-01-20T10:06:25.000000Z",
+      "url": "https://api.example.com/storage/1/example.png"
+    }
+  },
+  "http_status": 200,
+  "success": true
+}
