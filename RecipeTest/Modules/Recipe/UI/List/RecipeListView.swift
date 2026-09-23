@@ -24,7 +24,7 @@ struct RecipeListView: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(theme.color.surfacesBackground.color)
-    .navigationTitle(Text(String(localized: .Recipe.recipeListTitle)))
+    .navigationTitle(.Recipe.recipeListTitle)
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
         RecipeLayoutToggle(layout: viewModel.layout) { layout in
@@ -49,7 +49,7 @@ private extension RecipeListView {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
 
     case let .failed(message):
-      messageState(
+      messageStateView(
         title: message,
         detail: nil,
         retry: { await viewModel.loadFirstPage() }
@@ -96,7 +96,7 @@ private extension RecipeListView {
   var emptyState: some View {
     GeometryReader { proxy in
       ScrollView {
-        messageState(
+        messageStateView(
           title: String(localized: .Recipe.recipeListEmptyTitle),
           detail: String(localized: .Recipe.recipeListEmptyMessage),
           retry: nil
@@ -114,7 +114,7 @@ private extension RecipeListView {
     if viewModel.hasLoadedAllData {
       EmptyView()
     } else if let nextPageError = viewModel.nextPageError {
-      VStack(spacing: 8) {
+      VStack(spacing: Self.messageSpacing) {
         Text(nextPageError)
           .font(theme.textStyle.footnoteRegular.font)
           .foregroundStyle(theme.color.textSecondary.color)
@@ -135,12 +135,12 @@ private extension RecipeListView {
     }
   }
 
-  func messageState(
+  func messageStateView(
     title: String,
     detail: String?,
     retry: (() async -> Void)?
   ) -> some View {
-    VStack(spacing: 8) {
+    VStack(spacing: Self.messageSpacing) {
       Text(title)
         .font(theme.textStyle.bodySemibold.font)
         .foregroundStyle(theme.color.textPrimary.color)
@@ -158,11 +158,23 @@ private extension RecipeListView {
           Task { await retry() }
         }
         .font(theme.textStyle.bodySemibold.font)
-        .padding(.top, 4)
+        .padding(.top, Self.retryTopPadding)
       }
     }
     .padding(RecipeListLayout.spacing * 2)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
+  }
+}
+
+// MARK: - Constants
+
+private extension RecipeListView {
+  static var messageSpacing: CGFloat {
+    8
+  }
+
+  static var retryTopPadding: CGFloat {
+    4
   }
 }
 

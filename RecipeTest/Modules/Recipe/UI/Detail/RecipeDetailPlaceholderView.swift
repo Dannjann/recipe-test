@@ -14,7 +14,7 @@ struct RecipeDetailPlaceholderView: View {
   let recipe: RecipeSummary
 
   var body: some View {
-    VStack(spacing: 12) {
+    VStack(spacing: Self.spacing) {
       Text(recipe.title)
         .font(theme.textStyle.title2.font)
         .foregroundStyle(theme.color.textPrimary.color)
@@ -30,6 +30,14 @@ struct RecipeDetailPlaceholderView: View {
     .background(theme.color.surfacesBackground.color)
     .navigationTitle(Text(recipe.title))
     .navigationBarTitleDisplayMode(.inline)
+  }
+}
+
+// MARK: - Constants
+
+private extension RecipeDetailPlaceholderView {
+  static var spacing: CGFloat {
+    12
   }
 }
 
