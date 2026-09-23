@@ -1,0 +1,83 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "core.error.dataNotFound": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data expected from the server not found"
+          }
+        }
+      }
+    },
+    "core.error.expectedGotNil": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expected %@. Got nil instead."
+          }
+        }
+      }
+    },
+    "core.error.httpStatus": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTPStatusCode: %1$@; Message: %2$@;"
+          }
+        }
+      }
+    },
+    "core.error.parseFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not parse data from server"
+          }
+        }
+      }
+    },
+    "core.error.parseFailedDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not parse data from server: %@"
+          }
+        }
+      }
+    },
+    "core.error.unknown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An unknown error has occured"
+          }
+        }
+      }
+    },
+    "core.error.unknownApplication": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The application has encountered an unknown error."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

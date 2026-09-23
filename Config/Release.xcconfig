@@ -1,0 +1,11 @@
+//
+//  Release.xcconfig
+//  RecipeTest
+//
+
+#include? "Secrets.xcconfig"
+
+ENABLE_TESTABILITY = NO
+SWIFT_OPTIMIZATION_LEVEL = -O
+SWIFT_COMPILATION_MODE = wholemodule
+VALIDATE_PRODUCT = YES
