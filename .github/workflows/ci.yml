@@ -1,0 +1,140 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT: RecipeTest.xcodeproj
+  SCHEME: RecipeTest
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: macos-26
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # Pick the newest Xcode on the image rather than pinning a patch version, which
+      # goes stale every time the runner image is updated.
+      - name: Select Xcode
+        run: |
+          ls -d /Applications/Xcode*.app
+          latest=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Selecting $latest"
+          sudo xcode-select -s "$latest"
+          xcodebuild -version
+
+      # This project's isolation model depends on SWIFT_DEFAULT_ACTOR_ISOLATION, which
+      # older Xcodes do not recognise and SILENTLY IGNORE — every type then defaults to
+      # nonisolated and the build fails with a wall of unrelated-looking actor errors.
+      # Fail here with a clear reason instead.
+      - name: Verify the toolchain supports default actor isolation
+        run: |
+          if ! xcrun swiftc -frontend -help 2>&1 | grep -q -- '-default-isolation'; then
+            echo "::error::This toolchain does not support -default-isolation."
+            echo "::error::SWIFT_DEFAULT_ACTOR_ISOLATION would be ignored, not honoured."
+            echo "::error::Swift $(xcrun swift -version 2>&1 | head -1)"
+            exit 1
+          fi
+          echo "✓ -default-isolation supported"
+
+      # SwiftLint runs as a build tool plugin, so `xcodebuild` below covers it. SwiftFormat
+      # is not part of the build and needs its own check, or `.swiftformat` documents a
+      # style nothing enforces.
+      - name: Check formatting
+        run: |
+          brew list swiftformat >/dev/null 2>&1 || brew install swiftformat
+          swiftformat RecipeTest Tests UITests --lint
+
+      - name: Resolve package dependencies
+        run: xcodebuild -resolvePackageDependencies -project "$PROJECT" -scheme "$SCHEME"
+
+      # Ask xcodebuild which simulators it will actually accept — NOT `simctl`.
+      # `simctl list devices available` lists every installed device and knows nothing
+      # about the app's deployment target, so it returns UDIDs that xcodebuild then
+      # rejects with "Unable to find a destination matching the provided destination
+      # specifier" — a device is found, so a naive emptiness check never fires.
+      # `-showdestinations` applies eligibility and annotates unusable rows with
+      # `error:`, which is what makes them filterable here.
+      #
+      # Runs after package resolution: -showdestinations resolves the package graph too,
+      # and a resolution failure should be reported by the step named for it.
+      # Ask xcodebuild which simulators it will actually accept — NOT `simctl`.
+      # `simctl list devices available` lists every installed device and knows nothing
+      # about the app's deployment target, so it returns UDIDs that xcodebuild then
+      # rejects with "Unable to find a destination matching the provided destination
+      # specifier" — a device is found, so a naive emptiness check never fires.
+      # `-showdestinations` applies eligibility and annotates unusable rows with
+      # `error:`, which is what makes them filterable here.
+      #
+      # Runs after package resolution: -showdestinations resolves the package graph too,
+      # and a resolution failure should be reported by the step named for it.
+      - name: Choose a simulator
+        run: |
+          set -o pipefail
+
+          # Instrumentation, kept deliberately: when this step fails the cause is
+          # almost always the runner's runtime inventory, which is invisible from the
+          # xcodebuild error alone. Printing all three layers makes the next failure
+          # diagnosable from the log rather than from a rerun.
+          echo "=== Selected toolchain ==="
+          xcode-select -p
+          xcodebuild -version
+          echo "=== Installed iOS simulator runtimes ==="
+          xcrun simctl list runtimes 2>&1 | grep -i ios || echo "(no iOS runtimes installed)"
+          echo "=== iPhone devices simctl reports available ==="
+          xcrun simctl list devices available 2>&1 | grep -E '^ +iPhone' || echo "(none)"
+
+          echo "=== Destinations xcodebuild accepts for this scheme ==="
+          xcodebuild -showdestinations \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -skipPackagePluginValidation 2>/dev/null | tee /tmp/destinations.txt
+
+          udid=$(grep 'platform:iOS Simulator' /tmp/destinations.txt \
+            | grep -v 'error:' \
+            | grep -v 'placeholder' \
+            | grep 'name:iPhone' \
+            | head -1 \
+            | grep -oE 'id:[0-9A-F-]{36}' \
+            | cut -d: -f2)
+
+          if [ -z "$udid" ]; then
+            echo "::error::No eligible iPhone simulator for the $SCHEME scheme."
+            echo "::error::Either no iOS runtime is installed for this Xcode, or"
+            echo "::error::IPHONEOS_DEPLOYMENT_TARGET sits above the newest one."
+            echo "--- every destination xcodebuild reported ---"
+            cat /tmp/destinations.txt
+            exit 1
+          fi
+
+          echo "Using simulator $udid"
+          grep "$udid" /tmp/destinations.txt
+          echo "SIMULATOR_ID=$udid" >> "$GITHUB_ENV"
+
+      - name: Build and test
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
+
+      - name: Build staging target
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project "$PROJECT" \
+            -scheme RecipeTest-Staging \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO

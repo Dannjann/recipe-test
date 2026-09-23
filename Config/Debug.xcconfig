@@ -1,0 +1,11 @@
+//
+//  Debug.xcconfig
+//  RecipeTest
+//
+
+#include? "Secrets.xcconfig"
+
+ENABLE_TESTABILITY = YES
+SWIFT_OPTIMIZATION_LEVEL = -Onone
+GCC_OPTIMIZATION_LEVEL = 0
+ONLY_ACTIVE_ARCH = YES

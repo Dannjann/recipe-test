@@ -1,0 +1,11 @@
+{
+  "message": "The title field is required.",
+  "errors": {
+    "title": [
+      "The title field is required."
+    ]
+  },
+  "http_status": 422,
+  "success": false,
+  "error_code": "HTTP_UNPROCESSABLE_ENTITY"
+}

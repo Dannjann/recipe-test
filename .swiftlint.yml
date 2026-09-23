@@ -1,0 +1,44 @@
+disabled_rules: # rule identifiers to exclude from running
+  - force_try
+  # By default, this limits us to a minimum of 3 characters.
+  # But it is practical to use 1 char at times when in a short block statement.
+  - identifier_name
+  - todo
+  - trailing_comma
+  - trailing_whitespace
+  - type_body_length
+
+# These are paths to ignore during linting. Takes precedence over `included`.
+excluded:
+  - Tests
+  - UITests
+
+# These are paths to include during linting. `--path` is ignored if present.
+included:
+  - RecipeTest
+
+# configurable rules can be customized from this configuration file
+# binary rules can set their severity level
+force_cast: warning
+line_length:
+  ignores_comments: true
+  warning: 120
+  error: 180
+vertical_whitespace:
+  max_empty_lines: 2
+
+custom_rules:
+  weakified_self:
+    included: ".*\\.swift"
+    name: "Weakified self"
+    regex: "(guard\\s+let +)(?!self)[^=]+(= *self([,\\s]|\\s+else)+)"
+    capture_group: 0
+    message: "Not following standards. Use `guard let self`"
+    severity: error
+
+  localized_string_literal:
+    included: ".*\\.swift"
+    name: "Localized string literal"
+    regex: "(String\\(\\s*localized:|NSLocalizedString\\()\\s*\""
+    message: "Define the string in a .xcstrings catalog (extraction state Manual) and use the generated symbol."
+    severity: error
