@@ -8,7 +8,7 @@
 
 import Foundation
 
-nonisolated struct RemotePaginationMetaInfo: APIModel, Codable {
+nonisolated struct RemotePaginationMetaInfo: APIModel, Codable, Equatable {
   var total: Int
   var perPage: Int
   var from: Int?
