@@ -18,7 +18,12 @@ nonisolated struct RemotePaginationMetaInfo: APIModel, Codable {
 }
 
 nonisolated extension RemotePaginationMetaInfo {
+  /// `>=`, not `==`: a server asked for a page past the end answers with that page
+  /// number and an empty slice rather than an error — `MockAPIRouter.paginate` does
+  /// exactly this. With `==`, `total: 25, perPage: 10, currentPage: 4, lastPage: 3`
+  /// reports more data to load, and a pager driven off `!hasLoadedAllData` requests
+  /// empty pages forever.
   var hasLoadedAllData: Bool {
-    total <= perPage || currentPage == lastPage
+    total <= perPage || currentPage >= lastPage
   }
 }

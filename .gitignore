@@ -42,3 +42,4 @@ Secrets.xcconfig
 
 ## Superpowers planning artefacts — kept on disk, not in history.
 docs/superpowers/plans/
+docs/superpowers/specs/

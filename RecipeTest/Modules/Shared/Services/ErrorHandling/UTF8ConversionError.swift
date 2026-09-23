@@ -13,7 +13,11 @@ nonisolated enum UTF8ConversionError: Error {
   case utf8ConversionFailed
 }
 
-nonisolated extension UTF8ConversionError {
+/// `LocalizedError`, not a bare extension: `errorDescription` is only consulted by
+/// Foundation when the type actually conforms. Without it, `localizedDescription` —
+/// which is what `debugLogError(_:)` logs — falls back to the generic "operation
+/// couldn't be completed" text and the encoding detail below is never seen.
+nonisolated extension UTF8ConversionError: LocalizedError {
   var errorDescription: String? {
     switch self {
     case let .stringConversionFailed(encoding):

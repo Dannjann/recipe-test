@@ -64,7 +64,13 @@ nonisolated extension APIResponse: Decodable {
     errors = try container.decodeIfPresent([String: [String]].self, forKey: .errors)
     errorCode = (try? container.decode(APIErrorCode.self, forKey: .errorCode)) ?? .default
 
-    let envelopeStatus = try container.decodeIfPresent(HTTPStatusCode.self, forKey: .statusCode)
+    // Decoded as `Int` and then mapped, rather than decoded as `HTTPStatusCode` directly:
+    // a `Decodable` enum throws on a raw value it has no case for, so a single unlisted
+    // status in the envelope (419, 520…) failed the entire response instead of one field.
+    let envelopeStatus = try container
+      .decodeIfPresent(Int.self, forKey: .statusCode)
+      .flatMap { HTTPStatusCode(nearestTo: $0) }
+
     statusCode = envelopeStatus ?? .ok
     carriesEnvelopeStatus = envelopeStatus != nil
   }

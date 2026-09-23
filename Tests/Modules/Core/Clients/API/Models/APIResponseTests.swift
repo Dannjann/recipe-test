@@ -56,6 +56,21 @@ struct APIResponseTests {
     #expect(sut.statusCode == .ok)
   }
 
+  /// `http_status` used to decode straight into `HTTPStatusCode`, and a `Decodable` enum
+  /// throws on a raw value it has no case for — so one unlisted status failed the whole
+  /// response rather than one field.
+  @Test
+  func decoding_ofAnUnlistedEnvelopeStatus_stillDecodesTheResponse() throws {
+    let sut = try JSONDecoder().decode(
+      APIResponse.self,
+      from: Data(#"{"http_status":419,"message":"Session expired"}"#.utf8)
+    )
+
+    #expect(sut.carriesEnvelopeStatus)
+    #expect(sut.statusCode.isRequestError)
+    #expect(sut.message == "Session expired")
+  }
+
   @Test
   func init_withNoContent_isRepresentableWithoutABody() {
     let sut = APIResponse(statusCode: .noContent)
