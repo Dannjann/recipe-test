@@ -46,6 +46,10 @@ struct RemotePaginationMetaInfoTests {
     (25, 10, 3, 3, true),
     (5, 10, 1, 1, true),
     (10, 10, 1, 1, true),
+    // A page past the end: the server answers with the page that was asked for and an
+    // empty slice. `== lastPage` reported more to load, so a pager kept asking.
+    (25, 10, 4, 3, true),
+    (25, 10, 99, 3, true),
   ])
   func hasLoadedAllData_reflectsTheCurrentAndLastPage(
     total: Int,
