@@ -35,8 +35,35 @@ struct RecipeMapperTests {
   }
 
   @Test
+  func toDomain_withAnEmptyID_returnsNil() {
+    #expect(RecipeMapper.toDomain(from: .dummy(id: "")) == nil)
+  }
+
+  @Test
   func toDomain_withoutATitle_returnsNil() {
     #expect(RecipeMapper.toDomain(from: .dummy(title: nil)) == nil)
+  }
+
+  @Test
+  func toDomain_withAnEmptyTitle_returnsNil() {
+    #expect(RecipeMapper.toDomain(from: .dummy(title: "")) == nil)
+  }
+
+  /// A difficulty the app has no case for must not cost the recipe. Today the fixture
+  /// only sends easy/medium/hard; a backend adding "expert" must degrade, not break.
+  @Test
+  func toDomain_withAnUnknownDifficulty_keepsTheRecipeAndDropsTheValue() throws {
+    let sut = try #require(RecipeMapper.toDomain(from: .dummy(difficulty: "expert")))
+
+    #expect(sut.difficulty == nil)
+    #expect(sut.id == "rcp-001")
+  }
+
+  @Test(arguments: [("easy", RecipeDifficulty.easy), ("medium", .medium), ("hard", .hard)])
+  func toDomain_mapsEveryKnownDifficulty(raw: String, expected: RecipeDifficulty) throws {
+    let sut = try #require(RecipeMapper.toDomain(from: .dummy(difficulty: raw)))
+
+    #expect(sut.difficulty == expected)
   }
 
   @Test
