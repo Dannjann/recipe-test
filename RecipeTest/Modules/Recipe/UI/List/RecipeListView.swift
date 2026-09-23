@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct RecipeListView: View {
-  @Environment(\.theme) var theme: any ThemeProtocol
+  @Environment(\.theme) private var theme: any ThemeProtocol
 
   let viewModel: any RecipeListViewModelProtocol
   var onRecipeTap: SingleResult<RecipeSummary> = DefaultClosure.singleResult()
@@ -49,132 +49,15 @@ private extension RecipeListView {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
 
     case let .failed(message):
-      messageStateView(
+      RecipeListMessageView(
         title: message,
-        detail: nil,
-        retry: { await viewModel.loadFirstPage() }
+        onRetry: { await viewModel.loadFirstPage() }
       )
+      .frame(maxHeight: .infinity)
 
     case .loaded:
-      if viewModel.recipes.isEmpty {
-        emptyState
-      } else {
-        scroller
-      }
+      RecipeListContent(viewModel: viewModel, onRecipeTap: onRecipeTap)
     }
-  }
-
-  /// LazyVStack, not a plain one: a ScrollView builds every child eagerly, which would
-  /// request page 2 on the first frame. Pairs with the footer's `.task(id:)` to re-fire.
-  var scroller: some View {
-    ScrollView {
-      LazyVStack(spacing: 0) {
-        LazyVGrid(
-          columns: viewModel.layout.columns,
-          spacing: RecipeListLayout.spacing
-        ) {
-          ForEach(viewModel.recipes) { recipe in
-            RecipeCard(recipe: recipe, layout: viewModel.layout)
-              .onTapGesture {
-                onRecipeTap(recipe)
-              }
-              .accessibilityAddTraits(.isButton)
-          }
-        }
-        .animation(.snappy, value: viewModel.layout)
-
-        // Outside the grid so the footer spans both columns instead of one cell.
-        footer
-      }
-      .padding(.horizontal, RecipeListLayout.spacing)
-    }
-    .refreshable {
-      await viewModel.refresh()
-    }
-  }
-
-  var emptyState: some View {
-    GeometryReader { proxy in
-      ScrollView {
-        messageStateView(
-          title: String(localized: .Recipe.recipeListEmptyTitle),
-          detail: String(localized: .Recipe.recipeListEmptyMessage),
-          retry: nil
-        )
-        .frame(minHeight: proxy.size.height)
-      }
-      .refreshable {
-        await viewModel.refresh()
-      }
-    }
-  }
-
-  @ViewBuilder
-  var footer: some View {
-    if viewModel.hasLoadedAllData {
-      EmptyView()
-    } else if let nextPageError = viewModel.nextPageError {
-      VStack(spacing: Self.messageSpacing) {
-        Text(nextPageError)
-          .font(theme.textStyle.footnoteRegular.font)
-          .foregroundStyle(theme.color.textSecondary.color)
-          .multilineTextAlignment(.center)
-
-        Button(String(localized: .Recipe.recipeListErrorRetry)) {
-          Task { await viewModel.loadNextPage() }
-        }
-        .font(theme.textStyle.bodySemibold.font)
-      }
-      .padding(.vertical, RecipeListLayout.spacing)
-    } else {
-      ProgressView()
-        .padding(.vertical, RecipeListLayout.spacing)
-        .task(id: viewModel.recipes.count) {
-          await viewModel.loadNextPage()
-        }
-    }
-  }
-
-  func messageStateView(
-    title: String,
-    detail: String?,
-    retry: (() async -> Void)?
-  ) -> some View {
-    VStack(spacing: Self.messageSpacing) {
-      Text(title)
-        .font(theme.textStyle.bodySemibold.font)
-        .foregroundStyle(theme.color.textPrimary.color)
-        .multilineTextAlignment(.center)
-
-      if let detail {
-        Text(detail)
-          .font(theme.textStyle.subheadlineRegular.font)
-          .foregroundStyle(theme.color.textSecondary.color)
-          .multilineTextAlignment(.center)
-      }
-
-      if let retry {
-        Button(String(localized: .Recipe.recipeListErrorRetry)) {
-          Task { await retry() }
-        }
-        .font(theme.textStyle.bodySemibold.font)
-        .padding(.top, Self.retryTopPadding)
-      }
-    }
-    .padding(RecipeListLayout.spacing * 2)
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-  }
-}
-
-// MARK: - Constants
-
-private extension RecipeListView {
-  static var messageSpacing: CGFloat {
-    8
-  }
-
-  static var retryTopPadding: CGFloat {
-    4
   }
 }
 
@@ -234,6 +117,13 @@ private extension RecipeListView {
     NavigationStack {
       RecipeListView(viewModel: MockRecipeListViewModel(recipes: [], loadState: .loading))
     }
+  }
+
+  #Preview("Accessibility text size") {
+    NavigationStack {
+      RecipeListView(viewModel: MockRecipeListViewModel())
+    }
+    .dynamicTypeSize(.accessibility3)
   }
 
 #endif
