@@ -45,25 +45,6 @@ jobs:
           fi
           echo "✓ -default-isolation supported"
 
-      # Resolve a simulator that actually exists on this image, by UDID.
-      # Not by name: device names contain parentheses ("iPhone SE (3rd generation)"),
-      # so any sed that strips at the first "(" silently truncates them. A UDID needs
-      # no parsing.
-      - name: Choose a simulator
-        run: |
-          xcrun simctl list devices available
-          udid=$(xcrun simctl list devices available \
-            | grep -E '^ +iPhone' \
-            | tail -1 \
-            | grep -oE '[0-9A-F]{8}-[0-9A-F-]{27}')
-          if [ -z "$udid" ]; then
-            echo "::error::No iPhone simulator available on this runner."
-            exit 1
-          fi
-          echo "Using simulator $udid"
-          xcrun simctl list devices available | grep "$udid"
-          echo "SIMULATOR_ID=$udid" >> "$GITHUB_ENV"
-
       # SwiftLint runs as a build tool plugin, so `xcodebuild` below covers it. SwiftFormat
       # is not part of the build and needs its own check, or `.swiftformat` documents a
       # style nothing enforces.
@@ -74,6 +55,44 @@ jobs:
 
       - name: Resolve package dependencies
         run: xcodebuild -resolvePackageDependencies -project "$PROJECT" -scheme "$SCHEME"
+
+      # Ask xcodebuild which simulators it will actually accept — NOT `simctl`.
+      # `simctl list devices available` lists every installed device and knows nothing
+      # about the app's deployment target, so it returns UDIDs that xcodebuild then
+      # rejects with "Unable to find a destination matching the provided destination
+      # specifier" — a device is found, so a naive emptiness check never fires.
+      # `-showdestinations` applies eligibility and annotates unusable rows with
+      # `error:`, which is what makes them filterable here.
+      #
+      # Runs after package resolution: -showdestinations resolves the package graph too,
+      # and a resolution failure should be reported by the step named for it.
+      - name: Choose a simulator
+        run: |
+          set -o pipefail
+          xcodebuild -showdestinations \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -skipPackagePluginValidation 2>/dev/null | tee /tmp/destinations.txt
+
+          udid=$(grep 'platform:iOS Simulator' /tmp/destinations.txt \
+            | grep -v 'error:' \
+            | grep -v 'placeholder' \
+            | grep 'name:iPhone' \
+            | head -1 \
+            | grep -oE 'id:[0-9A-F-]{36}' \
+            | cut -d: -f2)
+
+          if [ -z "$udid" ]; then
+            echo "::error::No eligible iPhone simulator for the $SCHEME scheme."
+            echo "::error::The usual cause is IPHONEOS_DEPLOYMENT_TARGET sitting above the"
+            echo "::error::newest iOS runtime this Xcode ships. Ineligible rows and why:"
+            grep 'platform:iOS Simulator' /tmp/destinations.txt | grep 'error:' | head -10
+            exit 1
+          fi
+
+          echo "Using simulator $udid"
+          grep "$udid" /tmp/destinations.txt
+          echo "SIMULATOR_ID=$udid" >> "$GITHUB_ENV"
 
       - name: Build and test
         run: |
