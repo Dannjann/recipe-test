@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct RecipeLayoutToggle: View {
-  @Environment(\.theme) var theme: any ThemeProtocol
+  @Environment(\.theme) private var theme: any ThemeProtocol
 
   let layout: RecipeListLayout
   let onSelect: SingleResult<RecipeListLayout>
@@ -36,7 +36,6 @@ private extension RecipeLayoutToggle {
     layout.toggled
   }
 
-  /// Shows the layout the button switches *to*.
   var iconName: String {
     switch destination {
     case .list: "list.bullet"

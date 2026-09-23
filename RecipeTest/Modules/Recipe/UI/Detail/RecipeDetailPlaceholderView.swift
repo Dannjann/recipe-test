@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct RecipeDetailPlaceholderView: View {
-  @Environment(\.theme) var theme: any ThemeProtocol
+  @Environment(\.theme) private var theme: any ThemeProtocol
 
   let recipe: RecipeSummary
 
