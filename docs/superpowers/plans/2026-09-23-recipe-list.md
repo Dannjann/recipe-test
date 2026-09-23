@@ -30,6 +30,14 @@
 - **No string literals in `String(localized:)`** — a custom SwiftLint rule rejects them. Every piece of user-facing copy goes into `Recipe.xcstrings` (Task 5) **before** a view references it.
 - **Xcode project:** `RecipeTest`, `Tests` and `UITests` are `PBXFileSystemSynchronizedRootGroup`s. Files dropped anywhere inside those folders join the target automatically — **never edit `project.pbxproj`**.
 - **Previews are required** on every new SwiftUI view, per the team standard.
+- **Comments: only where the code cannot speak for itself.** The code is the documentation —
+  clear names, small functions, obvious structure. Keep a comment only where a reader would
+  otherwise undo a deliberate choice, and keep it to one line. Delete anything that restates
+  what a line does, narrates the obvious, or argues against an alternative that was never
+  written. **The code blocks in the tasks below were written before this constraint and carry
+  extensive doc comments: they are illustrative of structure and behaviour, not of comment
+  density. Transcribe the code, not the prose around it.** This overrides the comment-heavy
+  style in the repo's older files.
 - **Running tests.** Resolve a simulator id once and reuse it for every task:
   ```bash
   xcodebuild -showdestinations -project RecipeTest.xcodeproj -scheme RecipeTest \
@@ -1206,6 +1214,64 @@ Append to the `RecipeListViewModelTests` struct:
 
     #expect(sut.recipes.map(\.id) == ["rcp-999"])
   }
+
+  @Test
+  func loadNextPage_startedDuringARefresh_isRefused() async {
+    let service = MockRecipeService()
+    let sut = makeSUT(service: service, pageSize: 1)
+
+    service.recipes.returns(.dummy(ids: ["rcp-001"], total: 9, perPage: 1, currentPage: 1, lastPage: 9))
+    await sut.loadFirstPage()
+
+    let gate = CallGate()
+    service.recipes.responds { _ in
+      guard await gate.arrive() == 1 else {
+        return .dummy(ids: ["late"], total: 9, perPage: 1, currentPage: 7, lastPage: 9)
+      }
+
+      await gate.waitUntilOpen()
+
+      return .dummy(ids: ["rcp-999"], total: 9, perPage: 1, currentPage: 1, lastPage: 9)
+    }
+
+    async let refresh: Void = sut.refresh()
+    await gate.waitForArrivals(1)
+
+    await sut.loadNextPage()
+    await gate.open()
+    await refresh
+
+    #expect(service.recipes.callCount == 2)
+    #expect(sut.recipes.map(\.id) == ["rcp-999"])
+  }
+
+  /// Pins the `!isLoadingNextPage` guard. Without it a footer flickering in and out of
+  /// view fires overlapping requests for the same page.
+  @Test
+  func loadNextPage_whileOneIsAlreadyInFlight_doesNotDoubleRequest() async {
+    let service = MockRecipeService()
+    let sut = makeSUT(service: service, pageSize: 1)
+
+    service.recipes.returns(.dummy(ids: ["rcp-001"], total: 9, perPage: 1, currentPage: 1, lastPage: 9))
+    await sut.loadFirstPage()
+
+    let gate = CallGate()
+    service.recipes.responds { _ in
+      _ = await gate.arrive()
+      await gate.waitUntilOpen()
+
+      return .dummy(ids: ["rcp-002"], total: 9, perPage: 1, currentPage: 2, lastPage: 9)
+    }
+
+    async let inFlight: Void = sut.loadNextPage()
+    await gate.waitForArrivals(1)
+
+    await sut.loadNextPage()
+    await gate.open()
+    await inFlight
+
+    #expect(service.recipes.requests.map(\.index) == [1, 2])
+  }
 ```
 
 Add the gate helper to the same file, below the `// MARK: - Helpers` extension:
@@ -1279,15 +1345,15 @@ Expected: FAIL — `refresh()` is an empty stub, so `sut.recipes` still reads `[
 Replace the Task 2 stub in `RecipeListViewModel.swift`:
 
 ```swift
-  /// Pull-to-refresh. Deliberately does *not* set `.loading`: that would blank a screen
-  /// the user is looking at, and `.refreshable` already draws its own indicator.
-  ///
-  /// Bumping the generation is what makes this safe to call at any moment. Anything in
-  /// flight — a slow first load, a half-finished next page — is invalidated, so it cannot
-  /// land after this refresh and overwrite it or append onto a list it no longer matches.
+  /// Does not set `.loading`: that would blank a screen the user is looking at, and
+  /// `.refreshable` draws its own indicator.
   func refresh() async {
     let token = startNewGeneration()
 
+    isRefreshing = true
+    defer { isRefreshing = false }
+
+    nextPage = Page(index: 1, size: pageSize)
     isLoadingNextPage = false
     nextPageError = nil
 
@@ -1295,12 +1361,31 @@ Replace the Task 2 stub in `RecipeListViewModel.swift`:
   }
 ```
 
+Add the flag alongside the other private state in `RecipeListViewModel`:
+
+```swift
+  private var isRefreshing = false
+```
+
+And add it to `loadNextPage()`'s guard list, from Task 3:
+
+```swift
+    guard
+      loadState == .loaded,
+      !isRefreshing,
+      !hasLoadedAllData,
+      !isLoadingNextPage
+    else { return }
+```
+
+**Why the flag is needed, and why the generation counter is not enough.** The generation counter invalidates requests started *before* a refresh. It cannot invalidate one started *during* it, and that case is reachable: `refresh()` sets `nextPageError = nil` synchronously, which flips the footer from its error branch to its `ProgressView` branch — a structurally different view, so SwiftUI fires the new one's `.task`. That calls `loadNextPage()` while refresh's page-one request is still in flight. All of Task 3's guards pass (`loadState` is still `.loaded`, `isLoadingNextPage` was just reset), it captures the *new* generation so it is not stale, and it reads the pre-refresh `nextPage` because `loadPageOne` only resets that after its own await. If refresh lands first, page 7's rows get appended onto refreshed page-1 rows and `nextPage` jumps to 8 — pages 2 through 7 silently skipped.
+
 `keepingRowsOnFailure: true` is read by `loadPageOne`'s `catch` from Task 2: it returns early when rows are already on screen, leaving `loadState` at `.loaded`. A refresh that fails with an *empty* screen — a retry after a failed first load — still surfaces the error, because `recipes.isEmpty` is then true.
 
 - [ ] **Step 4: Run the tests and watch them pass**
 
 Run with `-only-testing:Tests/RecipeListViewModelTests`.
-Expected: PASS, 21 tests.
+Expected: PASS, 23 tests.
 
 - [ ] **Step 5: Run the whole suite**
 
