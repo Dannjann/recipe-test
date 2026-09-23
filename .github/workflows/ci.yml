@@ -66,9 +66,33 @@ jobs:
       #
       # Runs after package resolution: -showdestinations resolves the package graph too,
       # and a resolution failure should be reported by the step named for it.
+      # Ask xcodebuild which simulators it will actually accept — NOT `simctl`.
+      # `simctl list devices available` lists every installed device and knows nothing
+      # about the app's deployment target, so it returns UDIDs that xcodebuild then
+      # rejects with "Unable to find a destination matching the provided destination
+      # specifier" — a device is found, so a naive emptiness check never fires.
+      # `-showdestinations` applies eligibility and annotates unusable rows with
+      # `error:`, which is what makes them filterable here.
+      #
+      # Runs after package resolution: -showdestinations resolves the package graph too,
+      # and a resolution failure should be reported by the step named for it.
       - name: Choose a simulator
         run: |
           set -o pipefail
+
+          # Instrumentation, kept deliberately: when this step fails the cause is
+          # almost always the runner's runtime inventory, which is invisible from the
+          # xcodebuild error alone. Printing all three layers makes the next failure
+          # diagnosable from the log rather than from a rerun.
+          echo "=== Selected toolchain ==="
+          xcode-select -p
+          xcodebuild -version
+          echo "=== Installed iOS simulator runtimes ==="
+          xcrun simctl list runtimes 2>&1 | grep -i ios || echo "(no iOS runtimes installed)"
+          echo "=== iPhone devices simctl reports available ==="
+          xcrun simctl list devices available 2>&1 | grep -E '^ +iPhone' || echo "(none)"
+
+          echo "=== Destinations xcodebuild accepts for this scheme ==="
           xcodebuild -showdestinations \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
@@ -84,9 +108,10 @@ jobs:
 
           if [ -z "$udid" ]; then
             echo "::error::No eligible iPhone simulator for the $SCHEME scheme."
-            echo "::error::The usual cause is IPHONEOS_DEPLOYMENT_TARGET sitting above the"
-            echo "::error::newest iOS runtime this Xcode ships. Ineligible rows and why:"
-            grep 'platform:iOS Simulator' /tmp/destinations.txt | grep 'error:' | head -10
+            echo "::error::Either no iOS runtime is installed for this Xcode, or"
+            echo "::error::IPHONEOS_DEPLOYMENT_TARGET sits above the newest one."
+            echo "--- every destination xcodebuild reported ---"
+            cat /tmp/destinations.txt
             exit 1
           fi
 
