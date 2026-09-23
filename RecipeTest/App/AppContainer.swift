@@ -69,7 +69,19 @@ final class AppContainer {
 
   // MARK: Feature services
 
-  private(set) lazy var recipeService: RecipeServiceProtocol = RecipeService(api: api)
+  private(set) lazy var recipeService: RecipeServiceProtocol = {
+    // Resolved here for the same reason `api` does it: the closure is `@Sendable` and
+    // the service is nonisolated, so capturing `self` would reach main-actor state from
+    // off the main actor.
+    let monitoring = monitoring
+
+    return RecipeService(
+      api: api,
+      onError: { error in
+        monitoring.logError(error)
+      }
+    )
+  }()
 
   private init() {
     debugLog("env: \(AppContainer.environment.rawValue)")

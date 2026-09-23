@@ -14,7 +14,7 @@ struct RecipeServiceTests {
   @Test
   func getRecipes_translatesThePageIntoPageAndPerPage() async throws {
     let api = MockRecipeAPI()
-    let sut = RecipeService(api: api)
+    let sut = makeSUT(api: api)
 
     _ = try await sut.getRecipes(page: Page(index: 3, size: 20))
 
@@ -25,7 +25,7 @@ struct RecipeServiceTests {
   @Test
   func getRecipes_mapsTheRowsIntoSummaries() async throws {
     let api = MockRecipeAPI(recipes: [.dummy(id: "rcp-001"), .dummy(id: "rcp-002")])
-    let sut = RecipeService(api: api)
+    let sut = makeSUT(api: api)
 
     let page = try await sut.getRecipes(page: Page(size: 10))
 
@@ -37,7 +37,7 @@ struct RecipeServiceTests {
   @Test
   func getRecipes_dropsUnmappableRowsAndKeepsTheRest() async throws {
     let api = MockRecipeAPI(recipes: [.dummy(id: "rcp-001"), .dummy(id: nil), .dummy(id: "rcp-003")])
-    let sut = RecipeService(api: api)
+    let sut = makeSUT(api: api)
 
     let page = try await sut.getRecipes(page: Page(size: 10))
 
@@ -47,7 +47,7 @@ struct RecipeServiceTests {
   @Test
   func getRecipes_carriesThePaginationMetaThrough() async throws {
     let api = MockRecipeAPI(meta: .dummy(total: 36, perPage: 5, currentPage: 2, lastPage: 8))
-    let sut = RecipeService(api: api)
+    let sut = makeSUT(api: api)
 
     let page = try await sut.getRecipes(page: Page(index: 2, size: 5))
 
@@ -64,7 +64,7 @@ struct RecipeServiceTests {
       recipes: [],
       meta: .dummy(total: 36, perPage: 5, from: nil, to: nil, currentPage: 99, lastPage: 8)
     )
-    let sut = RecipeService(api: api)
+    let sut = makeSUT(api: api)
 
     let page = try await sut.getRecipes(page: Page(index: 99, size: 5))
 
@@ -76,7 +76,7 @@ struct RecipeServiceTests {
   func getRecipes_propagatesAnAPIError() async throws {
     let api = MockRecipeAPI()
     api.recipes.fails(with: AppError.noInternetConnection)
-    let sut = RecipeService(api: api)
+    let sut = makeSUT(api: api)
 
     await #expect(throws: AppError.self) {
       _ = try await sut.getRecipes(page: Page(size: 10))
@@ -91,7 +91,7 @@ struct RecipeServiceTests {
     api.recipes.responds { request in
       ([.dummy(id: "rcp-\(request.page)")], .dummy(currentPage: request.page))
     }
-    let sut = RecipeService(api: api)
+    let sut = makeSUT(api: api)
 
     let first = try await sut.getRecipes(page: Page(index: 1, size: 10))
     let second = try await sut.getRecipes(page: Page(index: 2, size: 10))
@@ -104,7 +104,7 @@ struct RecipeServiceTests {
   @Test
   func getRecipe_sendsTheID() async throws {
     let api = MockRecipeAPI()
-    let sut = RecipeService(api: api)
+    let sut = makeSUT(api: api)
 
     _ = try await sut.getRecipe(id: "rcp-007")
 
@@ -115,7 +115,7 @@ struct RecipeServiceTests {
   @Test
   func getRecipe_mapsTheRecipe() async throws {
     let api = MockRecipeAPI(recipe: .dummy(id: "rcp-007", title: "Chicken Katsu Curry"))
-    let sut = RecipeService(api: api)
+    let sut = makeSUT(api: api)
 
     let recipe = try await sut.getRecipe(id: "rcp-007")
 
@@ -126,21 +126,53 @@ struct RecipeServiceTests {
 
   /// A detail screen with no recipe has nothing to show, so there is no partial result to
   /// degrade to — unlike a list, where a bad row is simply dropped.
+  ///
+  /// Named rather than `AppError.unknown`: the caller can tell a backend contract break
+  /// from every other unhandled failure, and the id it names is what makes the report
+  /// actionable.
   @Test
-  func getRecipe_withAnUnmappableRow_throws() async throws {
+  func getRecipe_withAnUnmappableRow_throwsAnUnmappableRecipeError() async throws {
     let api = MockRecipeAPI(recipe: .dummy(title: nil))
-    let sut = RecipeService(api: api)
+    let sut = makeSUT(api: api)
 
-    await #expect(throws: AppError.self) {
+    await #expect(throws: RecipeServiceError.unmappableRecipe(id: "rcp-001")) {
       _ = try await sut.getRecipe(id: "rcp-001")
     }
+  }
+
+  /// The response decoded cleanly, so `APIClient.onError` never saw a failure. Without
+  /// this report the break would show up as a failed screen and nothing else.
+  @Test
+  func getRecipe_withAnUnmappableRow_reportsTheError() async {
+    let recorder = ErrorRecorder()
+    let api = MockRecipeAPI(recipe: .dummy(title: nil))
+    let sut = makeSUT(api: api, onError: recorder.record)
+
+    _ = try? await sut.getRecipe(id: "rcp-001")
+
+    #expect(recorder.count == 1)
+    #expect(recorder.errors.first as? RecipeServiceError == .unmappableRecipe(id: "rcp-001"))
+  }
+
+  /// An error the API layer already reported is passed through untouched. Reporting it a
+  /// second time here would double-count it in monitoring.
+  @Test
+  func getRecipe_withAnAPIError_doesNotReportItASecondTime() async {
+    let recorder = ErrorRecorder()
+    let api = MockRecipeAPI()
+    api.recipe.fails(with: AppError.noInternetConnection)
+    let sut = makeSUT(api: api, onError: recorder.record)
+
+    _ = try? await sut.getRecipe(id: "rcp-001")
+
+    #expect(recorder.count == 0)
   }
 
   @Test
   func getRecipe_propagatesAnAPIError() async throws {
     let api = MockRecipeAPI()
     api.recipe.fails(with: AppError.noInternetConnection)
-    let sut = RecipeService(api: api)
+    let sut = makeSUT(api: api)
 
     await #expect(throws: AppError.self) {
       _ = try await sut.getRecipe(id: "rcp-001")
@@ -152,11 +184,24 @@ struct RecipeServiceTests {
   func getRecipe_succeedsWhileTheListEndpointIsFailing() async throws {
     let api = MockRecipeAPI()
     api.recipes.fails(with: AppError.noInternetConnection)
-    let sut = RecipeService(api: api)
+    let sut = makeSUT(api: api)
 
     let recipe = try await sut.getRecipe(id: "rcp-001")
 
     #expect(recipe.id == "rcp-001")
     #expect(api.recipes.wasCalled == false)
+  }
+}
+
+// MARK: - Helpers
+
+private extension RecipeServiceTests {
+  /// `onError` defaults to a sink: only the reporting test cares what the service
+  /// raises on its own account, and the other twelve would carry an unused argument.
+  func makeSUT(
+    api: MockRecipeAPI,
+    onError: @escaping SendableErrorResult = { _ in }
+  ) -> RecipeService {
+    RecipeService(api: api, onError: onError)
   }
 }
