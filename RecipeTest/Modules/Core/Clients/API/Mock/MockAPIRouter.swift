@@ -80,6 +80,13 @@ nonisolated extension MockAPIRouter {
       return (500, body, endpoint.contentType)
 
     case .empty:
+      // "No rows" for a request that addresses one resource means that resource is not
+      // there. An empty array would hand the caller something it cannot decode.
+      if let rowID = endpoint.fixtureRowID {
+        let body = try envelope(status: 404, message: "No recipe with id \(rowID)", data: nil, meta: nil)
+        return (404, body, endpoint.contentType)
+      }
+
       let perPage = intQuery("per_page", from: url) ?? 10
       let body = try envelope(
         status: 200,
@@ -99,6 +106,18 @@ nonisolated extension MockAPIRouter {
     }
 
     let rows = try fixtureRows(named: fixtureName)
+
+    // A detail endpoint: one row out of the collection fixture, enveloped as an object
+    // rather than an array. An id nothing matches is a 404, exactly as a real backend
+    // would answer it.
+    if let rowID = endpoint.fixtureRowID {
+      guard let row = rows.first(where: { $0["id"] as? String == rowID }) else {
+        let body = try envelope(status: 404, message: "No recipe with id \(rowID)", data: nil, meta: nil)
+        return (404, body, endpoint.contentType)
+      }
+
+      return try (200, envelope(status: 200, message: "OK", data: row, meta: nil), endpoint.contentType)
+    }
 
     guard endpoint.isPaginated else {
       return try (200, envelope(status: 200, message: "OK", data: rows, meta: nil), endpoint.contentType)
