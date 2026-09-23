@@ -10,6 +10,17 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-23-recipe-service-layer-design.md`
 
+> **This plan is a record of the work as it was executed, not a description of the code
+> as it now stands.** Two things changed after it ran, in response to code review — see
+> the spec, which is kept current, for the shape that shipped:
+>
+> - `RecipeService.getRecipe(id:)` throws `RecipeServiceError.unmappableRecipe(id:)`, not
+>   `AppError.unknown`, and reports it through the service's own `onError`.
+> - `RecipeService.init` therefore takes `onError:` alongside `api:`.
+>
+> The code listings below still show the pre-review shape. Follow the spec, not this file,
+> when copying the layout for the next feature module.
+
 ## Global Constraints
 
 - **Branch:** all work lands on `feat/recipe-service-layer`. Never commit on `develop` or `main`.

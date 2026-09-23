@@ -75,6 +75,7 @@ RecipeTest/Modules/Recipe/
   Services/
     RecipeServiceProtocol.swift
     RecipeService.swift
+    RecipeServiceError.swift
     RecipeSummaryMapper.swift
     RecipeMapper.swift
 ```
@@ -195,8 +196,9 @@ nonisolated extension APIClient {
 }
 ```
 
-Both throw `AppError.unknown` when the payload is absent, and both route failures
-through `onError` before rethrowing — matching what the existing method does.
+Both throw `APIClientError.dataNotFound(_:)` when the payload is absent — naming the
+type that was expected, which `AppError.unknown` cannot — and both route failures through
+`onError` before rethrowing, matching what the existing method does.
 
 ## API layer
 
@@ -227,7 +229,7 @@ nonisolated protocol RecipeServiceProtocol: AppServiceProtocol, Sendable {
 }
 
 final nonisolated class RecipeService: RecipeServiceProtocol {
-  init(api: any RecipeAPIProtocol)
+  init(api: any RecipeAPIProtocol, onError: @escaping SendableErrorResult)
 }
 ```
 
@@ -237,11 +239,16 @@ dropped from the page, not fatal — one bad row must not cost the user the othe
 nine.
 
 `getRecipe(id:)` maps with `RecipeMapper.toDomain(from:)` and throws
-`AppError.unknown` when the row cannot be mapped. A detail screen with no recipe has
-nothing to show, so there is no partial result to degrade to.
+`RecipeServiceError.unmappableRecipe(id:)` when the row cannot be mapped. A detail screen
+with no recipe has nothing to show, so there is no partial result to degrade to. The case
+is named rather than `AppError.unknown` so a caller can tell a backend contract break from
+every other unhandled failure, and it carries the id that broke.
 
-Errors from the API layer propagate unchanged. `APIClient` already reports them to
-`onError` (and so to `MonitoringService`); the service adds no handling of its own.
+Errors from the API layer propagate unchanged. `APIClient` already reports those to its
+own `onError` (and so to `MonitoringService`), so the service does not report them a
+second time. It does report what it raises itself: a payload that decoded cleanly but
+could not be mapped never reaches the client's reporting, so without the service's own
+`onError` a contract break would surface as a failed screen and no signal anywhere.
 
 ### Mappers
 
@@ -258,11 +265,22 @@ depend on the array's order in the payload.
 ### Container wiring
 
 ```swift
-private(set) lazy var recipeService: RecipeServiceProtocol = RecipeService(api: api)
+private(set) lazy var recipeService: RecipeServiceProtocol = {
+  let monitoring = monitoring
+
+  return RecipeService(
+    api: api,
+    onError: { error in
+      monitoring.logError(error)
+    }
+  )
+}()
 ```
 
 in `AppContainer`, replacing the commented-out `catalogService` example. Lazy, as
-every other service there is.
+every other service there is. `monitoring` is resolved into a local for the same reason
+`api` does it: the closure is `@Sendable` and the service is nonisolated, so capturing
+`self` would reach main-actor state from off the main actor.
 
 ## Demo transport
 
