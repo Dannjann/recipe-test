@@ -10,8 +10,15 @@ import Foundation
 @testable import RecipeTest
 import Testing
 
-/// Serialized: `MockURLProtocol.router` is process-global, and Swift Testing runs suites
-/// in parallel. Two suites configuring it at once would flake against each other.
+/// `.serialized` runs this suite's own tests one at a time, which is what stops each
+/// `makeSUT` from overwriting `MockURLProtocol.router` while the previous test's request
+/// is still in flight.
+///
+/// It does *not* stop another suite running alongside this one — the trait orders tests
+/// within a suite, not across suites. What makes the process-global router safe today is
+/// that this is the only suite that writes it. A second suite driving `.mocked()` cannot
+/// be made safe by copying this trait: nest both suites inside one `.serialized` parent,
+/// or they will race on the global.
 @Suite(.serialized)
 struct APIClientRecipeTests {
   @Test
