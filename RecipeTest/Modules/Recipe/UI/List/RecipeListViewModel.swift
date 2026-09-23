@@ -25,7 +25,8 @@ final class RecipeListViewModel: RecipeListViewModelProtocol {
   /// Bumped each time page one is (re)requested; stale-generation results are discarded.
   private var generation = 0
 
-  private var isRefreshing = false
+  /// A counter, not a Bool: a Bool lets a nested refresh's `defer` clear the flag while an outer one is still in flight.
+  private var refreshDepth = 0
 
   init(
     service: any RecipeServiceProtocol,
@@ -57,10 +58,9 @@ extension RecipeListViewModel {
   func refresh() async {
     let token = startNewGeneration()
 
-    isRefreshing = true
-    defer { isRefreshing = false }
+    refreshDepth += 1
+    defer { refreshDepth -= 1 }
 
-    nextPage = Page(index: 1, size: pageSize)
     isLoadingNextPage = false
     nextPageError = nil
 
@@ -70,7 +70,7 @@ extension RecipeListViewModel {
   func loadNextPage() async {
     guard
       loadState == .loaded,
-      !isRefreshing,
+      refreshDepth == 0,
       !hasLoadedAllData,
       !isLoadingNextPage
     else { return }

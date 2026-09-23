@@ -295,7 +295,7 @@ struct RecipeListViewModelTests {
   }
 
   /// Two page-one requests are outstanding; the refresh's must win even if the initial load's answers last.
-  @Test
+  @Test(.timeLimit(.minutes(1)))
   func refresh_duringAnInFlightFirstLoad_winsRegardlessOfOrder() async {
     let service = MockRecipeService()
     let sut = makeSUT(service: service)
@@ -320,7 +320,7 @@ struct RecipeListViewModelTests {
   }
 
   /// A next page that returns after a refresh belongs to a list that no longer exists.
-  @Test
+  @Test(.timeLimit(.minutes(1)))
   func refresh_discardsANextPageThatWasAlreadyInFlight() async {
     let service = MockRecipeService()
     let sut = makeSUT(service: service, pageSize: 1)
@@ -349,7 +349,7 @@ struct RecipeListViewModelTests {
     #expect(sut.recipes.map(\.id) == ["rcp-999"])
   }
 
-  @Test
+  @Test(.timeLimit(.minutes(1)))
   func loadNextPage_startedDuringARefresh_isRefused() async {
     let service = MockRecipeService()
     let sut = makeSUT(service: service, pageSize: 1)
@@ -380,7 +380,7 @@ struct RecipeListViewModelTests {
   }
 
   /// Pins the `!isLoadingNextPage` guard: a footer flickering in and out of view must not fire overlapping requests for the same page.
-  @Test
+  @Test(.timeLimit(.minutes(1)))
   func loadNextPage_whileOneIsAlreadyInFlight_doesNotDoubleRequest() async {
     let service = MockRecipeService()
     let sut = makeSUT(service: service, pageSize: 1)
@@ -404,6 +404,61 @@ struct RecipeListViewModelTests {
     await inFlight
 
     #expect(service.recipes.requests.map(\.index) == [1, 2])
+  }
+
+  @Test
+  func refresh_whenItFails_doesNotRewindPagination() async {
+    let service = MockRecipeService()
+    service.recipes.responds { page in
+      .dummy(ids: ["rcp-00\(page.index)"], total: 9, perPage: 1, currentPage: page.index, lastPage: 9)
+    }
+    let sut = makeSUT(service: service, pageSize: 1)
+
+    await sut.loadFirstPage()
+    await sut.loadNextPage()
+
+    service.recipes.fails(with: AppError.noInternetConnection)
+    await sut.refresh()
+
+    service.recipes.responds { page in
+      .dummy(ids: ["rcp-00\(page.index)"], total: 9, perPage: 1, currentPage: page.index, lastPage: 9)
+    }
+    await sut.loadNextPage()
+
+    #expect(service.recipes.requests.map(\.index) == [1, 2, 1, 3])
+  }
+
+  @Test(.timeLimit(.minutes(1)))
+  func loadNextPage_duringANestedRefresh_isRefused() async {
+    let service = MockRecipeService()
+    let sut = makeSUT(service: service, pageSize: 1)
+
+    service.recipes.returns(.dummy(ids: ["rcp-001"], total: 9, perPage: 1, currentPage: 1, lastPage: 9))
+    await sut.loadFirstPage()
+
+    let gate = CallGate()
+    service.recipes.responds { _ in
+      guard await gate.arrive() == 1 else {
+        return .dummy(ids: ["rcp-00B"], total: 9, perPage: 1, currentPage: 1, lastPage: 9)
+      }
+
+      await gate.waitUntilOpen()
+
+      return .dummy(ids: ["rcp-00A"], total: 9, perPage: 1, currentPage: 1, lastPage: 9)
+    }
+
+    async let outerRefresh: Void = sut.refresh()
+    await gate.waitForArrivals(1)
+
+    async let innerRefresh: Void = sut.refresh()
+    await innerRefresh
+
+    await sut.loadNextPage()
+
+    await gate.open()
+    await outerRefresh
+
+    #expect(service.recipes.requests.map(\.index) == [1, 1, 1])
   }
 }
 
