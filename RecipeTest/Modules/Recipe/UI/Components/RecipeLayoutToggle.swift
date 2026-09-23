@@ -15,12 +15,15 @@ struct RecipeLayoutToggle: View {
   let onSelect: SingleResult<RecipeListLayout>
 
   var body: some View {
-    Button {
-      onSelect(layout.toggled)
-    } label: {
-      Image(systemName: iconName)
-        .foregroundStyle(theme.color.iconsDefault.color)
-    }
+    Button(
+      action: {
+        onSelect(destination)
+      },
+      label: {
+        Image(systemName: iconName)
+          .foregroundStyle(theme.color.iconsDefault.color)
+      }
+    )
     .accessibilityLabel(Text(accessibilityLabel))
     .accessibilityIdentifier("recipeList.layoutToggle")
   }
