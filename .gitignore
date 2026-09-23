@@ -39,3 +39,6 @@ playground.xcworkspace
 ## Secrets — the example file is committed, the real one is not.
 ## Unanchored on purpose: the path differs between this repo and a generated project.
 Secrets.xcconfig
+
+## Superpowers planning artefacts — kept on disk, not in history.
+docs/superpowers/plans/
