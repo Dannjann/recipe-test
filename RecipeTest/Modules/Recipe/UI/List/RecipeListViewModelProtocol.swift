@@ -18,6 +18,7 @@ protocol RecipeListViewModelProtocol: Observable, AnyObject {
   var isLoadingNextPage: Bool { get }
   var nextPageError: String? { get }
   var hasLoadedAllData: Bool { get }
+  var loadedPageCount: Int { get }
 
   // MARK: Inputs
 

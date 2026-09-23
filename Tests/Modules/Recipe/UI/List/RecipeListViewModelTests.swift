@@ -223,6 +223,85 @@ struct RecipeListViewModelTests {
     #expect(sut.recipes.map(\.id) == ["rcp-001", "rcp-002", "rcp-003"])
   }
 
+  // MARK: Paging trigger
+
+  /// `loadedPageCount` is what the list footer keys its `.task(id:)` on. The three tests
+  /// below pin the cases where a page lands without changing the row count — if the count
+  /// stalls there, the footer never re-fires and paging is over for the session.
+
+  @Test
+  func loadFirstPage_startsThePageCountAtOne() async {
+    let service = MockRecipeService(page: .dummy(ids: ["rcp-001"]))
+    let sut = makeSUT(service: service)
+
+    await sut.loadFirstPage()
+
+    #expect(sut.loadedPageCount == 1)
+  }
+
+  @Test
+  func loadNextPage_whenEveryRowIsADuplicate_stillAdvancesThePageCount() async {
+    let service = MockRecipeService()
+    service.recipes.responds { page in
+      .dummy(
+        ids: ["rcp-001", "rcp-002"],
+        total: 6,
+        perPage: 2,
+        currentPage: page.index,
+        lastPage: 3
+      )
+    }
+    let sut = makeSUT(service: service, pageSize: 2)
+
+    await sut.loadFirstPage()
+    await sut.loadNextPage()
+
+    #expect(sut.recipes.count == 2)
+    #expect(sut.loadedPageCount == 2)
+  }
+
+  @Test
+  func loadNextPage_whenThePageArrivesEmpty_stillAdvancesThePageCount() async {
+    let service = MockRecipeService()
+    service.recipes.responds { page in
+      page.index == 1
+        ? .dummy(ids: ["rcp-001", "rcp-002"], total: 6, perPage: 2, currentPage: 1, lastPage: 3)
+        : .dummy(ids: [], total: 6, perPage: 2, currentPage: page.index, lastPage: 3)
+    }
+    let sut = makeSUT(service: service, pageSize: 2)
+
+    await sut.loadFirstPage()
+    await sut.loadNextPage()
+
+    #expect(sut.recipes.count == 2)
+    #expect(sut.hasLoadedAllData == false)
+    #expect(sut.loadedPageCount == 2)
+  }
+
+  @Test
+  func refresh_rewindsThePageCountToOne() async {
+    let service = MockRecipeService()
+    service.recipes.responds { page in
+      .dummy(
+        ids: ["rcp-00\(page.index)"],
+        total: 6,
+        perPage: 1,
+        currentPage: page.index,
+        lastPage: 3
+      )
+    }
+    let sut = makeSUT(service: service, pageSize: 1)
+
+    await sut.loadFirstPage()
+    await sut.loadNextPage()
+
+    #expect(sut.loadedPageCount == 2)
+
+    await sut.refresh()
+
+    #expect(sut.loadedPageCount == 1)
+  }
+
   @Test
   func loadNextPage_beforeTheFirstPageLoaded_doesNothing() async {
     let service = MockRecipeService()

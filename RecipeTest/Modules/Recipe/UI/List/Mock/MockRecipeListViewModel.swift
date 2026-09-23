@@ -19,6 +19,7 @@ import Foundation
     private(set) var isLoadingNextPage: Bool
     private(set) var nextPageError: String?
     private(set) var hasLoadedAllData: Bool
+    private(set) var loadedPageCount: Int
 
     private(set) var loadFirstPageCallCount = 0
     private(set) var refreshCallCount = 0
@@ -31,7 +32,8 @@ import Foundation
       loadState: RecipeListLoadState = .loaded,
       isLoadingNextPage: Bool = false,
       nextPageError: String? = nil,
-      hasLoadedAllData: Bool = true
+      hasLoadedAllData: Bool = true,
+      loadedPageCount: Int = 1
     ) {
       self.recipes = recipes
       self.layout = layout
@@ -39,6 +41,7 @@ import Foundation
       self.isLoadingNextPage = isLoadingNextPage
       self.nextPageError = nextPageError
       self.hasLoadedAllData = hasLoadedAllData
+      self.loadedPageCount = loadedPageCount
     }
   }
 

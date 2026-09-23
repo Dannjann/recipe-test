@@ -17,6 +17,11 @@ final class RecipeListViewModel: RecipeListViewModelProtocol {
   private(set) var nextPageError: String?
   private(set) var hasLoadedAllData = false
 
+  /// What the list's footer keys its paging `.task(id:)` on. A row count cannot do that
+  /// job: unmappable and duplicate rows are dropped, so a page can land without changing
+  /// the row count, and the footer would never re-fire.
+  private(set) var loadedPageCount = 0
+
   private let service: any RecipeServiceProtocol
   private let pageSize: Int
 
@@ -25,8 +30,8 @@ final class RecipeListViewModel: RecipeListViewModelProtocol {
   /// Bumped each time page one is (re)requested; stale-generation results are discarded.
   private var generation = 0
 
-  /// A counter, not a Bool: a Bool lets a nested refresh's `defer` clear the flag while an
-  /// outer one is still in flight.
+  /// A depth, not a flag: a nested refresh's `defer` would otherwise clear it while an
+  /// outer refresh is still in flight.
   private var refreshDepth = 0
 
   init(
@@ -90,6 +95,7 @@ extension RecipeListViewModel {
       append(page.recipes)
       hasLoadedAllData = page.hasLoadedAllData
       nextPage = requested.next
+      loadedPageCount += 1
       isLoadingNextPage = false
     } catch {
       guard token == generation else { return }
@@ -120,6 +126,7 @@ private extension RecipeListViewModel {
       recipes = page.recipes
       hasLoadedAllData = page.hasLoadedAllData
       nextPage = Page(index: 2, size: pageSize)
+      loadedPageCount = 1
       nextPageError = nil
       loadState = .loaded
     } catch {
