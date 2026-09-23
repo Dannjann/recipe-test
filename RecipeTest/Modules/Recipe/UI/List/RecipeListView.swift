@@ -55,40 +55,55 @@ private extension RecipeListView {
 
     case .loaded:
       if viewModel.recipes.isEmpty {
-        messageState(
-          title: String(localized: .Recipe.recipeListEmptyTitle),
-          detail: String(localized: .Recipe.recipeListEmptyMessage),
-          retry: nil
-        )
+        emptyState
       } else {
         scroller
       }
     }
   }
 
-  /// One ScrollView for both: LazyVGrid has no viewport of its own outside one, and
-  /// the footer means "reached the end" only because it scrolls with the content.
+  /// LazyVStack, not a plain one: a ScrollView builds every child eagerly, which would
+  /// request page 2 on the first frame. Pairs with the footer's `.task(id:)` to re-fire.
   var scroller: some View {
     ScrollView {
-      LazyVGrid(
-        columns: viewModel.layout.columns,
-        spacing: RecipeListLayout.spacing
-      ) {
-        ForEach(viewModel.recipes) { recipe in
-          RecipeCard(recipe: recipe, layout: viewModel.layout)
-            .onTapGesture {
-              onRecipeTap(recipe)
-            }
+      LazyVStack(spacing: 0) {
+        LazyVGrid(
+          columns: viewModel.layout.columns,
+          spacing: RecipeListLayout.spacing
+        ) {
+          ForEach(viewModel.recipes) { recipe in
+            RecipeCard(recipe: recipe, layout: viewModel.layout)
+              .onTapGesture {
+                onRecipeTap(recipe)
+              }
+              .accessibilityAddTraits(.isButton)
+          }
         }
-      }
-      .animation(.snappy, value: viewModel.layout)
+        .animation(.snappy, value: viewModel.layout)
 
-      // Outside the grid so the footer spans both columns instead of one cell.
-      footer
+        // Outside the grid so the footer spans both columns instead of one cell.
+        footer
+      }
+      .padding(.horizontal, RecipeListLayout.spacing)
     }
-    .padding(.horizontal, RecipeListLayout.spacing)
     .refreshable {
       await viewModel.refresh()
+    }
+  }
+
+  var emptyState: some View {
+    GeometryReader { proxy in
+      ScrollView {
+        messageState(
+          title: String(localized: .Recipe.recipeListEmptyTitle),
+          detail: String(localized: .Recipe.recipeListEmptyMessage),
+          retry: nil
+        )
+        .frame(minHeight: proxy.size.height)
+      }
+      .refreshable {
+        await viewModel.refresh()
+      }
     }
   }
 
@@ -112,7 +127,7 @@ private extension RecipeListView {
     } else {
       ProgressView()
         .padding(.vertical, RecipeListLayout.spacing)
-        .task {
+        .task(id: viewModel.recipes.count) {
           await viewModel.loadNextPage()
         }
     }
