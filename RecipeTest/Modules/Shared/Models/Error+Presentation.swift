@@ -22,9 +22,16 @@ nonisolated extension Error {
 
   /// Whether this error means "the caller went away", rather than "the request failed".
   ///
-  /// SwiftUI cancels a `.task` when its view disappears, and `URLSession` reports that as
-  /// `URLError.cancelled` rather than as `CancellationError` — both have to be caught, or
-  /// navigating away mid-load leaves a failure on screen for the user to come back to.
+  /// A view model checks this so a torn-down `.task` never renders as a server failure and
+  /// always leaves the load retryable, rather than stuck on `.failed`. It recognises both
+  /// `CancellationError` and `URLError.cancelled` — the two shapes Swift Concurrency and
+  /// `URLSession` use for the same event.
+  ///
+  /// Today's transport produces neither: `APIClient` wraps Alamofire in a bare
+  /// `withCheckedThrowingContinuation` with no `withTaskCancellationHandler`, so a
+  /// cancelled `.task` never reaches this property as an error at all — the request is
+  /// simply left running and its result discarded. This guard is a contract held in
+  /// advance of that gap being closed, not a path this app's networking exercises today.
   var isCancellation: Bool {
     self is CancellationError || (self as? URLError)?.code == .cancelled
   }

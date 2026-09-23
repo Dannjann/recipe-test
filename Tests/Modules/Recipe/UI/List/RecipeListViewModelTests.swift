@@ -26,11 +26,11 @@ struct RecipeListViewModelTests {
   @Test
   func loadFirstPage_asksForPageOneAtTheConfiguredSize() async {
     let service = MockRecipeService()
-    let sut = makeSUT(service: service, pageSize: 10)
+    let sut = makeSUT(service: service, pageSize: 25)
 
     await sut.loadFirstPage()
 
-    #expect(service.recipes.lastRequest == Page(index: 1, size: 10))
+    #expect(service.recipes.lastRequest == Page(index: 1, size: 25))
   }
 
   /// No rows is a legitimate answer, not a failure. It has to land on `.loaded` so the
