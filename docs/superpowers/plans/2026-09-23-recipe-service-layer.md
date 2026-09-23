@@ -357,9 +357,7 @@ git commit -m "refactor(core): split model decoding from mapping
 
 decodeRemoteModelWithMeta decoded and mapped in one call, putting mapping in
 the client layer. It had no callers. decodeModel and decodeModelWithMeta only
-decode; mapping moves to each feature's own mappers.
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+decode; mapping moves to each feature's own mappers."
 ```
 
 ---
@@ -776,9 +774,7 @@ git commit -m "feat(recipe): add the remote recipe DTOs
 
 Every property is optional so one retyped field costs one value rather than a
 whole page; what the app requires is decided in the mappers. Fixtures are sliced
-from the shipped recipes.json so they cannot drift from what the app serves.
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+from the shipped recipes.json so they cannot drift from what the app serves."
 ```
 
 ---
@@ -1070,9 +1066,7 @@ git commit -m "feat(recipe): add RecipeSummary and its mapper
 
 difficulty is an enum because the set is closed and the UI switches on it;
 cuisine, tags, dietary attributes and allergens stay strings, since an enum
-would have to drop values it has no case for.
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+would have to drop values it has no case for."
 ```
 
 ---
@@ -1797,9 +1791,7 @@ git commit -m "feat(recipe): add the Recipe detail model and its mapper
 Each relation decides for itself what is unusable, so the smallest broken thing
 is what gets dropped: a photo with no URL costs that photo, an ingredient with
 no name costs that ingredient, and only a missing id or title costs the recipe.
-Steps are ordered by number rather than by payload order.
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+Steps are ordered by number rather than by payload order."
 ```
 
 ---
@@ -2182,9 +2174,7 @@ git commit -m "feat(core): answer recipe list and detail from the mock transport
 
 The router only sliced arrays. A detail endpoint now pulls its row out of the
 same collection fixture and envelopes it as an object; an id nothing matches is
-a 404, so a wrong id fails the way it would against a real backend.
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+a 404, so a wrong id fails the way it would against a real backend."
 ```
 
 ---
@@ -2426,9 +2416,7 @@ The protocol is owned by the feature and APIClient conforms to it in an
 extension, so the service can depend on the protocol rather than the class.
 Tests drive it through the mock transport, which is what exercises the real
 decode path: APIResponse decodes through GenericAPIModel's decoder, not the
-DTO's own.
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+DTO's own."
 ```
 
 ---
@@ -2974,9 +2962,7 @@ result to degrade to.
 
 MockAPICall gives each endpoint its own recorder and stub, so two endpoints
 cannot overwrite each other's recorded calls, one can fail while another
-succeeds, and there is no reset() to keep in sync.
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+succeeds, and there is no reset() to keep in sync."
 ```
 
 ---
@@ -3047,9 +3033,7 @@ Expected: `0/N files require formatting`.
 
 ```bash
 git add RecipeTest/App/AppContainer.swift
-git commit -m "feat(app): register RecipeService on the container
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+git commit -m "feat(app): register RecipeService on the container"
 ```
 
 - [ ] **Step 6: Review the branch before opening anything**
