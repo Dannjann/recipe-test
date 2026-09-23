@@ -13,16 +13,15 @@ import Foundation
 /// Add a case and a fixture file when you add an endpoint; an unmatched path deliberately
 /// produces a 404 rather than silently succeeding, so a typo in a resource path fails the
 /// same way it would against a real backend.
-///
-/// The base project ships only the image case — a feature module adds its own:
-///
-///     case catalog
-///
-/// matched on its resource name below, with `catalog.json` in `Resources/MockData` and
-/// `isPaginated` set to whether the endpoint pages.
 nonisolated enum MockEndpoint: Equatable {
   /// A placeholder photo. The seed is the filename, so a given URL gets a stable image.
   case image(seed: String)
+
+  /// `GET recipes` — a page of the recipe list.
+  case recipes
+
+  /// `GET recipes/{id}` — one recipe, sliced out of the same fixture the list uses.
+  case recipe(id: String)
 
   /// Matches on the trailing path components, so the versioned prefix (`/api/v1/...`)
   /// does not have to be repeated here.
@@ -36,28 +35,55 @@ nonisolated enum MockEndpoint: Equatable {
       return .image(seed: (resource as NSString).deletingPathExtension)
     }
 
-    // switch resource {
-    // case "catalog":
-    //   return .catalog
-    //
-    // default:
-    //   return nil
-    // }
+    // Checked before the collection below: `recipes/rcp-001` and `recipes` differ only
+    // in whether a resource name sits in front of the last component.
+    if components.dropLast().last == "recipes" {
+      return .recipe(id: resource)
+    }
 
-    return nil
+    switch resource {
+    case "recipes":
+      return .recipes
+
+    default:
+      return nil
+    }
   }
 
+  /// Both recipe endpoints read the same file — a detail is one row of the collection,
+  /// not a second copy of it.
   var fixtureName: String? {
     switch self {
     case .image:
       nil
+
+    case .recipes,
+         .recipe:
+      "recipes"
     }
   }
 
   var isPaginated: Bool {
     switch self {
-    case .image:
+    case .recipes:
+      true
+
+    case .image,
+         .recipe:
       false
+    }
+  }
+
+  /// The id of the single row this endpoint answers with, when it addresses one resource
+  /// rather than a collection. Nil for a collection endpoint.
+  var fixtureRowID: String? {
+    switch self {
+    case let .recipe(id):
+      id
+
+    case .image,
+         .recipes:
+      nil
     }
   }
 
@@ -65,6 +91,10 @@ nonisolated enum MockEndpoint: Equatable {
     switch self {
     case .image:
       "image/png"
+
+    case .recipes,
+         .recipe:
+      "application/json"
     }
   }
 }

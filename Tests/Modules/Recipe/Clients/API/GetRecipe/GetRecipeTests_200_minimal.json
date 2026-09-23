@@ -1,0 +1,130 @@
+{
+  "http_status": 200,
+  "message": "OK",
+  "data": {
+    "id": "rcp-021",
+    "slug": "kumpir",
+    "title": "Kumpir",
+    "short_description": "Turkish street-food baked potato whipped with butter and cheese.",
+    "full_description": "What separates kumpir from an ordinary jacket potato is what happens after it comes out of the oven: the flesh is mashed in the skin with butter and cheese until it is genuinely fluffy and emulsified, almost like a pommes puree in a jacket. Only then do the toppings go on. Skip that step and you have just made a baked potato.",
+    "hero_image_url": "https://api.example.com/api/v1/images/kumpir.png",
+    "servings": 2,
+    "prep_time_minutes": 10,
+    "cook_time_minutes": 75,
+    "total_time_minutes": 85,
+    "difficulty": "easy",
+    "cuisine": "turkish",
+    "meal_type": "snack",
+    "tags": [
+      "street-food",
+      "comfort-food",
+      "budget"
+    ],
+    "dietary_attributes": [
+      "vegetarian",
+      "gluten-free"
+    ],
+    "allergens": [
+      "dairy"
+    ],
+    "rating": 4.4,
+    "rating_count": 271,
+    "updated_at": "2026-07-21T13:27:00.000Z",
+    "author": null,
+    "nutrition": null,
+    "gallery": [],
+    "ingredient_groups": [
+      {
+        "id": "grp-021-1",
+        "title": null,
+        "ingredients": [
+          {
+            "id": "ing-021-1-1",
+            "name": "Potatoes",
+            "quantity": 2.0,
+            "unit": null,
+            "note": "large",
+            "is_optional": false
+          },
+          {
+            "id": "ing-021-1-2",
+            "name": "Butter",
+            "quantity": 2.0,
+            "unit": "tablespoon",
+            "note": null,
+            "is_optional": false
+          },
+          {
+            "id": "ing-021-1-3",
+            "name": "Cheese",
+            "quantity": 150.0,
+            "unit": "gram",
+            "note": null,
+            "is_optional": false
+          },
+          {
+            "id": "ing-021-1-4",
+            "name": "Onion",
+            "quantity": 1.0,
+            "unit": null,
+            "note": "large",
+            "is_optional": false
+          },
+          {
+            "id": "ing-021-1-5",
+            "name": "Red Pepper",
+            "quantity": 1.0,
+            "unit": null,
+            "note": "large",
+            "is_optional": false
+          },
+          {
+            "id": "ing-021-1-6",
+            "name": "Red Chilli Flakes",
+            "quantity": 1.0,
+            "unit": "pinch",
+            "note": null,
+            "is_optional": true
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "id": "stp-021-1",
+        "number": 1,
+        "text": "Prick the potatoes all over, rub them with salt, and bake until the skins are crisp and they give under pressure.",
+        "image_url": "https://api.example.com/api/v1/images/kumpir-step-1.png",
+        "duration_seconds": 4200
+      },
+      {
+        "id": "stp-021-2",
+        "number": 2,
+        "text": "Split each one lengthways without cutting through the base.",
+        "image_url": null,
+        "duration_seconds": null
+      },
+      {
+        "id": "stp-021-3",
+        "number": 3,
+        "text": "Work the butter and grated cheese into the hot flesh with a fork, right there in the skin, until smooth and fluffy.",
+        "image_url": "https://api.example.com/api/v1/images/kumpir-step-3.png",
+        "duration_seconds": 120
+      },
+      {
+        "id": "stp-021-4",
+        "number": 4,
+        "text": "Pile on the chopped onion and red pepper.",
+        "image_url": null,
+        "duration_seconds": null
+      },
+      {
+        "id": "stp-021-5",
+        "number": 5,
+        "text": "Finish with a pinch of red chilli flakes.",
+        "image_url": null,
+        "duration_seconds": null
+      }
+    ]
+  }
+}

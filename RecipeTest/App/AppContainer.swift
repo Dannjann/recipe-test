@@ -69,12 +69,19 @@ final class AppContainer {
 
   // MARK: Feature services
 
-  // Each feature's service is declared here, protocol-typed and lazy, e.g.
-  //
-  //     private(set) lazy var catalogService: CatalogServiceProtocol = CatalogService(
-  //       api: api,
-  //       pageSize: config.defaultPageSize
-  //     )
+  private(set) lazy var recipeService: RecipeServiceProtocol = {
+    // Resolved here for the same reason `api` does it: the closure is `@Sendable` and
+    // the service is nonisolated, so capturing `self` would reach main-actor state from
+    // off the main actor.
+    let monitoring = monitoring
+
+    return RecipeService(
+      api: api,
+      onError: { error in
+        monitoring.logError(error)
+      }
+    )
+  }()
 
   private init() {
     debugLog("env: \(AppContainer.environment.rawValue)")
