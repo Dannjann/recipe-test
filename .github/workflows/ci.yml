@@ -33,10 +33,44 @@ jobs:
 
       # Pick the newest Xcode on the image rather than pinning a patch version, which
       # goes stale every time the runner image is updated.
+      #
+      # Pre-release Xcodes are excluded rather than merely deprioritised. The runner
+      # images ship them (Xcode_27.0_beta.app, Xcode_26.4_Release_Candidate.app), they
+      # sort highest, and one of them winning would mean CI builds this project with a
+      # toolchain nobody releases against — and usually without the matching iOS
+      # simulator runtime the "Choose a simulator" step below needs. Which Xcode wins
+      # should not depend on the runner image's beta schedule.
+      #
+      # Globbed rather than parsed out of `ls` (actionlint SC2012): a path is an array
+      # element here, not a line of text to split.
       - name: Select Xcode
         run: |
-          ls -d /Applications/Xcode*.app
-          latest=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          set -o pipefail
+          shopt -s nullglob
+
+          installed=(/Applications/Xcode*.app)
+          if [ ${#installed[@]} -eq 0 ]; then
+            echo "::error::No Xcode found in /Applications."
+            exit 1
+          fi
+
+          echo "=== Xcodes on this image ==="
+          printf '%s\n' "${installed[@]}"
+
+          released=()
+          for app in "${installed[@]}"; do
+            case "${app##*/}" in
+              *[Bb]eta*|*Release_Candidate*|*[Rr][Cc].app) ;;
+              *) released+=("$app") ;;
+            esac
+          done
+
+          if [ ${#released[@]} -eq 0 ]; then
+            echo "::warning::This image carries only pre-release Xcodes; using them."
+            released=("${installed[@]}")
+          fi
+
+          latest=$(printf '%s\n' "${released[@]}" | sort -V | tail -1)
           echo "Selecting $latest"
           sudo xcode-select -s "$latest"
           xcodebuild -version
