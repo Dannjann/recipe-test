@@ -251,6 +251,160 @@ struct RecipeListViewModelTests {
 
     #expect(service.recipes.requests.map(\.index) == [1, 2])
   }
+
+  @Test
+  func refresh_replacesTheRowsRatherThanAppending() async {
+    let service = MockRecipeService(page: .dummy(ids: ["rcp-001", "rcp-002"]))
+    let sut = makeSUT(service: service)
+
+    await sut.loadFirstPage()
+    service.recipes.returns(.dummy(ids: ["rcp-009"]))
+    await sut.refresh()
+
+    #expect(sut.recipes.map(\.id) == ["rcp-009"])
+  }
+
+  @Test
+  func refresh_startsAgainFromPageOne() async {
+    let service = MockRecipeService()
+    service.recipes.responds { page in
+      .dummy(ids: ["rcp-00\(page.index)"], total: 9, perPage: 1, currentPage: page.index, lastPage: 9)
+    }
+    let sut = makeSUT(service: service, pageSize: 1)
+
+    await sut.loadFirstPage()
+    await sut.loadNextPage()
+    await sut.refresh()
+    await sut.loadNextPage()
+
+    #expect(service.recipes.requests.map(\.index) == [1, 2, 1, 2])
+  }
+
+  /// Clearing the rows before the request would flash an empty list on every pull, and destroy content if it failed.
+  @Test
+  func refresh_whenItFails_keepsTheRowsAndTheLoadedState() async {
+    let service = MockRecipeService(page: .dummy(ids: ["rcp-001"]))
+    let sut = makeSUT(service: service)
+
+    await sut.loadFirstPage()
+    service.recipes.fails(with: AppError.noInternetConnection)
+    await sut.refresh()
+
+    #expect(sut.recipes.map(\.id) == ["rcp-001"])
+    #expect(sut.loadState == .loaded)
+  }
+
+  /// Two page-one requests are outstanding; the refresh's must win even if the initial load's answers last.
+  @Test
+  func refresh_duringAnInFlightFirstLoad_winsRegardlessOfOrder() async {
+    let service = MockRecipeService()
+    let sut = makeSUT(service: service)
+
+    let gate = CallGate()
+    service.recipes.responds { _ in
+      guard await gate.arrive() == 1 else { return .dummy(ids: ["fresh"]) }
+
+      await gate.waitUntilOpen()
+
+      return .dummy(ids: ["stale"])
+    }
+
+    async let firstLoad: Void = sut.loadFirstPage()
+    await gate.waitForArrivals(1)
+
+    await sut.refresh()
+    await gate.open()
+    await firstLoad
+
+    #expect(sut.recipes.map(\.id) == ["fresh"])
+  }
+
+  /// A next page that returns after a refresh belongs to a list that no longer exists.
+  @Test
+  func refresh_discardsANextPageThatWasAlreadyInFlight() async {
+    let service = MockRecipeService()
+    let sut = makeSUT(service: service, pageSize: 1)
+
+    service.recipes.returns(.dummy(ids: ["rcp-001"], total: 9, perPage: 1, currentPage: 1, lastPage: 9))
+    await sut.loadFirstPage()
+
+    let gate = CallGate()
+    service.recipes.responds { _ in
+      guard await gate.arrive() == 1 else {
+        return .dummy(ids: ["rcp-999"], total: 9, perPage: 1, currentPage: 1, lastPage: 9)
+      }
+
+      await gate.waitUntilOpen()
+
+      return .dummy(ids: ["late"], total: 9, perPage: 1, currentPage: 2, lastPage: 9)
+    }
+
+    async let nextPage: Void = sut.loadNextPage()
+    await gate.waitForArrivals(1)
+
+    await sut.refresh()
+    await gate.open()
+    await nextPage
+
+    #expect(sut.recipes.map(\.id) == ["rcp-999"])
+  }
+
+  @Test
+  func loadNextPage_startedDuringARefresh_isRefused() async {
+    let service = MockRecipeService()
+    let sut = makeSUT(service: service, pageSize: 1)
+
+    service.recipes.returns(.dummy(ids: ["rcp-001"], total: 9, perPage: 1, currentPage: 1, lastPage: 9))
+    await sut.loadFirstPage()
+
+    let gate = CallGate()
+    service.recipes.responds { _ in
+      guard await gate.arrive() == 1 else {
+        return .dummy(ids: ["late"], total: 9, perPage: 1, currentPage: 7, lastPage: 9)
+      }
+
+      await gate.waitUntilOpen()
+
+      return .dummy(ids: ["rcp-999"], total: 9, perPage: 1, currentPage: 1, lastPage: 9)
+    }
+
+    async let refresh: Void = sut.refresh()
+    await gate.waitForArrivals(1)
+
+    await sut.loadNextPage()
+    await gate.open()
+    await refresh
+
+    #expect(service.recipes.callCount == 2)
+    #expect(sut.recipes.map(\.id) == ["rcp-999"])
+  }
+
+  /// Pins the `!isLoadingNextPage` guard: a footer flickering in and out of view must not fire overlapping requests for the same page.
+  @Test
+  func loadNextPage_whileOneIsAlreadyInFlight_doesNotDoubleRequest() async {
+    let service = MockRecipeService()
+    let sut = makeSUT(service: service, pageSize: 1)
+
+    service.recipes.returns(.dummy(ids: ["rcp-001"], total: 9, perPage: 1, currentPage: 1, lastPage: 9))
+    await sut.loadFirstPage()
+
+    let gate = CallGate()
+    service.recipes.responds { _ in
+      _ = await gate.arrive()
+      await gate.waitUntilOpen()
+
+      return .dummy(ids: ["rcp-002"], total: 9, perPage: 1, currentPage: 2, lastPage: 9)
+    }
+
+    async let inFlight: Void = sut.loadNextPage()
+    await gate.waitForArrivals(1)
+
+    await sut.loadNextPage()
+    await gate.open()
+    await inFlight
+
+    #expect(service.recipes.requests.map(\.index) == [1, 2])
+  }
 }
 
 // MARK: - Helpers
@@ -262,5 +416,54 @@ private extension RecipeListViewModelTests {
     pageSize: Int = 10
   ) -> RecipeListViewModel {
     RecipeListViewModel(service: service, pageSize: pageSize)
+  }
+}
+
+// MARK: - Helpers > Ordering
+
+/// Orders two concurrent calls to the same stub so an arrival order is guaranteed rather than hoped for.
+private actor CallGate {
+  private var arrivals = 0
+  private var isOpen = false
+  private var openWaiters: [CheckedContinuation<Void, Never>] = []
+  private var arrivalWaiters: [CheckedContinuation<Void, Never>] = []
+
+  func arrive() -> Int {
+    arrivals += 1
+
+    for continuation in arrivalWaiters {
+      continuation.resume()
+    }
+
+    arrivalWaiters = []
+
+    return arrivals
+  }
+
+  func waitUntilOpen() async {
+    guard !isOpen else { return }
+
+    await withCheckedContinuation { continuation in
+      openWaiters.append(continuation)
+    }
+  }
+
+  /// Blocks until `count` calls have provably entered the stub, so a stub can be swapped without racing the task's own start.
+  func waitForArrivals(_ count: Int) async {
+    while arrivals < count {
+      await withCheckedContinuation { continuation in
+        arrivalWaiters.append(continuation)
+      }
+    }
+  }
+
+  func open() {
+    isOpen = true
+
+    for continuation in openWaiters {
+      continuation.resume()
+    }
+
+    openWaiters = []
   }
 }

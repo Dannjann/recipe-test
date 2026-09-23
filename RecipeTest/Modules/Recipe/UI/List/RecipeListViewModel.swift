@@ -25,6 +25,8 @@ final class RecipeListViewModel: RecipeListViewModelProtocol {
   /// Bumped each time page one is (re)requested; stale-generation results are discarded.
   private var generation = 0
 
+  private var isRefreshing = false
+
   init(
     service: any RecipeServiceProtocol,
     pageSize: Int = 10
@@ -51,13 +53,24 @@ extension RecipeListViewModel {
     await loadPageOne(token: startNewGeneration(), keepingRowsOnFailure: false)
   }
 
+  /// Does not set `.loading`: that would blank a screen the user is looking at, and `.refreshable` draws its own indicator.
   func refresh() async {
-    // Task 4.
+    let token = startNewGeneration()
+
+    isRefreshing = true
+    defer { isRefreshing = false }
+
+    nextPage = Page(index: 1, size: pageSize)
+    isLoadingNextPage = false
+    nextPageError = nil
+
+    await loadPageOne(token: token, keepingRowsOnFailure: true)
   }
 
   func loadNextPage() async {
     guard
       loadState == .loaded,
+      !isRefreshing,
       !hasLoadedAllData,
       !isLoadingNextPage
     else { return }
