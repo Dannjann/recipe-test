@@ -9,7 +9,11 @@
 import SwiftUI
 
 struct RecipeCard: View {
-  @Environment(\.theme) var theme: any ThemeProtocol
+  @Environment(\.theme) private var theme: any ThemeProtocol
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+  @ScaledMetric(relativeTo: .body) private var listImageSide: CGFloat = 96
+  @ScaledMetric(relativeTo: .body) private var gridImageHeight: CGFloat = 120
 
   let recipe: RecipeSummary
   let layout: RecipeListLayout
@@ -24,8 +28,6 @@ struct RecipeCard: View {
         RoundedRectangle(cornerRadius: Self.cornerRadius)
           .stroke(theme.color.bordersDefault.color, lineWidth: Self.borderWidth)
       }
-      // One element, not three. Without this, VoiceOver stops on the image, the title and
-      // the description separately for every card in a 36-row list.
       .accessibilityElement(children: .combine)
       .accessibilityIdentifier("recipeList.card.\(recipe.id)")
   }
@@ -35,8 +37,8 @@ struct RecipeCard: View {
 
 private extension RecipeCard {
   /// `AnyLayout`, not a `switch` returning two stacks: separate branches would give the
-  /// arms separate structural identity, so toggling list↔grid would tear down and rebuild
-  /// every card rather than transition it.
+  /// arms separate structural identity, so toggling list↔grid would rebuild every card
+  /// rather than transition it.
   var content: some View {
     cardLayout {
       image
@@ -45,8 +47,7 @@ private extension RecipeCard {
     }
   }
 
-  /// Fixed frames in both axes prevent images from sizing themselves as they download,
-  /// which would reflow the entire grid.
+  /// Fixed in both axes, so images do not resize as they download and reflow the grid.
   var image: some View {
     CachedAsyncImage(url: recipe.heroImageURL)
       .scaledToFill()
@@ -61,7 +62,7 @@ private extension RecipeCard {
       Text(recipe.title)
         .font(theme.textStyle.bodySemibold.font)
         .foregroundStyle(theme.color.textPrimary.color)
-        .lineLimit(Self.titleLineLimit)
+        .lineLimit(titleLineLimit)
 
       Text(recipe.shortDescription)
         .font(theme.textStyle.subheadlineRegular.font)
@@ -75,38 +76,52 @@ private extension RecipeCard {
 // MARK: - Getters
 
 private extension RecipeCard {
+  /// A list card stacks like a grid one at accessibility text sizes: a thumbnail scaled to
+  /// match text that large leaves the title only a few points of width beside it.
+  var effectiveLayout: RecipeListLayout {
+    dynamicTypeSize.isAccessibilitySize ? .grid : layout
+  }
+
   var cardLayout: AnyLayout {
-    switch layout {
+    switch effectiveLayout {
     case .list: AnyLayout(HStackLayout(alignment: .top, spacing: Self.padding))
     case .grid: AnyLayout(VStackLayout(alignment: .leading, spacing: Self.padding))
     }
   }
 
   var imageWidth: CGFloat? {
-    switch layout {
-    case .list: Self.listImageSide
+    switch effectiveLayout {
+    case .list: listImageSide
     case .grid: nil
     }
   }
 
   var imageHeight: CGFloat {
-    switch layout {
-    case .list: Self.listImageSide
-    case .grid: Self.gridImageHeight
+    switch effectiveLayout {
+    case .list: listImageSide
+    case .grid: gridImageHeight
     }
   }
 
   var imageMaxWidth: CGFloat? {
-    switch layout {
+    switch effectiveLayout {
     case .list: nil
     case .grid: .infinity
     }
   }
 
-  var descriptionLineLimit: Int {
-    switch layout {
-    case .list: Self.listDescriptionLineLimit
-    case .grid: Self.gridDescriptionLineLimit
+  /// Unclamped at accessibility sizes: truncating is what the reader raised the text size
+  /// to avoid, and the card is free to grow.
+  var titleLineLimit: Int? {
+    dynamicTypeSize.isAccessibilitySize ? nil : Self.titleLines
+  }
+
+  var descriptionLineLimit: Int? {
+    guard !dynamicTypeSize.isAccessibilitySize else { return nil }
+
+    switch effectiveLayout {
+    case .list: return Self.listDescriptionLines
+    case .grid: return Self.gridDescriptionLines
     }
   }
 }
@@ -134,23 +149,15 @@ private extension RecipeCard {
     1
   }
 
-  static var listImageSide: CGFloat {
-    96
-  }
-
-  static var gridImageHeight: CGFloat {
-    120
-  }
-
-  static var titleLineLimit: Int {
+  static var titleLines: Int {
     2
   }
 
-  static var listDescriptionLineLimit: Int {
+  static var listDescriptionLines: Int {
     2
   }
 
-  static var gridDescriptionLineLimit: Int {
+  static var gridDescriptionLines: Int {
     3
   }
 }
@@ -184,6 +191,13 @@ private extension RecipeCard {
     )
     .padding()
     .background(DefaultTheme().color.surfacesBackground.color)
+  }
+
+  #Preview("List at an accessibility text size") {
+    RecipeCard(recipe: .dummy(), layout: .list)
+      .padding()
+      .background(DefaultTheme().color.surfacesBackground.color)
+      .dynamicTypeSize(.accessibility3)
   }
 
 #endif
