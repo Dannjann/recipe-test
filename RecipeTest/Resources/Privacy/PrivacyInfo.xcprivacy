@@ -23,15 +23,6 @@
 		<dict>
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
-				<string>0A2A.1</string>
-			</array>
-			<key>NSPrivacyAccessedAPIType</key>
-			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
-		</dict>
-		<dict>
-			<key>NSPrivacyAccessedAPITypeReasons</key>
-			<array>
-				<string>C56D.1</string>
 				<string>CA92.1</string>
 			</array>
 			<key>NSPrivacyAccessedAPIType</key>
