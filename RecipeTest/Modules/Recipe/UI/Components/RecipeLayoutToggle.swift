@@ -27,16 +27,20 @@ struct RecipeLayoutToggle: View {
 // MARK: - Getters
 
 private extension RecipeLayoutToggle {
+  var destination: RecipeListLayout {
+    layout.toggled
+  }
+
   /// Shows the layout the button switches *to*.
   var iconName: String {
-    switch layout.toggled {
+    switch destination {
     case .list: "list.bullet"
     case .grid: "square.grid.2x2"
     }
   }
 
   var accessibilityLabel: String {
-    switch layout.toggled {
+    switch destination {
     case .list: String(localized: .Recipe.recipeListLayoutList)
     case .grid: String(localized: .Recipe.recipeListLayoutGrid)
     }

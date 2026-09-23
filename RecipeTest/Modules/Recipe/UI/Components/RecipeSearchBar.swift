@@ -8,30 +8,45 @@
 
 import SwiftUI
 
+/// Purely presentational — will be wrapped in a Button when search is wired.
 struct RecipeSearchBar: View {
-  /// Deliberately inert — will push a filter page when wired.
-  var onTap: VoidResult = DefaultClosure.voidResult()
-
   var body: some View {
-    Button(action: onTap) {
-      HStack(spacing: 8) {
-        Image(systemName: "magnifyingglass")
-          .foregroundStyle(Color.themeColor(.iconsSecondary))
+    HStack(spacing: Self.iconTextSpacing) {
+      Image(systemName: "magnifyingglass")
+        .foregroundStyle(Color.themeColor(.iconsSecondary))
 
-        Text(String(localized: .Recipe.recipeListSearchPlaceholder))
-          .themeTextStyle(.bodyRegular)
-          .themeColor(.textTertiary)
+      Text(String(localized: .Recipe.recipeListSearchPlaceholder))
+        .themeTextStyle(.bodyRegular)
+        .themeColor(.textTertiary)
 
-        Spacer(minLength: 0)
-      }
-      .padding(.horizontal, 12)
-      .frame(height: 44)
-      .background(Color.themeColor(.surfacesFieldsAndTags))
-      .clipShape(RoundedRectangle(cornerRadius: 10))
+      Spacer(minLength: 0)
     }
-    .buttonStyle(.plain)
-    .allowsHitTesting(false)
+    .padding(.horizontal, Self.horizontalPadding)
+    .frame(height: Self.height)
+    .background(Color.themeColor(.surfacesFieldsAndTags))
+    .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
+    .accessibilityElement(children: .combine)
     .accessibilityIdentifier("recipeList.searchBar")
+  }
+}
+
+// MARK: - Constants
+
+private extension RecipeSearchBar {
+  static var iconTextSpacing: CGFloat {
+    8
+  }
+
+  static var horizontalPadding: CGFloat {
+    12
+  }
+
+  static var height: CGFloat {
+    44
+  }
+
+  static var cornerRadius: CGFloat {
+    10
   }
 }
 
