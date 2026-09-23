@@ -132,6 +132,46 @@ nonisolated extension HTTPStatusCode {
   var isServerError: Bool {
     classification == .serverError
   }
+
+  /// Whether this status means the request did not succeed — either layer of
+  /// `DataRequest.parse` treats it as grounds for `APIClientError.failedRequest`.
+  var isFailure: Bool {
+    isRequestError || isServerError
+  }
+}
+
+nonisolated extension HTTPStatusCode {
+  /// Maps a raw status onto a case, falling back to the first case of the same class
+  /// when the enum has no exact one.
+  ///
+  /// The list above is RFC statuses; a real deployment also emits 419, 425, 520-524 and
+  /// whatever else its edge proxy invents. `init?(rawValue:)` answers `nil` for those,
+  /// which is indistinguishable from "this response carried no status at all" — so an
+  /// unlisted 5xx used to be read as a success. Classifying it is enough; the exact
+  /// unlisted number is not what the caller branches on.
+  ///
+  /// Returns `nil` only for a value outside `100..<600`, which is not an HTTP status.
+  init?(nearestTo rawValue: Int) {
+    if let exact = HTTPStatusCode(rawValue: rawValue) {
+      self = exact
+      return
+    }
+
+    switch rawValue {
+    case 100 ..< 200:
+      self = .continue
+    case 200 ..< 300:
+      self = .ok
+    case 300 ..< 400:
+      self = .multipleChoices
+    case 400 ..< 500:
+      self = .badRequest
+    case 500 ..< 600:
+      self = .internalServerError
+    default:
+      return nil
+    }
+  }
 }
 
 // MARK: - Comparable

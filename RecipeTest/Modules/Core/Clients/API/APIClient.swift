@@ -125,7 +125,11 @@ nonisolated extension DataRequest {
   }
 
   /// The single place a raw Alamofire response becomes an `APIResponse` or an error.
-  private static func parse(_ response: AFDataResponse<Data>) -> Result<APIResponse, any Error> {
+  ///
+  /// Internal rather than private so the status-handling rules below can be tested against
+  /// a constructed `AFDataResponse` instead of a live socket. Not part of the API any
+  /// feature code should call — go through `apiResponse()`.
+  static func parse(_ response: AFDataResponse<Data>) -> Result<APIResponse, any Error> {
     if case let .failure(error) = response.result {
       if let urlError = error.underlyingError as? URLError, urlError.code == .notConnectedToInternet {
         return .failure(AppError.noInternetConnection)
@@ -134,9 +138,12 @@ nonisolated extension DataRequest {
       return .failure(error)
     }
 
-    // Not force-unwrapped: a response can complete without an `HTTPURLResponse` behind it,
-    // and the body's own status is the better fallback when it has one.
-    let transportCode = response.response.flatMap { HTTPStatusCode(rawValue: $0.statusCode) }
+    // Not force-unwrapped: a response can complete without an `HTTPURLResponse` behind it.
+    // Mapped with `nearestTo:` rather than `rawValue:` — the enum does not list every
+    // status a deployment emits, and an unlisted one coming back `nil` was indistinguishable
+    // from "this response carried no status at all".
+    let transportCode = response.response.flatMap { HTTPStatusCode(nearestTo: $0.statusCode) }
+    let transportFailed = transportCode?.isFailure ?? false
 
     // Checked before decoding — a 204 body is empty, and decoding it would fail first.
     if transportCode == .noContent {
@@ -144,37 +151,56 @@ nonisolated extension DataRequest {
     }
 
     guard let responseData = response.value else {
-      return .failure(APIClientError.dataNotFound(Data.self))
+      guard let transportCode, transportFailed else {
+        return .failure(APIClientError.dataNotFound(Data.self))
+      }
+
+      return .failure(Self.failedRequest(status: transportCode, body: nil))
     }
+
+    let decoded: APIResponse
 
     do {
-      var resp = try JSONDecoder().decode(APIResponse.self, from: Self.utf8Data(from: responseData))
-
-      // A backend that does not wrap its responses sends no `http_status`; the transport
-      // is then the only source of truth for the status.
-      if !resp.carriesEnvelopeStatus, let transportCode {
-        resp.statusCode = transportCode
-      }
-
-      guard let code = transportCode ?? (resp.carriesEnvelopeStatus ? resp.statusCode : nil) else {
-        return .success(resp)
-      }
-
-      guard code.isRequestError || code.isServerError else {
-        return .success(resp)
-      }
-
-      let defaultMessage = String(localized: .Core.coreErrorUnknownApplication)
-      let info = APIClientFailedRequestInfo(
-        status: code,
-        message: resp.message ?? defaultMessage,
-        errorCode: resp.errorCode
-      )
-
-      return .failure(APIClientError.failedRequest(info))
+      decoded = try JSONDecoder().decode(APIResponse.self, from: Self.utf8Data(from: responseData))
     } catch {
-      return .failure(error)
+      // A failing status whose body is not the envelope — an edge proxy's HTML error page,
+      // say. The status is the useful part of that response; reporting the `DecodingError`
+      // instead loses it and tells the caller the wrong thing went wrong.
+      guard let transportCode, transportFailed else { return .failure(error) }
+
+      return .failure(Self.failedRequest(status: transportCode, body: nil))
     }
+
+    var resp = decoded
+
+    // A backend that does not wrap its responses sends no `http_status`; the transport
+    // is then the only source of truth for the status.
+    if !resp.carriesEnvelopeStatus, let transportCode {
+      resp.statusCode = transportCode
+    }
+
+    // Both layers are checked, and the envelope is not merely a fallback for a missing
+    // transport status. A backend answering HTTP 200 with `{"http_status": 422, ...}` is
+    // reporting a failed request — reading only the transport, which is what almost every
+    // response has, handed exactly that case back to the caller as a success.
+    let envelopeCode = resp.carriesEnvelopeStatus ? resp.statusCode : nil
+
+    guard let failure = [transportCode, envelopeCode].compactMap(\.self).first(where: \.isFailure) else {
+      return .success(resp)
+    }
+
+    return .failure(Self.failedRequest(status: failure, body: resp))
+  }
+
+  /// `body` is nil when there was nothing decodable to read a message out of.
+  private static func failedRequest(status: HTTPStatusCode, body: APIResponse?) -> APIClientError {
+    let info = APIClientFailedRequestInfo(
+      status: status,
+      message: body?.message ?? String(localized: .Core.coreErrorUnknownApplication),
+      errorCode: body?.errorCode ?? .default
+    )
+
+    return .failedRequest(info)
   }
 
   private static func utf8Data(from data: Data) throws -> Data {
