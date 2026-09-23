@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT: RecipeTest.xcodeproj
+  SCHEME: RecipeTest
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # Pick the newest Xcode on the image rather than pinning a patch version, which
+      # goes stale every time the runner image is updated.
+      - name: Select Xcode
+        run: |
+          ls -d /Applications/Xcode*.app
+          latest=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Selecting $latest"
+          sudo xcode-select -s "$latest"
+          xcodebuild -version
+
+      # This project's isolation model depends on SWIFT_DEFAULT_ACTOR_ISOLATION, which
+      # older Xcodes do not recognise and SILENTLY IGNORE — every type then defaults to
+      # nonisolated and the build fails with a wall of unrelated-looking actor errors.
+      # Fail here with a clear reason instead.
+      - name: Verify the toolchain supports default actor isolation
+        run: |
+          if ! xcrun swiftc -frontend -help 2>&1 | grep -q -- '-default-isolation'; then
+            echo "::error::This toolchain does not support -default-isolation."
+            echo "::error::SWIFT_DEFAULT_ACTOR_ISOLATION would be ignored, not honoured."
+            echo "::error::Swift $(xcrun swift -version 2>&1 | head -1)"
+            exit 1
+          fi
+          echo "✓ -default-isolation supported"
+
+      # Resolve a simulator that actually exists on this image, by UDID.
+      # Not by name: device names contain parentheses ("iPhone SE (3rd generation)"),
+      # so any sed that strips at the first "(" silently truncates them. A UDID needs
+      # no parsing.
+      - name: Choose a simulator
+        run: |
+          xcrun simctl list devices available
+          udid=$(xcrun simctl list devices available \
+            | grep -E '^ +iPhone' \
+            | tail -1 \
+            | grep -oE '[0-9A-F]{8}-[0-9A-F-]{27}')
+          if [ -z "$udid" ]; then
+            echo "::error::No iPhone simulator available on this runner."
+            exit 1
+          fi
+          echo "Using simulator $udid"
+          xcrun simctl list devices available | grep "$udid"
+          echo "SIMULATOR_ID=$udid" >> "$GITHUB_ENV"
+
+      # SwiftLint runs as a build tool plugin, so `xcodebuild` below covers it. SwiftFormat
+      # is not part of the build and needs its own check, or `.swiftformat` documents a
+      # style nothing enforces.
+      - name: Check formatting
+        run: |
+          brew list swiftformat >/dev/null 2>&1 || brew install swiftformat
+          swiftformat RecipeTest Tests UITests --lint
+
+      - name: Resolve package dependencies
+        run: xcodebuild -resolvePackageDependencies -project "$PROJECT" -scheme "$SCHEME"
+
+      - name: Build and test
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
+
+      - name: Build staging target
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project "$PROJECT" \
+            -scheme RecipeTest-Staging \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO
