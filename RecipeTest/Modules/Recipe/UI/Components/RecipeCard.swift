@@ -115,29 +115,33 @@ private extension RecipeCard {
 
 // MARK: - Previews
 
-#Preview("List") {
-  RecipeCard(recipe: .dummy(), layout: .list)
+#if DEBUG
+
+  #Preview("List") {
+    RecipeCard(recipe: .dummy(), layout: .list)
+      .padding()
+      .background(Color.themeColor(.surfacesBackground))
+  }
+
+  #Preview("Grid") {
+    HStack(spacing: RecipeListLayout.spacing) {
+      RecipeCard(recipe: .dummy(), layout: .grid)
+      RecipeCard(recipe: .dummy(id: "rcp-002", title: "Miso-Glazed Aubergine"), layout: .grid)
+    }
     .padding()
     .background(Color.themeColor(.surfacesBackground))
-}
-
-#Preview("Grid") {
-  HStack(spacing: RecipeListLayout.spacing) {
-    RecipeCard(recipe: .dummy(), layout: .grid)
-    RecipeCard(recipe: .dummy(id: "rcp-002", title: "Miso-Glazed Aubergine"), layout: .grid)
   }
-  .padding()
-  .background(Color.themeColor(.surfacesBackground))
-}
 
-#Preview("Long title and description") {
-  RecipeCard(
-    recipe: .dummy(
-      title: "Slow-Braised Beef Short Rib with Gremolata and Soft Polenta",
-      shortDescription: String(repeating: "A very long description that must not be allowed to run away. ", count: 4)
-    ),
-    layout: .list
-  )
-  .padding()
-  .background(Color.themeColor(.surfacesBackground))
-}
+  #Preview("Long title and description") {
+    RecipeCard(
+      recipe: .dummy(
+        title: "Slow-Braised Beef Short Rib with Gremolata and Soft Polenta",
+        shortDescription: String(repeating: "A very long description that must not be allowed to run away. ", count: 4)
+      ),
+      layout: .list
+    )
+    .padding()
+    .background(Color.themeColor(.surfacesBackground))
+  }
+
+#endif

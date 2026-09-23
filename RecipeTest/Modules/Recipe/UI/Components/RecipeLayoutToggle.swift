@@ -49,10 +49,14 @@ private extension RecipeLayoutToggle {
 
 // MARK: - Previews
 
-#Preview("Currently list") {
-  RecipeLayoutToggle(layout: .list, onSelect: { _ in })
-}
+#if DEBUG
 
-#Preview("Currently grid") {
-  RecipeLayoutToggle(layout: .grid, onSelect: { _ in })
-}
+  #Preview("Currently list") {
+    RecipeLayoutToggle(layout: .list, onSelect: { _ in })
+  }
+
+  #Preview("Currently grid") {
+    RecipeLayoutToggle(layout: .grid, onSelect: { _ in })
+  }
+
+#endif

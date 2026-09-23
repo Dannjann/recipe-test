@@ -48,7 +48,11 @@ extension CachedAsyncImage where Placeholder == AnyView {
   }
 }
 
-#Preview("Placeholder — unreachable URL") {
-  CachedAsyncImage(url: URL(string: "https://api.example.com/missing.png"))
-    .frame(width: 120, height: 120)
-}
+#if DEBUG
+
+  #Preview("Placeholder — unreachable URL") {
+    CachedAsyncImage(url: URL(string: "https://api.example.com/missing.png"))
+      .frame(width: 120, height: 120)
+  }
+
+#endif

@@ -166,56 +166,60 @@ private extension RecipeListView {
 
 // MARK: - Previews
 
-#Preview("Loaded — list") {
-  NavigationStack {
-    RecipeListView(viewModel: MockRecipeListViewModel())
-  }
-}
+#if DEBUG
 
-#Preview("Loaded — grid") {
-  NavigationStack {
-    RecipeListView(viewModel: MockRecipeListViewModel(layout: .grid))
+  #Preview("Loaded — list") {
+    NavigationStack {
+      RecipeListView(viewModel: MockRecipeListViewModel())
+    }
   }
-}
 
-#Preview("Loading next page") {
-  NavigationStack {
-    RecipeListView(
-      viewModel: MockRecipeListViewModel(isLoadingNextPage: true, hasLoadedAllData: false)
-    )
+  #Preview("Loaded — grid") {
+    NavigationStack {
+      RecipeListView(viewModel: MockRecipeListViewModel(layout: .grid))
+    }
   }
-}
 
-#Preview("Next page failed") {
-  NavigationStack {
-    RecipeListView(
-      viewModel: MockRecipeListViewModel(
-        nextPageError: AppError.noInternetConnection.localizedDescription,
-        hasLoadedAllData: false
+  #Preview("Loading next page") {
+    NavigationStack {
+      RecipeListView(
+        viewModel: MockRecipeListViewModel(isLoadingNextPage: true, hasLoadedAllData: false)
       )
-    )
+    }
   }
-}
 
-#Preview("Empty") {
-  NavigationStack {
-    RecipeListView(viewModel: MockRecipeListViewModel(recipes: []))
-  }
-}
-
-#Preview("Failed") {
-  NavigationStack {
-    RecipeListView(
-      viewModel: MockRecipeListViewModel(
-        recipes: [],
-        loadState: .failed(AppError.noInternetConnection.localizedDescription)
+  #Preview("Next page failed") {
+    NavigationStack {
+      RecipeListView(
+        viewModel: MockRecipeListViewModel(
+          nextPageError: AppError.noInternetConnection.localizedDescription,
+          hasLoadedAllData: false
+        )
       )
-    )
+    }
   }
-}
 
-#Preview("Loading") {
-  NavigationStack {
-    RecipeListView(viewModel: MockRecipeListViewModel(recipes: [], loadState: .loading))
+  #Preview("Empty") {
+    NavigationStack {
+      RecipeListView(viewModel: MockRecipeListViewModel(recipes: []))
+    }
   }
-}
+
+  #Preview("Failed") {
+    NavigationStack {
+      RecipeListView(
+        viewModel: MockRecipeListViewModel(
+          recipes: [],
+          loadState: .failed(AppError.noInternetConnection.localizedDescription)
+        )
+      )
+    }
+  }
+
+  #Preview("Loading") {
+    NavigationStack {
+      RecipeListView(viewModel: MockRecipeListViewModel(recipes: [], loadState: .loading))
+    }
+  }
+
+#endif

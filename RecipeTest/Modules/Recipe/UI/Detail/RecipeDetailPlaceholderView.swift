@@ -33,8 +33,12 @@ struct RecipeDetailPlaceholderView: View {
 
 // MARK: - Previews
 
-#Preview {
-  NavigationStack {
-    RecipeDetailPlaceholderView(recipe: .dummy())
+#if DEBUG
+
+  #Preview {
+    NavigationStack {
+      RecipeDetailPlaceholderView(recipe: .dummy())
+    }
   }
-}
+
+#endif

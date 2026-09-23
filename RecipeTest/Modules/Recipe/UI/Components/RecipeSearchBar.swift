@@ -52,8 +52,12 @@ private extension RecipeSearchBar {
 
 // MARK: - Previews
 
-#Preview {
-  RecipeSearchBar()
-    .padding()
-    .background(Color.themeColor(.surfacesBackground))
-}
+#if DEBUG
+
+  #Preview {
+    RecipeSearchBar()
+      .padding()
+      .background(Color.themeColor(.surfacesBackground))
+  }
+
+#endif

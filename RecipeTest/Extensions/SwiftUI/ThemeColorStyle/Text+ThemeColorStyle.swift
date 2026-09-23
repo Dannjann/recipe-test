@@ -16,153 +16,157 @@ extension Text {
   }
 }
 
-#Preview {
-  Form {
-    Section("Text Colors") {
-      Group {
-        Text("Primary Text")
-          .themeColor(.textPrimary)
+#if DEBUG
 
-        Text("Secondary Text")
-          .themeColor(.textSecondary)
+  #Preview {
+    Form {
+      Section("Text Colors") {
+        Group {
+          Text("Primary Text")
+            .themeColor(.textPrimary)
 
-        Text("Tertiary Text")
-          .themeColor(.textTertiary)
+          Text("Secondary Text")
+            .themeColor(.textSecondary)
 
-        Text("Disabled Text")
-          .themeColor(.textDisabled)
+          Text("Tertiary Text")
+            .themeColor(.textTertiary)
 
-        Text("Inverted Text")
-          .themeColor(.textInverted)
+          Text("Disabled Text")
+            .themeColor(.textDisabled)
 
-        Text("White Text")
-          .themeColor(.textWhite)
+          Text("Inverted Text")
+            .themeColor(.textInverted)
 
-        Text("Brand Default Text")
-          .themeColor(.textBrandDefault)
+          Text("White Text")
+            .themeColor(.textWhite)
+
+          Text("Brand Default Text")
+            .themeColor(.textBrandDefault)
+        }
       }
-    }
 
-    Section("Surface Colors") {
-      Group {
-        Text("Background")
-          .themeColor(.surfacesBackground)
+      Section("Surface Colors") {
+        Group {
+          Text("Background")
+            .themeColor(.surfacesBackground)
 
-        Text("Background 2")
-          .themeColor(.surfacesBackground2)
+          Text("Background 2")
+            .themeColor(.surfacesBackground2)
 
-        Text("Background 3")
-          .themeColor(.surfacesBackground3)
+          Text("Background 3")
+            .themeColor(.surfacesBackground3)
 
-        Text("Fields and Tags")
-          .themeColor(.surfacesFieldsAndTags)
+          Text("Fields and Tags")
+            .themeColor(.surfacesFieldsAndTags)
 
-        Text("Disabled Surface")
-          .themeColor(.surfacesDisabled)
+          Text("Disabled Surface")
+            .themeColor(.surfacesDisabled)
 
-        Text("Inverted Surface")
-          .themeColor(.surfacesInverted)
+          Text("Inverted Surface")
+            .themeColor(.surfacesInverted)
 
-        Text("Brand Default Surface")
-          .themeColor(.surfacesBrandDefault)
+          Text("Brand Default Surface")
+            .themeColor(.surfacesBrandDefault)
 
-        Text("Brand Shade 1")
-          .themeColor(.surfacesBrandShade1)
+          Text("Brand Shade 1")
+            .themeColor(.surfacesBrandShade1)
 
-        Text("Brand Shade 2")
-          .themeColor(.surfacesBrandShade2)
+          Text("Brand Shade 2")
+            .themeColor(.surfacesBrandShade2)
 
-        Text("Brand Shade 3")
-          .themeColor(.surfacesBrandShade3)
+          Text("Brand Shade 3")
+            .themeColor(.surfacesBrandShade3)
+        }
       }
-    }
 
-    Section("Border Colors") {
-      Group {
-        Text("Default Border")
-          .themeColor(.bordersDefault)
+      Section("Border Colors") {
+        Group {
+          Text("Default Border")
+            .themeColor(.bordersDefault)
 
-        Text("Disabled Border")
-          .themeColor(.bordersDisabled)
+          Text("Disabled Border")
+            .themeColor(.bordersDisabled)
 
-        Text("Secondary Border")
-          .themeColor(.bordersSecondary)
+          Text("Secondary Border")
+            .themeColor(.bordersSecondary)
 
-        Text("Brand Default Border")
-          .themeColor(.bordersBrandDefault)
+          Text("Brand Default Border")
+            .themeColor(.bordersBrandDefault)
 
-        Text("Inverted Border")
-          .themeColor(.bordersInverted)
+          Text("Inverted Border")
+            .themeColor(.bordersInverted)
+        }
       }
-    }
 
-    Section("Icon Colors") {
-      Group {
-        Text("Default Icons")
-          .themeColor(.iconsDefault)
+      Section("Icon Colors") {
+        Group {
+          Text("Default Icons")
+            .themeColor(.iconsDefault)
 
-        Text("Secondary Icons")
-          .themeColor(.iconsSecondary)
+          Text("Secondary Icons")
+            .themeColor(.iconsSecondary)
 
-        Text("Tertiary Icons")
-          .themeColor(.iconsTertiary)
+          Text("Tertiary Icons")
+            .themeColor(.iconsTertiary)
 
-        Text("Disabled Icons")
-          .themeColor(.iconsDisabled)
+          Text("Disabled Icons")
+            .themeColor(.iconsDisabled)
 
-        Text("Inverted Icons")
-          .themeColor(.iconsInverted)
+          Text("Inverted Icons")
+            .themeColor(.iconsInverted)
 
-        Text("White Icons")
-          .themeColor(.iconsWhite)
+          Text("White Icons")
+            .themeColor(.iconsWhite)
 
-        Text("Brand Default Icons")
-          .themeColor(.iconsBrandDefault)
+          Text("Brand Default Icons")
+            .themeColor(.iconsBrandDefault)
+        }
       }
-    }
 
-    Section("Complementary Colors") {
-      Group {
-        Text("Complementary Default")
-          .themeColor(.complementaryDefault)
+      Section("Complementary Colors") {
+        Group {
+          Text("Complementary Default")
+            .themeColor(.complementaryDefault)
 
-        Text("Complementary Shade 1")
-          .themeColor(.complementaryShade1)
+          Text("Complementary Shade 1")
+            .themeColor(.complementaryShade1)
 
-        Text("Complementary Shade 2")
-          .themeColor(.complementaryShade2)
+          Text("Complementary Shade 2")
+            .themeColor(.complementaryShade2)
 
-        Text("Complementary Shade 3")
-          .themeColor(.complementaryShade3)
+          Text("Complementary Shade 3")
+            .themeColor(.complementaryShade3)
+        }
       }
-    }
 
-    Section("Semantic Colors") {
-      Group {
-        Text("Success Default")
-          .themeColor(.semanticsSuccessDefault)
+      Section("Semantic Colors") {
+        Group {
+          Text("Success Default")
+            .themeColor(.semanticsSuccessDefault)
 
-        Text("Success Shade")
-          .themeColor(.semanticsSuccessShade)
+          Text("Success Shade")
+            .themeColor(.semanticsSuccessShade)
 
-        Text("Info Default")
-          .themeColor(.semanticsInfoDefault)
+          Text("Info Default")
+            .themeColor(.semanticsInfoDefault)
 
-        Text("Info Shade")
-          .themeColor(.semanticsInfoShade)
+          Text("Info Shade")
+            .themeColor(.semanticsInfoShade)
 
-        Text("Warning Default")
-          .themeColor(.semanticsWarningDefault)
+          Text("Warning Default")
+            .themeColor(.semanticsWarningDefault)
 
-        Text("Warning Shade")
-          .themeColor(.semanticsWarningShade)
+          Text("Warning Shade")
+            .themeColor(.semanticsWarningShade)
 
-        Text("Error Default")
-          .themeColor(.semanticsErrorDefault)
+          Text("Error Default")
+            .themeColor(.semanticsErrorDefault)
 
-        Text("Error Shade")
-          .themeColor(.semanticsErrorShade)
+          Text("Error Shade")
+            .themeColor(.semanticsErrorShade)
+        }
       }
     }
   }
-}
+
+#endif
