@@ -20,7 +20,7 @@ import SwiftUI
 /// ```
 struct CachedAsyncImage<Placeholder: View>: View {
   let url: URL?
-  var forceRefresh: Bool = false
+  var shouldForceRefresh: Bool = false
   var maxRetryCount: Int = 3
   var retryInterval: TimeInterval = 5
 
@@ -29,7 +29,7 @@ struct CachedAsyncImage<Placeholder: View>: View {
   var body: some View {
     KFImage(url)
       .retry(maxCount: maxRetryCount, interval: .seconds(retryInterval))
-      .forceRefresh(forceRefresh)
+      .forceRefresh(shouldForceRefresh)
       .placeholder(placeholder)
       .resizable()
   }
@@ -37,16 +37,20 @@ struct CachedAsyncImage<Placeholder: View>: View {
 
 // MARK: - Default placeholder
 
-extension CachedAsyncImage where Placeholder == AnyView {
+/// Concrete `ProgressView`, not `AnyView`: type erasure in a view hierarchy costs SwiftUI
+/// the structural information it uses to skip unchanged subtrees.
+extension CachedAsyncImage where Placeholder == ProgressView<EmptyView, EmptyView> {
   /// Uses a centred `ProgressView` while the image loads.
-  init(url: URL?, forceRefresh: Bool = false) {
+  init(url: URL?, shouldForceRefresh: Bool = false) {
     self.init(
       url: url,
-      forceRefresh: forceRefresh,
-      placeholder: { AnyView(ProgressView()) }
+      shouldForceRefresh: shouldForceRefresh,
+      placeholder: { ProgressView() }
     )
   }
 }
+
+// MARK: - Previews
 
 #if DEBUG
 
