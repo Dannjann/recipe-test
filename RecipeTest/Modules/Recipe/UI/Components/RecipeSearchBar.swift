@@ -10,7 +10,7 @@ import SwiftUI
 
 /// Purely presentational — will be wrapped in a Button when search is wired.
 struct RecipeSearchBar: View {
-  @Environment(\.theme) var theme: any ThemeProtocol
+  @Environment(\.theme) private var theme: any ThemeProtocol
 
   var body: some View {
     HStack(spacing: Self.iconTextSpacing) {
@@ -27,7 +27,9 @@ struct RecipeSearchBar: View {
     .frame(height: Self.height)
     .background(theme.color.surfacesFieldsAndTags.color)
     .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
-    .accessibilityElement(children: .combine)
+    // Hidden until search is wired: otherwise it offers VoiceOver and Switch Control a
+    // search field that does nothing.
+    .accessibilityHidden(true)
     .accessibilityIdentifier("recipeList.searchBar")
   }
 }
