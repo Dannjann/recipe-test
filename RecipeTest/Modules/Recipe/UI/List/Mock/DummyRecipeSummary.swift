@@ -36,7 +36,8 @@ import Foundation
       )
     }
 
-    /// Six rows with distinct titles and hero URLs, so a grid preview shows variety rather than the same card six times.
+    /// Six rows with distinct titles and hero URLs, so a grid preview shows variety rather
+    /// than the same card six times.
     static func dummyList(count: Int = 6) -> [Self] {
       let titles = [
         "Spaghetti alla Carbonara",
