@@ -5,6 +5,11 @@ on:
     branches: [main, develop]
   pull_request:
 
+# The job only reads the repository. Without this block the token inherits the
+# repository default, which can include write scopes the build has no use for.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -20,6 +25,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Nothing here runs an authenticated git command, and the steps below invoke
+          # third-party tooling (brew, SwiftLint plugin, SPM) that would otherwise be
+          # running next to a usable token.
+          persist-credentials: false
 
       # Pick the newest Xcode on the image rather than pinning a patch version, which
       # goes stale every time the runner image is updated.
