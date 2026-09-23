@@ -64,8 +64,42 @@ extension RecipeListViewModel {
     // Task 4.
   }
 
+  /// Called by the footer's `onAppear`, which only fires once the user has scrolled to
+  /// the end of the content.
+  ///
+  /// Guarded three ways: the screen must already be showing rows, there must be more to
+  /// fetch, and one request at a time. Without the third, a footer that flickers in and
+  /// out of view fires several overlapping requests for the same page.
   func loadNextPage() async {
-    // Task 3.
+    guard
+      loadState == .loaded,
+      !hasLoadedAllData,
+      !isLoadingNextPage
+    else { return }
+
+    isLoadingNextPage = true
+    nextPageError = nil
+
+    let token = generation
+    let requested = nextPage
+
+    do {
+      let page = try await service.getRecipes(page: requested)
+      guard token == generation else { return }
+
+      append(page.recipes)
+      hasLoadedAllData = page.hasLoadedAllData
+      nextPage = requested.next
+      isLoadingNextPage = false
+    } catch {
+      guard token == generation else { return }
+
+      isLoadingNextPage = false
+
+      guard !error.isCancellation else { return }
+
+      nextPageError = error.displayMessage
+    }
   }
 
   func select(layout: RecipeListLayout) {
@@ -115,5 +149,14 @@ private extension RecipeListViewModel {
     generation += 1
 
     return generation
+  }
+
+  /// Filters ids already on screen. A `ForEach` keyed on a duplicated `Identifiable` id
+  /// drops rows and animates wrongly, and a paginated backend whose rows shift between
+  /// requests will hand you the same recipe on two pages.
+  func append(_ newRecipes: [RecipeSummary]) {
+    let existing = Set(recipes.map(\.id))
+
+    recipes += newRecipes.filter { !existing.contains($0.id) }
   }
 }

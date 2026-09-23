@@ -125,6 +125,152 @@ struct RecipeListViewModelTests {
     #expect(sut.recipes.map(\.id) == ["rcp-001"])
     #expect(sut.loadState == .loaded)
   }
+
+  @Test
+  func loadNextPage_appendsAfterTheExistingRows() async {
+    let service = MockRecipeService()
+    service.recipes.responds { page in
+      page.index == 1
+        ? .dummy(ids: ["rcp-001", "rcp-002"], total: 4, perPage: 2, currentPage: 1, lastPage: 2)
+        : .dummy(ids: ["rcp-003", "rcp-004"], total: 4, perPage: 2, currentPage: 2, lastPage: 2)
+    }
+    let sut = makeSUT(service: service, pageSize: 2)
+
+    await sut.loadFirstPage()
+    await sut.loadNextPage()
+
+    #expect(sut.recipes.map(\.id) == ["rcp-001", "rcp-002", "rcp-003", "rcp-004"])
+    #expect(service.recipes.requests.map(\.index) == [1, 2])
+  }
+
+  /// Without this the pager asks for page 5, page 6, page 7... forever, because a real
+  /// backend answers a page past the end with an empty slice rather than an error.
+  @Test
+  func loadNextPage_onTheLastPage_doesNotAsk() async {
+    let service = MockRecipeService(page: .dummy(ids: ["rcp-001"], total: 1, perPage: 10, currentPage: 1, lastPage: 1))
+    let sut = makeSUT(service: service)
+
+    await sut.loadFirstPage()
+    await sut.loadNextPage()
+
+    #expect(sut.hasLoadedAllData)
+    #expect(service.recipes.callCount == 1)
+  }
+
+  /// REVIEW FOCUS 4. Seven rows for a `perPage` of ten, but `currentPage` is still below
+  /// `lastPage`. Inferring "done" from a short page stops here and silently hides the
+  /// rest of the catalogue — only the meta gets to decide.
+  @Test
+  func loadNextPage_afterAShortPageThatIsNotTheLast_keepsGoing() async {
+    let service = MockRecipeService(
+      page: .dummy(
+        ids: ["rcp-001", "rcp-002", "rcp-003", "rcp-004", "rcp-005", "rcp-006", "rcp-007"],
+        total: 30,
+        perPage: 10,
+        currentPage: 1,
+        lastPage: 3
+      )
+    )
+    let sut = makeSUT(service: service)
+
+    await sut.loadFirstPage()
+
+    #expect(sut.hasLoadedAllData == false)
+
+    await sut.loadNextPage()
+
+    #expect(service.recipes.requests.map(\.index) == [1, 2])
+  }
+
+  /// A failed page three leaves the user's rows alone. Taking the screen away because the
+  /// bottom edge failed would be a far worse trade than a retry button in the footer.
+  @Test
+  func loadNextPage_whenItFails_keepsTheRowsAndReportsInTheFooter() async {
+    let service = MockRecipeService()
+    service.recipes.responds { page in
+      guard page.index == 1 else { throw AppError.noInternetConnection }
+
+      return .dummy(ids: ["rcp-001"], total: 4, perPage: 1, currentPage: 1, lastPage: 4)
+    }
+    let sut = makeSUT(service: service, pageSize: 1)
+
+    await sut.loadFirstPage()
+    await sut.loadNextPage()
+
+    #expect(sut.recipes.map(\.id) == ["rcp-001"])
+    #expect(sut.loadState == .loaded)
+    #expect(sut.nextPageError == AppError.noInternetConnection.localizedDescription)
+    #expect(sut.isLoadingNextPage == false)
+  }
+
+  @Test
+  func loadNextPage_afterAFailure_canRetryAndClearsTheFooterError() async {
+    let service = MockRecipeService()
+    service.recipes.responds { page in
+      guard page.index == 1 else { throw AppError.noInternetConnection }
+
+      return .dummy(ids: ["rcp-001"], total: 2, perPage: 1, currentPage: 1, lastPage: 2)
+    }
+    let sut = makeSUT(service: service, pageSize: 1)
+
+    await sut.loadFirstPage()
+    await sut.loadNextPage()
+
+    service.recipes.returns(.dummy(ids: ["rcp-002"], total: 2, perPage: 1, currentPage: 2, lastPage: 2))
+    await sut.loadNextPage()
+
+    #expect(sut.recipes.map(\.id) == ["rcp-001", "rcp-002"])
+    #expect(sut.nextPageError == nil)
+  }
+
+  /// A `ForEach` over duplicated `Identifiable` ids misbehaves visibly. The mock backend
+  /// cannot produce one, but a real paginated backend whose underlying rows shift between
+  /// requests absolutely can.
+  @Test
+  func loadNextPage_withARepeatedId_keepsOnlyTheFirst() async {
+    let service = MockRecipeService()
+    service.recipes.responds { page in
+      page.index == 1
+        ? .dummy(ids: ["rcp-001", "rcp-002"], total: 4, perPage: 2, currentPage: 1, lastPage: 2)
+        : .dummy(ids: ["rcp-002", "rcp-003"], total: 4, perPage: 2, currentPage: 2, lastPage: 2)
+    }
+    let sut = makeSUT(service: service, pageSize: 2)
+
+    await sut.loadFirstPage()
+    await sut.loadNextPage()
+
+    #expect(sut.recipes.map(\.id) == ["rcp-001", "rcp-002", "rcp-003"])
+  }
+
+  @Test
+  func loadNextPage_beforeTheFirstPageLoaded_doesNothing() async {
+    let service = MockRecipeService()
+    let sut = makeSUT(service: service)
+
+    await sut.loadNextPage()
+
+    #expect(service.recipes.wasCalled == false)
+  }
+
+  /// REVIEW FOCUS 5. The toggle is a pure view concern. Touching paging state here either
+  /// double-requests a page or wedges the footer's spinner on forever.
+  @Test
+  func select_doesNotDisturbPaging() async {
+    let service = MockRecipeService(page: .dummy(ids: ["rcp-001"], total: 4, perPage: 1, currentPage: 1, lastPage: 4))
+    let sut = makeSUT(service: service, pageSize: 1)
+
+    await sut.loadFirstPage()
+    sut.select(layout: .grid)
+
+    #expect(sut.layout == .grid)
+    #expect(sut.isLoadingNextPage == false)
+    #expect(sut.hasLoadedAllData == false)
+
+    service.recipes.returns(.dummy(ids: ["rcp-002"], total: 4, perPage: 1, currentPage: 2, lastPage: 4))
+    await sut.loadNextPage()
+
+    #expect(service.recipes.requests.map(\.index) == [1, 2])
+  }
 }
 
 // MARK: - Helpers
