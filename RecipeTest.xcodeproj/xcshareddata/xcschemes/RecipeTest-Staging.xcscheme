@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "B45E0000000000000000000B"
+               BlueprintIdentifier = "B45E0000000000000000000C"
                BuildableName = "RecipeTest-Staging.app"
                BlueprintName = "RecipeTest-Staging"
                ReferencedContainer = "container:RecipeTest.xcodeproj">
@@ -32,7 +32,7 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "B45E00000000000000000035"
+               BlueprintIdentifier = "B45E00000000000000000036"
                BuildableName = "Tests.xctest"
                BlueprintName = "Tests"
                ReferencedContainer = "container:RecipeTest.xcodeproj">
@@ -42,7 +42,7 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "B45E0000000000000000003E"
+               BlueprintIdentifier = "B45E0000000000000000003F"
                BuildableName = "UITests.xctest"
                BlueprintName = "UITests"
                ReferencedContainer = "container:RecipeTest.xcodeproj">
@@ -64,7 +64,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B45E0000000000000000000B"
+            BlueprintIdentifier = "B45E0000000000000000000C"
             BuildableName = "RecipeTest-Staging.app"
             BlueprintName = "RecipeTest-Staging"
             ReferencedContainer = "container:RecipeTest.xcodeproj">
@@ -81,7 +81,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B45E0000000000000000000B"
+            BlueprintIdentifier = "B45E0000000000000000000C"
             BuildableName = "RecipeTest-Staging.app"
             BlueprintName = "RecipeTest-Staging"
             ReferencedContainer = "container:RecipeTest.xcodeproj">
