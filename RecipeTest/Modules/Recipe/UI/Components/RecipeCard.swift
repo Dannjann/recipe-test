@@ -38,7 +38,6 @@ private extension RecipeCard {
     case .list:
       HStack(alignment: .top, spacing: Self.padding) {
         image
-          .frame(width: Self.listImageSide, height: Self.listImageSide)
 
         text
       }
@@ -46,21 +45,32 @@ private extension RecipeCard {
     case .grid:
       VStack(alignment: .leading, spacing: Self.padding) {
         image
-          .frame(height: Self.gridImageHeight)
-          .frame(maxWidth: .infinity)
 
         text
       }
     }
   }
 
-  /// Fixed frames in both axes, applied by the caller above: an image that sizes itself
-  /// from what downloads would reflow the whole grid as each one resolves.
+  /// Fixed frames in both axes prevent images from sizing themselves as they download,
+  /// which would reflow the entire grid.
+  @ViewBuilder
   var image: some View {
-    CachedAsyncImage(url: recipe.heroImageURL)
-      .aspectRatio(contentMode: .fill)
-      .clipped()
-      .clipShape(RoundedRectangle(cornerRadius: Self.imageCornerRadius))
+    switch layout {
+    case .list:
+      CachedAsyncImage(url: recipe.heroImageURL)
+        .aspectRatio(contentMode: .fill)
+        .frame(width: Self.listImageSide, height: Self.listImageSide)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: Self.imageCornerRadius))
+
+    case .grid:
+      CachedAsyncImage(url: recipe.heroImageURL)
+        .aspectRatio(contentMode: .fill)
+        .frame(height: Self.gridImageHeight)
+        .frame(maxWidth: .infinity)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: Self.imageCornerRadius))
+    }
   }
 
   var text: some View {
