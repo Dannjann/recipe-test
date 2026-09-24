@@ -66,6 +66,14 @@ private extension RecipeDetailView {
   var toolbarBackgroundVisibility: Visibility {
     isTitleOffscreen ? .visible : .hidden
   }
+
+  /// The bar's background is only half of what the system draws up there. The scroll edge
+  /// effect blurs whatever sits under the bar on its own terms and does not answer to
+  /// `toolbarBackgroundVisibility`, so leaving it alone frosted the top of the gallery
+  /// while the bar itself was transparent. It arms on the same condition as the background.
+  var isScrollEdgeEffectHidden: Bool {
+    !isTitleOffscreen
+  }
 }
 
 // MARK: - Subviews
@@ -106,6 +114,10 @@ private extension RecipeDetailView {
       )
     }
     .scrollIndicators(.hidden)
+    .scrollEdgeEffectHidden(
+      isScrollEdgeEffectHidden,
+      for: .top
+    )
     .ignoresSafeArea(edges: .top)
     .onScrollGeometryChange(
       for: Bool.self,
