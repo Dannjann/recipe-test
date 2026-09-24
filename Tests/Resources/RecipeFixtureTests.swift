@@ -32,13 +32,12 @@ struct RecipeFixtureTests {
     }
   }
 
-  /// `PH_I` covers a fraction of the 370 ingredient names, so most ingredients have no
-  /// photograph. The mapper has to cope with that, which means the fixture has to contain
-  /// at least one — otherwise the test that proves it is testing nothing.
+  /// Ingredient photographs no longer come from the prototype's partial `PH_I` pool, so the
+  /// fixture pins presence rather than absence. The mapper's tolerance of a null image is
+  /// still proven, synthetically, by `RecipeMapperTests` — it never read this fixture.
   @Test
-  func ingredients_areFlatAndMayHaveNoPhotograph() throws {
+  func ingredients_areFlatAndCarryAPhotograph() throws {
     let recipes = try rows("recipes")
-    var sawMissingImage = false
 
     for recipe in recipes {
       let ingredients = try #require(recipe["ingredients"] as? [[String: Any]])
@@ -51,13 +50,10 @@ struct RecipeFixtureTests {
         #expect(try #require(ingredient["name"] as? String).isEmpty == false)
         #expect(ingredient["quantity_text"] is String)
 
-        if ingredient["image_url"] is NSNull {
-          sawMissingImage = true
-        }
+        let image = try #require(ingredient["image_url"] as? String)
+        #expect(URL(string: image)?.scheme == "https")
       }
     }
-
-    #expect(sawMissingImage, "the mapper must cope with a null ingredient image")
   }
 
   /// A reused gallery photograph reads as a broken carousel, not as a design choice.
