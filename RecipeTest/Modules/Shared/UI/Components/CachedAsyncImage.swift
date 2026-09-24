@@ -16,7 +16,7 @@ import SwiftUI
 ///
 /// ```swift
 /// CachedAsyncImage(url: item.imageURL)
-///   .aspectRatio(contentMode: .fill)
+///   .scaledToFill()
 /// ```
 struct CachedAsyncImage<Placeholder: View>: View {
   let url: URL?

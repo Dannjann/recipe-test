@@ -16,7 +16,7 @@ struct MainIngredientTile: View {
       CachedAsyncImage(url: ingredient.imageURL) {
         Color.themeColor(.surfacesBackground3)
       }
-      .aspectRatio(contentMode: .fill)
+      .scaledToFill()
       .frame(
         width: Self.baseImageSize,
         height: Self.baseImageSize
