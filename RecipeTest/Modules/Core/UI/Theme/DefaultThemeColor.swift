@@ -61,4 +61,9 @@ struct DefaultThemeColor: ThemeColorProtocol {
   let semanticsWarningShade: ColorResource = .semanticsWarningShade
   let semanticsErrorDefault: ColorResource = .semanticsErrorDefault
   let semanticsErrorShade: ColorResource = .semanticsErrorShade
+
+  // Accents
+  let surfacesAccentPeach: ColorResource = .surfacesAccentPeach
+  let surfacesAccentMint: ColorResource = .surfacesAccentMint
+  let surfacesAccentSky: ColorResource = .surfacesAccentSky
 }

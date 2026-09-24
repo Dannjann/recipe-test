@@ -62,4 +62,9 @@ protocol ThemeColorProtocol {
   var semanticsWarningShade: ColorResource { get }
   var semanticsErrorDefault: ColorResource { get }
   var semanticsErrorShade: ColorResource { get }
+
+  // Accents
+  var surfacesAccentPeach: ColorResource { get }
+  var surfacesAccentMint: ColorResource { get }
+  var surfacesAccentSky: ColorResource { get }
 }
