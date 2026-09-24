@@ -6,6 +6,7 @@
 //  Copyright © 2026 Danjan. All rights reserved.
 //
 
+import Alamofire
 import Foundation
 @testable import RecipeTest
 import Testing
@@ -156,6 +157,88 @@ struct HomeViewModelTests {
     #expect(sut.latestRecipes == loaded)
   }
 
+  /// Review Focus 1, through the transport the app actually uses. Alamofire never hands
+  /// back a bare `URLError` — it wraps one — so a guard that only checks `URLError`
+  /// misses every real cancellation.
+  @Test
+  func loadLatestRecipes_whenAlamofireReportsAnExplicitCancel_keepsTheSectionItAlreadyHad() async {
+    let service = MockRecipeService()
+    let sut = HomeViewModel(recipeService: service)
+    await sut.loadContent()
+    let loaded = sut.latestRecipes
+
+    service.recipes.fails(with: AFError.explicitlyCancelled)
+    await sut.loadLatestRecipes()
+
+    #expect(sut.latestRecipes == loaded)
+  }
+
+  @Test
+  func loadLatestRecipes_whenAlamofireWrapsACancelledURLError_keepsTheSectionItAlreadyHad() async {
+    let service = MockRecipeService()
+    let sut = HomeViewModel(recipeService: service)
+    await sut.loadContent()
+    let loaded = sut.latestRecipes
+
+    service.recipes.fails(with: AFError.sessionTaskFailed(error: URLError(.cancelled)))
+    await sut.loadLatestRecipes()
+
+    #expect(sut.latestRecipes == loaded)
+  }
+
+  /// A slow retry that fails must not overwrite the fresher content a refresh already
+  /// put on screen. Without a generation guard the reader watches their recipes turn
+  /// into an error message.
+  @Test
+  func loadLatestRecipes_whenASlowFailureLandsAfterAFasterSuccess_keepsTheFreshContent() async {
+    let service = MockRecipeService()
+    let sut = HomeViewModel(recipeService: service)
+
+    let slowStarted = AsyncSignal()
+    let slowMayFinish = AsyncSignal()
+    service.recipes.responds { _ in
+      slowStarted.signal()
+      await slowMayFinish.wait()
+
+      throw AppError.unknown
+    }
+    let slow = Task { await sut.loadLatestRecipes() }
+    await slowStarted.wait()
+
+    service.recipes.returns(RecipeListPage(recipes: [.dummy(id: "fresh")], meta: .dummy()))
+    await sut.loadLatestRecipes()
+    slowMayFinish.signal()
+    await slow.value
+
+    #expect(sut.latestRecipes.value?.map(\.id) == ["fresh"])
+  }
+
+  /// The mirror: a slow *success* landing after a newer request must not resurrect data
+  /// the newer one already replaced.
+  @Test
+  func loadCategories_whenASlowSuccessLandsAfterANewerOne_keepsTheNewerResult() async {
+    let service = MockRecipeService()
+    let sut = HomeViewModel(recipeService: service)
+
+    let slowStarted = AsyncSignal()
+    let slowMayFinish = AsyncSignal()
+    service.categories.responds { _ in
+      slowStarted.signal()
+      await slowMayFinish.wait()
+
+      return [.dummy(id: "stale")]
+    }
+    let slow = Task { await sut.loadCategories() }
+    await slowStarted.wait()
+
+    service.categories.returns([.dummy(id: "newer")])
+    await sut.loadCategories()
+    slowMayFinish.signal()
+    await slow.value
+
+    #expect(sut.categories.value?.map(\.id) == ["newer"])
+  }
+
   @Test
   func loadCategories_whenItFails_showsTheErrorDescription() async {
     let service = MockRecipeService()
@@ -184,5 +267,42 @@ private final class StateBox: @unchecked Sendable {
 
   func record(_ state: SectionState<[RecipeSummary]>) {
     lock.withLock { recorded = state }
+  }
+}
+
+/// One-shot rendezvous between a test and a stubbed response, so an overlapping-load
+/// test can pin the exact interleaving it means to exercise instead of racing on sleeps.
+private final class AsyncSignal: @unchecked Sendable {
+  private let lock = NSLock()
+  private var isSignalled = false
+  private var waiters: [CheckedContinuation<Void, Never>] = []
+
+  func signal() {
+    let resumed: [CheckedContinuation<Void, Never>] = lock.withLock {
+      isSignalled = true
+      defer { waiters = [] }
+
+      return waiters
+    }
+
+    resumed.forEach { $0.resume() }
+  }
+
+  func wait() async {
+    await withCheckedContinuation { continuation in
+      let alreadySignalled: Bool = lock.withLock {
+        guard isSignalled else {
+          waiters.append(continuation)
+
+          return false
+        }
+
+        return true
+      }
+
+      if alreadySignalled {
+        continuation.resume()
+      }
+    }
   }
 }

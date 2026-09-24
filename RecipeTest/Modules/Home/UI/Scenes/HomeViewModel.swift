@@ -6,6 +6,7 @@
 //  Copyright © 2026 Danjan. All rights reserved.
 //
 
+import Alamofire
 import Foundation
 
 @Observable
@@ -16,6 +17,13 @@ final class HomeViewModel: HomeViewModelProtocol {
 
   private(set) var latestRecipes: SectionState<[RecipeSummary]> = .loading
   private(set) var categories: SectionState<[RecipeCategory]> = .loading
+
+  /// Bumped when a section starts a request, and checked again when that request
+  /// answers. Nothing here is serialised: `.task`, `.refreshable` and each Retry button
+  /// all call in independently, so without this a slow first request can land after a
+  /// faster second one and overwrite fresher content with staler.
+  private var latestRecipesGeneration = 0
+  private var categoriesGeneration = 0
 
   private let recipeService: RecipeServiceProtocol
 
@@ -31,13 +39,15 @@ extension HomeViewModel {
   /// their own `do`/`catch` inside the methods below, so a thrown error never leaves this
   /// scope.
   func loadContent() async {
-    async let recipes: Void = loadLatestRecipes()
-    async let categories: Void = loadCategories()
+    async let recipesLoad: Void = loadLatestRecipes()
+    async let categoriesLoad: Void = loadCategories()
 
-    _ = await (recipes, categories)
+    _ = await (recipesLoad, categoriesLoad)
   }
 
   func loadLatestRecipes() async {
+    latestRecipesGeneration += 1
+    let generation = latestRecipesGeneration
     latestRecipes = refreshing(latestRecipes)
 
     do {
@@ -46,18 +56,30 @@ extension HomeViewModel {
         page: Page(index: 1, size: Self.latestRecipesPageSize)
       )
 
+      guard generation == latestRecipesGeneration else { return }
+
       latestRecipes = state(for: page.recipes)
     } catch {
+      guard generation == latestRecipesGeneration else { return }
+
       latestRecipes = state(for: error, keeping: latestRecipes)
     }
   }
 
   func loadCategories() async {
+    categoriesGeneration += 1
+    let generation = categoriesGeneration
     categories = refreshing(categories)
 
     do {
-      categories = try await state(for: recipeService.getCategories())
+      let loaded = try await recipeService.getCategories()
+
+      guard generation == categoriesGeneration else { return }
+
+      categories = state(for: loaded)
     } catch {
+      guard generation == categoriesGeneration else { return }
+
       categories = state(for: error, keeping: categories)
     }
   }
@@ -85,12 +107,25 @@ private extension HomeViewModel {
   func state<Value>(for error: any Error, keeping current: SectionState<Value>) -> SectionState<Value> {
     guard !isCancellation(error) else { return current }
 
-    let description = error.localizedDescription
-
-    return .failed(description.isEmpty ? String(localized: .Shared.sharedErrorSomethingWentWrong) : description)
+    return .failed(error.localizedDescription)
   }
 
+  /// Four shapes, because the transport is Alamofire: it never surfaces a bare
+  /// `URLError`, it wraps one — which is why `APIClient` already has to unwrap
+  /// `underlyingError` to recognise a dropped connection. Checking only the two Swift
+  /// concurrency shapes would miss every cancellation the network layer actually reports.
   func isCancellation(_ error: any Error) -> Bool {
-    error is CancellationError || (error as? URLError)?.code == .cancelled
+    if error is CancellationError {
+      return true
+    }
+
+    if (error as? URLError)?.code == .cancelled {
+      return true
+    }
+
+    guard let afError = error.asAFError else { return false }
+
+    return afError.isExplicitlyCancelledError
+      || (afError.underlyingError as? URLError)?.code == .cancelled
   }
 }

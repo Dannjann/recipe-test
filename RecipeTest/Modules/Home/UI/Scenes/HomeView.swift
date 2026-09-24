@@ -29,10 +29,10 @@ struct HomeView: View {
         HomeSearchPill(onTap: onSearchTap)
 
         HomeSectionHeader(title: .Home.homeLatestRecipesTitle)
-        latestRecipes
+        LatestRecipesSection(viewModel: viewModel, onRecipeTap: onRecipeTap)
 
         HomeSectionHeader(title: .Home.homeCategoriesTitle)
-        categories
+        CategoriesSection(viewModel: viewModel, onCategoryTap: onCategoryTap)
       }
       .padding(.bottom, 40)
     }
@@ -58,22 +58,45 @@ private extension HomeView {
       .accessibilityLabel(Text(.Home.homeLogoAccessibilityLabel))
       .accessibilityAddTraits(.isHeader)
   }
+}
 
-  var latestRecipes: some View {
+// MARK: - LatestRecipesSection
+
+/// A `View` rather than a computed property on `HomeView`. A computed `some View` is
+/// inlined into its parent's body, so reading `viewModel.latestRecipes` there would
+/// register the whole of `HomeView` — logo, pill, both headers, both sections — for
+/// invalidation every time either section resolved. Reading it here narrows that to this
+/// subtree.
+private struct LatestRecipesSection: View {
+  let viewModel: any HomeViewModelProtocol
+  let onRecipeTap: SingleResult<String>
+
+  @ScaledMetric(relativeTo: .body) private var minHeight: CGFloat = LatestRecipeCard.baseHeight
+
+  var body: some View {
     SectionStateView(
       state: viewModel.latestRecipes,
-      minHeight: LatestRecipeCard.baseHeight,
+      minHeight: minHeight,
       emptyMessage: .Home.homeLatestRecipesEmpty,
       onRetryTap: { Task { await viewModel.loadLatestRecipes() } }
     ) { recipes in
       LatestRecipeCarousel(recipes: recipes, onRecipeTap: onRecipeTap)
     }
   }
+}
 
-  var categories: some View {
+// MARK: - CategoriesSection
+
+private struct CategoriesSection: View {
+  let viewModel: any HomeViewModelProtocol
+  let onCategoryTap: SingleResult<RecipeCategory>
+
+  @ScaledMetric(relativeTo: .body) private var minHeight: CGFloat = RecipeCategoryTile.baseWidth
+
+  var body: some View {
     SectionStateView(
       state: viewModel.categories,
-      minHeight: RecipeCategoryTile.baseWidth,
+      minHeight: minHeight,
       emptyMessage: .Home.homeCategoriesEmpty,
       onRetryTap: { Task { await viewModel.loadCategories() } }
     ) { categories in
@@ -99,14 +122,17 @@ private struct LatestRecipeCarousel: View {
         }
       }
       .scrollTargetLayout()
-      // The carousel runs edge to edge; the page margin is content inset, so the last
-      // card can scroll clear of the screen edge instead of stopping short of it.
-      .padding(.horizontal, 20)
       // Room for `cardShadow`'s 14pt blur, which a scroll view otherwise clips.
       .padding(.vertical, 16)
     }
     .scrollIndicators(.hidden)
     .scrollTargetBehavior(.viewAligned)
+    // `.contentMargins`, not `.padding` on the content: `.viewAligned` snaps a card's
+    // leading edge to the scroll view's content edge, and it respects a content margin
+    // but knows nothing about padding applied inside the stack. With padding, the first
+    // card rests at 20pt and every card snapped to after it sits flush against the
+    // screen. This insets the content and the snap position together.
+    .contentMargins(.horizontal, 20, for: .scrollContent)
     .padding(.vertical, -16)
     .accessibilityLabel(Text(.Home.homeLatestRecipesTitle))
   }

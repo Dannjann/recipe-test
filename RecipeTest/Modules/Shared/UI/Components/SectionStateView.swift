@@ -35,11 +35,7 @@ struct SectionStateView<Value: Equatable, Content: View>: View {
       message(title: Text(emptyMessage), description: nil, showsRetry: false)
 
     case let .failed(description):
-      message(
-        title: Text(String(localized: .Shared.sharedErrorSomethingWentWrong)),
-        description: Text(description),
-        showsRetry: true
-      )
+      failure(description: description)
     }
   }
 }
@@ -47,6 +43,20 @@ struct SectionStateView<Value: Equatable, Content: View>: View {
 // MARK: - Subviews
 
 private extension SectionStateView {
+  /// Most failures reach here as `AppError.unknown`, whose `localizedDescription` is the
+  /// same "Something went wrong" this view would otherwise print above it. Printing one
+  /// sentence twice reads like a bug in the app, so the generic heading is only added
+  /// when the error actually says something the heading does not.
+  func failure(description: String) -> some View {
+    let heading = String(localized: .Shared.sharedErrorSomethingWentWrong)
+
+    return message(
+      title: Text(heading),
+      description: description == heading ? nil : Text(description),
+      showsRetry: true
+    )
+  }
+
   func message(title: Text, description: Text?, showsRetry: Bool) -> some View {
     VStack(spacing: 12) {
       title
