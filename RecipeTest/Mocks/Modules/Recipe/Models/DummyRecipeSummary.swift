@@ -7,9 +7,8 @@
 //
 
 import Foundation
-@testable import RecipeTest
 
-extension RecipeSummary {
+nonisolated extension RecipeSummary {
   static func dummy(
     id: String = "rcp-001",
     title: String = "Spaghetti alla Carbonara",

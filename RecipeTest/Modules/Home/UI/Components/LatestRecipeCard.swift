@@ -86,53 +86,23 @@ private extension LatestRecipeCard {
 }
 
 #Preview("Card") {
-  LatestRecipeCard(recipe: .init(
-    id: "rcp-001",
-    title: "Spaghetti alla Carbonara",
-    heroImageURL: URL(string: "https://www.themealdb.com/images/media/meals/llcbn01574260722.jpg"),
-    category: "Pasta",
-    cuisine: "italian",
-    mealType: "dinner",
-    totalTimeMinutes: 25,
-    servings: 4,
-    difficulty: .medium,
-    isVegetarian: false
-  ), onTap: { _ in })
+  LatestRecipeCard(recipe: .dummy(), onTap: { _ in })
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(Color.themeColor(.surfacesBackground))
 }
 
-#Preview("Card — no photograph") {
-  LatestRecipeCard(recipe: .init(
-    id: "rcp-002",
-    title: "Pão de Queijo",
-    heroImageURL: nil,
-    category: "Snacks",
-    cuisine: "brazilian",
-    mealType: "snack",
-    totalTimeMinutes: 40,
-    servings: 6,
-    difficulty: .easy,
-    isVegetarian: true
-  ), onTap: { _ in })
+#Preview("No photograph") {
+  LatestRecipeCard(recipe: .dummy(title: "Pão de Queijo", heroImageURL: nil), onTap: { _ in })
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(Color.themeColor(.surfacesBackground))
 }
 
-#Preview("Card — long title, AX5") {
-  LatestRecipeCard(recipe: .init(
-    id: "rcp-003",
-    title: "Slow-Braised Beef Short Rib with Gremolata and Soft Polenta",
-    heroImageURL: nil,
-    category: "Meal",
-    cuisine: "italian",
-    mealType: "dinner",
-    totalTimeMinutes: 240,
-    servings: 4,
-    difficulty: .hard,
-    isVegetarian: false
-  ), onTap: { _ in })
-    .environment(\.dynamicTypeSize, .accessibility5)
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.themeColor(.surfacesBackground))
+#Preview("Long title, AX5") {
+  LatestRecipeCard(
+    recipe: .dummy(title: "Slow-Braised Beef Short Rib with Gremolata and Soft Polenta", heroImageURL: nil),
+    onTap: { _ in }
+  )
+  .environment(\.dynamicTypeSize, .accessibility5)
+  .frame(maxWidth: .infinity, maxHeight: .infinity)
+  .background(Color.themeColor(.surfacesBackground))
 }

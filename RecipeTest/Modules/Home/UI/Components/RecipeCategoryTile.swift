@@ -57,26 +57,15 @@ private extension RecipeCategoryTile {
 }
 
 #Preview("Tile") {
-  RecipeCategoryTile(
-    category: .init(
-      id: "cat-01",
-      name: "Meal",
-      imageURL: URL(string: "https://images.unsplash.com/photo-1668971259423-c9f71fb6b7b4?w=480"),
-      recipeCount: 18
-    ),
-    onTap: { _ in }
-  )
-  .frame(width: RecipeCategoryTile.baseWidth)
-  .frame(maxWidth: .infinity, maxHeight: .infinity)
-  .background(Color.themeColor(.surfacesBackground))
+  RecipeCategoryTile(category: .dummy(), onTap: { _ in })
+    .frame(width: RecipeCategoryTile.baseWidth)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(Color.themeColor(.surfacesBackground))
 }
 
-#Preview("Tile — no photograph, long name") {
-  RecipeCategoryTile(
-    category: .init(id: "cat-07", name: "Slow Cooker Dinners", imageURL: nil, recipeCount: 3),
-    onTap: { _ in }
-  )
-  .frame(width: RecipeCategoryTile.baseWidth)
-  .frame(maxWidth: .infinity, maxHeight: .infinity)
-  .background(Color.themeColor(.surfacesBackground))
+#Preview("No photograph, long name") {
+  RecipeCategoryTile(category: .dummy(name: "Slow Cooker Dinners", imageURL: nil), onTap: { _ in })
+    .frame(width: RecipeCategoryTile.baseWidth)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(Color.themeColor(.surfacesBackground))
 }
