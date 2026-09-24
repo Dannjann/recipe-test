@@ -26,7 +26,7 @@ appId: com.danjan.recipe
 
 # And the detail screen goes back to the list it was opened from.
 - tapOn:
-    id: "recipe-detail-back-button"
+    id: "BackButton"
 - assertVisible:
     id: "recipe-list-result-count-label"
 - assertVisible:

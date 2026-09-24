@@ -8,28 +8,25 @@
 
 import SwiftUI
 
+/// The system navigation bar, not a bar of its own: hiding it is what took the interactive
+/// swipe back with it. The bar stays transparent over the gallery and only takes on its
+/// background and title once the recipe's name has scrolled away, which is how the screen
+/// behaved when it drew that bar itself.
 struct RecipeDetailView: View {
   let viewModel: any RecipeDetailViewModelProtocol
-  let onBackTap: VoidResult
 
   @State private var isTitleOffscreen = false
 
-  /// A `ZStack`, not an `.overlay` on the scroll view. The scroll view ignores the top
-  /// safe area so the gallery runs behind the status bar; the stack itself respects it,
-  /// which is what puts the back button below the clock instead of under it. The bar's
-  /// own background reaches back up over the status bar.
   var body: some View {
-    ZStack(alignment: .top) {
-      scrollView
-
-      topBar
-    }
-    .background(Color.themeColor(.surfacesBackground))
-    .toolbarVisibility(
-      .hidden,
-      for: .navigationBar
-    )
-    .task { await viewModel.loadDetail() }
+    scrollView
+      .background(Color.themeColor(.surfacesBackground))
+      .navigationTitle(navigationTitle)
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbarBackgroundVisibility(
+        toolbarBackgroundVisibility,
+        for: .navigationBar
+      )
+      .task { await viewModel.loadDetail() }
   }
 }
 
@@ -43,6 +40,10 @@ private extension RecipeDetailView {
   /// Tuned on device: the bar arms just as the recipe's name leaves the top of the screen.
   /// Derived from the gallery's height rather than measured, so a change to the sheet's
   /// overlap or its top paddings has to be re-tuned here.
+  var titleFade: Animation {
+    .easeOut(duration: 0.25)
+  }
+
   var stickyBarThreshold: CGFloat {
     RecipeGallery.baseHeight - stickyBarLead
   }
@@ -50,6 +51,16 @@ private extension RecipeDetailView {
   /// How far above the gallery's bottom edge the title has already scrolled out of reach.
   var stickyBarLead: CGFloat {
     78
+  }
+
+  /// Empty until the recipe's own name has gone: two copies of it on screen at once is what
+  /// the fade exists to avoid.
+  var navigationTitle: String {
+    isTitleOffscreen ? viewModel.title : ""
+  }
+
+  var toolbarBackgroundVisibility: Visibility {
+    isTitleOffscreen ? .visible : .hidden
   }
 }
 
@@ -82,16 +93,8 @@ private extension RecipeDetailView {
         geometry.contentOffset.y > stickyBarThreshold
       },
       action: { _, isOffscreen in
-        isTitleOffscreen = isOffscreen
+        withAnimation(titleFade) { isTitleOffscreen = isOffscreen }
       }
-    )
-  }
-
-  var topBar: some View {
-    RecipeDetailTopBar(
-      title: viewModel.title,
-      isTitleOffscreen: isTitleOffscreen,
-      onBackTap: onBackTap
     )
   }
 }
@@ -100,8 +103,7 @@ private extension RecipeDetailView {
   #Preview("Loaded") {
     NavigationStack {
       RecipeDetailView(
-        viewModel: MockRecipeDetailViewModel.loaded(),
-        onBackTap: {}
+        viewModel: MockRecipeDetailViewModel.loaded()
       )
     }
   }
@@ -109,8 +111,7 @@ private extension RecipeDetailView {
   #Preview("Loading") {
     NavigationStack {
       RecipeDetailView(
-        viewModel: MockRecipeDetailViewModel.loading(),
-        onBackTap: {}
+        viewModel: MockRecipeDetailViewModel.loading()
       )
     }
   }
@@ -118,8 +119,7 @@ private extension RecipeDetailView {
   #Preview("Failed") {
     NavigationStack {
       RecipeDetailView(
-        viewModel: MockRecipeDetailViewModel.failed(),
-        onBackTap: {}
+        viewModel: MockRecipeDetailViewModel.failed()
       )
     }
   }
@@ -127,8 +127,7 @@ private extension RecipeDetailView {
   #Preview("No photographs") {
     NavigationStack {
       RecipeDetailView(
-        viewModel: MockRecipeDetailViewModel.noPhotographs(),
-        onBackTap: {}
+        viewModel: MockRecipeDetailViewModel.noPhotographs()
       )
     }
   }
@@ -136,8 +135,7 @@ private extension RecipeDetailView {
   #Preview("Nothing to cook with") {
     NavigationStack {
       RecipeDetailView(
-        viewModel: MockRecipeDetailViewModel.withoutABody(),
-        onBackTap: {}
+        viewModel: MockRecipeDetailViewModel.withoutABody()
       )
     }
   }
@@ -145,8 +143,7 @@ private extension RecipeDetailView {
   #Preview("Metrics missing") {
     NavigationStack {
       RecipeDetailView(
-        viewModel: MockRecipeDetailViewModel.missingMetrics(),
-        onBackTap: {}
+        viewModel: MockRecipeDetailViewModel.missingMetrics()
       )
     }
   }
@@ -154,8 +151,7 @@ private extension RecipeDetailView {
   #Preview("Loaded — AX3") {
     NavigationStack {
       RecipeDetailView(
-        viewModel: MockRecipeDetailViewModel.partiallyChecked(),
-        onBackTap: {}
+        viewModel: MockRecipeDetailViewModel.partiallyChecked()
       )
     }
     .environment(
