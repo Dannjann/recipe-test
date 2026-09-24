@@ -67,6 +67,12 @@ private extension RecipeMetricCard {
     12
   }
 
+  /// Tighter than the card's vertical rhythm: at 12pt the label still needs every point
+  /// it can get beside the icon, or "Cooking" breaks mid-word in a 110pt card.
+  var headerSpacing: CGFloat {
+    6
+  }
+
   var horizontalPadding: CGFloat {
     14
   }
@@ -98,12 +104,14 @@ private extension RecipeMetricCard {
   var header: some View {
     HStack(
       alignment: .top,
-      spacing: spacing
+      spacing: headerSpacing
     ) {
       Text(title)
-        .themeTextStyle(.subheadlineRegular)
+        .themeTextStyle(.footnoteRegular)
         .themeColor(.textPrimary)
         .multilineTextAlignment(.leading)
+        .lineLimit(2)
+        .minimumScaleFactor(0.8)
 
       Spacer(minLength: 0)
 
