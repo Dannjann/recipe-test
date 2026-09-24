@@ -8,13 +8,6 @@
 
 import SwiftUI
 
-/// Home: the logo, a search affordance, the six newest recipes, and the category grid.
-///
-/// The view model arrives as a `let` rather than `@State` — `HomeViewCoordinator` owns
-/// its lifetime, and Observation tracks a handed-over `@Observable` just the same.
-///
-/// The three callbacks are the whole of this screen's relationship with navigation. It
-/// does not know a `PathRouter` exists.
 struct HomeView: View {
   let viewModel: any HomeViewModelProtocol
   let onSearchTap: VoidResult
@@ -62,11 +55,7 @@ private extension HomeView {
 
 // MARK: - LatestRecipesSection
 
-/// A `View` rather than a computed property on `HomeView`. A computed `some View` is
-/// inlined into its parent's body, so reading `viewModel.latestRecipes` there would
-/// register the whole of `HomeView` — logo, pill, both headers, both sections — for
-/// invalidation every time either section resolved. Reading it here narrows that to this
-/// subtree.
+/// A `View`, not a computed property: a computed one is inlined and would invalidate all of `HomeView`.
 private struct LatestRecipesSection: View {
   let viewModel: any HomeViewModelProtocol
   let onRecipeTap: SingleResult<String>
@@ -107,9 +96,6 @@ private struct CategoriesSection: View {
 
 // MARK: - LatestRecipeCarousel
 
-/// A real `View` rather than a computed property on `HomeView`: it is the unit SwiftUI
-/// invalidates, and it reads only the recipes — so a change to the categories section
-/// does not re-evaluate it.
 private struct LatestRecipeCarousel: View {
   let recipes: [RecipeSummary]
   let onRecipeTap: SingleResult<String>
@@ -122,16 +108,12 @@ private struct LatestRecipeCarousel: View {
         }
       }
       .scrollTargetLayout()
-      // Room for `cardShadow`'s 14pt blur, which a scroll view otherwise clips.
+      // Paired with the negative padding below: room for cardShadow, which the scroll view clips.
       .padding(.vertical, 16)
     }
     .scrollIndicators(.hidden)
     .scrollTargetBehavior(.viewAligned)
-    // `.contentMargins`, not `.padding` on the content: `.viewAligned` snaps a card's
-    // leading edge to the scroll view's content edge, and it respects a content margin
-    // but knows nothing about padding applied inside the stack. With padding, the first
-    // card rests at 20pt and every card snapped to after it sits flush against the
-    // screen. This insets the content and the snap position together.
+    // Not `.padding`: `.viewAligned` snaps to the content edge, which padding does not move.
     .contentMargins(.horizontal, 20, for: .scrollContent)
     .padding(.vertical, -16)
     .accessibilityLabel(Text(.Home.homeLatestRecipesTitle))
@@ -146,9 +128,7 @@ private struct RecipeCategoryGrid: View {
 
   @ScaledMetric(relativeTo: .body) private var tileWidth: CGFloat = RecipeCategoryTile.baseWidth
 
-  /// Adaptive rather than a fixed three: at an accessibility text size a 14pt label does
-  /// not fit a 104pt tile, and the grid should drop to two columns and then one rather
-  /// than squash it.
+  /// Adaptive, not a fixed three: the tile has to shed columns at accessibility sizes.
   private var columns: [GridItem] {
     [GridItem(.adaptive(minimum: tileWidth), spacing: 14)]
   }
@@ -165,8 +145,6 @@ private struct RecipeCategoryGrid: View {
 
 // MARK: - Previews
 
-// Drives the screen into any pair of states without a service behind it. `#if DEBUG` so
-// it cannot be reached from a release build.
 #if DEBUG
   @Observable
   private final class PreviewHomeViewModel: HomeViewModelProtocol {

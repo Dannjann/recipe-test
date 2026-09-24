@@ -9,11 +9,8 @@
 import Foundation
 @testable import RecipeTest
 
-/// A `RecipeServiceProtocol` double, shaped like `MockRecipeAPI`: one `MockAPICall` per
-/// method, so one endpoint can be made to fail while its neighbours keep answering —
-/// which is the whole point of the screen this doubles for.
+/// Shaped like `MockRecipeAPI`: one `MockAPICall` per method, so one call can fail alone.
 final class MockRecipeService: RecipeServiceProtocol {
-  /// Named rather than a tuple so `lastRequest` can be compared in one `#expect`.
   struct RecipesRequest: Equatable {
     let query: RecipeQuery
     let page: Page
@@ -31,8 +28,6 @@ final class MockRecipeService: RecipeServiceProtocol {
     self.recipes = MockAPICall(returning: recipes)
     self.categories = MockAPICall(returning: categories)
 
-    // `Recipe` has no dummy yet — no screen in this stage fetches one. A test that needs
-    // the detail call stubs it itself rather than paying for a factory nothing reads.
     self.recipe = MockAPICall(
       returning: recipe ?? Recipe(
         id: "rcp-001",

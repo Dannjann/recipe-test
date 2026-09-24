@@ -38,7 +38,6 @@ struct HomeViewModelTests {
     #expect(service.recipes.lastRequest?.page == Page(index: 1, size: 6))
   }
 
-  /// The point of per-section state: one outage costs one section.
   @Test
   func loadContent_categoriesFails_leavesTheRecipesSectionLoaded() async {
     let service = MockRecipeService()
@@ -90,8 +89,6 @@ struct HomeViewModelTests {
     #expect(sut.latestRecipes.value?.map(\.id) == ["rcp-002"])
   }
 
-  /// Review Focus 3. Retry has to clear the stale message before the new answer lands,
-  /// or the section sits on an error while it is already refetching.
   @Test
   func loadLatestRecipes_fromFailed_clearsTheErrorBeforeTheResponseArrives() async {
     let service = MockRecipeService()
@@ -110,9 +107,6 @@ struct HomeViewModelTests {
     #expect(observed.value == .loading)
   }
 
-  /// Review Focus 2. A refresh keeps what the reader is already looking at; replacing it
-  /// with a spinner blanks the screen underneath a refresh control that is already
-  /// spinning.
   @Test
   func loadContent_whenAlreadyLoaded_keepsTheContentVisibleWhileRefreshing() async {
     let service = MockRecipeService()
@@ -130,7 +124,6 @@ struct HomeViewModelTests {
     #expect(observed.value?.isLoaded == true)
   }
 
-  /// Review Focus 1. SwiftUI cancels `.task` on disappear; that must not paint an error.
   @Test
   func loadLatestRecipes_whenCancelled_keepsTheSectionItAlreadyHad() async {
     let service = MockRecipeService()
@@ -157,9 +150,6 @@ struct HomeViewModelTests {
     #expect(sut.latestRecipes == loaded)
   }
 
-  /// Review Focus 1, through the transport the app actually uses. Alamofire never hands
-  /// back a bare `URLError` — it wraps one — so a guard that only checks `URLError`
-  /// misses every real cancellation.
   @Test
   func loadLatestRecipes_whenAlamofireReportsAnExplicitCancel_keepsTheSectionItAlreadyHad() async {
     let service = MockRecipeService()
@@ -186,9 +176,6 @@ struct HomeViewModelTests {
     #expect(sut.latestRecipes == loaded)
   }
 
-  /// A slow retry that fails must not overwrite the fresher content a refresh already
-  /// put on screen. Without a generation guard the reader watches their recipes turn
-  /// into an error message.
   @Test
   func loadLatestRecipes_whenASlowFailureLandsAfterAFasterSuccess_keepsTheFreshContent() async {
     let service = MockRecipeService()
@@ -213,8 +200,6 @@ struct HomeViewModelTests {
     #expect(sut.latestRecipes.value?.map(\.id) == ["fresh"])
   }
 
-  /// The mirror: a slow *success* landing after a newer request must not resurrect data
-  /// the newer one already replaced.
   @Test
   func loadCategories_whenASlowSuccessLandsAfterANewerOne_keepsTheNewerResult() async {
     let service = MockRecipeService()
@@ -253,10 +238,7 @@ struct HomeViewModelTests {
 
 // MARK: - Helpers
 
-/// Lets a stubbed response read the state the view model is in *while* that response is
-/// still in flight. A captured `var` cannot be written from the stub's closure — it
-/// escapes into `MockAPICall` and runs off the test's isolation — so the observation goes
-/// through a reference instead.
+/// A reference, not a captured `var`: the stub closure escapes and runs off the test's isolation.
 private final class StateBox: @unchecked Sendable {
   private let lock = NSLock()
   private var recorded: SectionState<[RecipeSummary]>?
@@ -270,8 +252,7 @@ private final class StateBox: @unchecked Sendable {
   }
 }
 
-/// One-shot rendezvous between a test and a stubbed response, so an overlapping-load
-/// test can pin the exact interleaving it means to exercise instead of racing on sleeps.
+/// Pins the interleaving an overlapping-load test needs, instead of racing on sleeps.
 private final class AsyncSignal: @unchecked Sendable {
   private let lock = NSLock()
   private var isSignalled = false

@@ -8,12 +8,7 @@
 
 import SwiftUI
 
-/// The search affordance at the top of Home.
-///
-/// A `Button` rather than a `TextField`: tapping it opens the search overlay in a later
-/// stage; nothing is typed into it here. It is not a Liquid Glass surface on purpose —
-/// the prototype is a flat cream sheet with soft brown shadows, and glass would read as a
-/// different product.
+/// A `Button`, not a `TextField`: it opens the search overlay rather than accepting input.
 struct HomeSearchPill: View {
   let onTap: VoidResult
 

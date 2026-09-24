@@ -8,16 +8,8 @@
 
 import SwiftUI
 
-/// Owns the Home flow: it constructs the scene's view model and is the only type that
-/// decides where a tap on Home leads.
-///
-/// Every handler below is empty in this stage — the search overlay, the recipe list and
-/// the recipe detail do not exist yet. They are wired anyway so that adding them is an
-/// edit to this file and nothing else.
-///
-/// No `PathRouter` yet, deliberately. `AppCoordinator` already publishes one into the
-/// environment; this coordinator picks it up with `@Environment(PathRouter.self)` when it
-/// has a destination to push, rather than storing one it never reads.
+/// The handlers are empty on purpose: their destinations do not exist yet, and wiring them
+/// now keeps adding one an edit to this file alone.
 struct HomeViewCoordinator: ViewCoordinator {
   @State private var viewModel: HomeViewModel
 
@@ -38,17 +30,14 @@ struct HomeViewCoordinator: ViewCoordinator {
 // MARK: - Handlers
 
 private extension HomeViewCoordinator {
-  /// Next stage: presents the search and filter overlay.
   func handleSearchTap() -> VoidResult {
     {}
   }
 
-  /// Next stage: pushes `Route.Home.recipeDetail(id)`.
   func handleRecipeTap() -> SingleResult<String> {
     { _ in }
   }
 
-  /// Next stage: pushes `Route.Home.recipeList(category)`.
   func handleCategoryTap() -> SingleResult<RecipeCategory> {
     { _ in }
   }

@@ -8,11 +8,6 @@
 
 import Foundation
 
-/// What `HomeView` reads and calls.
-///
-/// Inputs are the three `load*` methods, outputs the two section states — the MVVM shape
-/// the team standards ask for. The protocol is what lets a preview drive the screen into
-/// any state without a service behind it.
 @MainActor
 protocol HomeViewModelProtocol {
   var latestRecipes: SectionState<[RecipeSummary]> { get }

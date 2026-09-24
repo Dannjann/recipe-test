@@ -8,11 +8,7 @@
 
 import SwiftUI
 
-/// Renders the three states a section can be in that are not its content, and hands the
-/// fourth to its caller.
-///
-/// `minHeight` holds the section's footprint across all four cases, so the page below it
-/// does not jump as each section resolves at its own pace.
+/// `minHeight` holds the section's footprint so the page below does not jump as it resolves.
 struct SectionStateView<Value: Equatable, Content: View>: View {
   let state: SectionState<Value>
   let minHeight: CGFloat
@@ -43,10 +39,7 @@ struct SectionStateView<Value: Equatable, Content: View>: View {
 // MARK: - Subviews
 
 private extension SectionStateView {
-  /// Most failures reach here as `AppError.unknown`, whose `localizedDescription` is the
-  /// same "Something went wrong" this view would otherwise print above it. Printing one
-  /// sentence twice reads like a bug in the app, so the generic heading is only added
-  /// when the error actually says something the heading does not.
+  /// `AppError.unknown` describes itself with the heading, so printing both repeats a sentence.
   func failure(description: String) -> some View {
     let heading = String(localized: .Shared.sharedErrorSomethingWentWrong)
 

@@ -8,15 +8,8 @@
 
 import SwiftUI
 
-/// One tile in Home's Explore by Category grid: a square photograph with the category
-/// name beneath it.
-///
-/// `baseWidth` is what three columns, 20pt page margins and 14pt gutters leave on the
-/// narrowest phone the app supports. The grid scales it and adapts its column count
-/// rather than squashing the label.
+/// `baseWidth` is what three columns, 20pt margins and 14pt gutters leave on the narrowest phone.
 struct RecipeCategoryTile: View {
-  static let baseWidth: CGFloat = 104
-
   let category: RecipeCategory
   let onTap: SingleResult<RecipeCategory>
 
@@ -37,6 +30,14 @@ struct RecipeCategoryTile: View {
     .accessibilityElement(children: .combine)
     .accessibilityLabel(Text(category.name))
     .accessibilityAddTraits(.isButton)
+  }
+}
+
+// MARK: - Getters
+
+extension RecipeCategoryTile {
+  static var baseWidth: CGFloat {
+    104
   }
 }
 
@@ -70,7 +71,6 @@ private extension RecipeCategoryTile {
   .background(Color.themeColor(.surfacesBackground))
 }
 
-// Review Focus 4: no photograph, and Review Focus 5: a name that does not fit one line.
 #Preview("Tile — no photograph, long name") {
   RecipeCategoryTile(
     category: .init(id: "cat-07", name: "Slow Cooker Dinners", imageURL: nil, recipeCount: 3),

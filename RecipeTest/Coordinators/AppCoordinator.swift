@@ -8,10 +8,7 @@
 
 import SwiftUI
 
-/// The root of the SwiftUI coordinator tree. Owns the `PathRouter` backing the
-/// `NavigationStack` and decides which flow is shown.
-///
-/// One flow today. Branch here on session state once the app has accounts.
+/// Owns the `PathRouter` backing the `NavigationStack` and decides which flow is shown.
 struct AppCoordinator: ViewCoordinator {
   @State private var pathRouter: PathRouter = .init()
 

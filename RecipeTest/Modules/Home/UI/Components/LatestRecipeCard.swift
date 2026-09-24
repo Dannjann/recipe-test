@@ -8,16 +8,8 @@
 
 import SwiftUI
 
-/// One card in Home's Latest Recipes carousel: the photograph, a bottom gradient, and the
-/// title over it.
-///
-/// The prototype's 170x240 is a fixed mock. Here both dimensions scale with the reader's
-/// text size, because the title lives inside the card — a fixed box would clip the very
-/// text somebody enlarged it to read.
+/// Both dimensions scale: the title sits inside the card, so a fixed box would clip it.
 struct LatestRecipeCard: View {
-  static let baseWidth: CGFloat = 170
-  static let baseHeight: CGFloat = 240
-
   let recipe: RecipeSummary
   let onTap: SingleResult<String>
 
@@ -44,6 +36,18 @@ struct LatestRecipeCard: View {
   }
 }
 
+// MARK: - Getters
+
+extension LatestRecipeCard {
+  static var baseWidth: CGFloat {
+    170
+  }
+
+  static var baseHeight: CGFloat {
+    240
+  }
+}
+
 // MARK: - Subviews
 
 private extension LatestRecipeCard {
@@ -56,8 +60,6 @@ private extension LatestRecipeCard {
     .clipped()
   }
 
-  /// The prototype's gradient verbatim: opaque enough at the foot to carry white text,
-  /// gone by two thirds up so the photograph is not dimmed for nothing.
   var gradient: some View {
     LinearGradient(
       stops: [
@@ -77,7 +79,7 @@ private extension LatestRecipeCard {
       .themeTextStyle(.bodyBold)
       .themeColor(.textWhite)
       .multilineTextAlignment(.leading)
-      // Truncating is the thing a reader raised the text size to avoid.
+      // Truncating is what a reader raised the text size to avoid.
       .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
       .padding(16)
   }
@@ -100,7 +102,6 @@ private extension LatestRecipeCard {
     .background(Color.themeColor(.surfacesBackground))
 }
 
-// Review Focus 4: the row has no photograph. The card keeps its shape and its title.
 #Preview("Card — no photograph") {
   LatestRecipeCard(recipe: .init(
     id: "rcp-002",
@@ -118,7 +119,6 @@ private extension LatestRecipeCard {
     .background(Color.themeColor(.surfacesBackground))
 }
 
-// Review Focus 5: a long title at the largest accessibility size.
 #Preview("Card — long title, AX5") {
   LatestRecipeCard(recipe: .init(
     id: "rcp-003",
