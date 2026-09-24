@@ -135,10 +135,7 @@ private extension RecipeSearchInputView {
         fieldGutter
       )
       .frame(minHeight: fieldHeight)
-      .background(
-        Color.themeColor(.surfacesFieldsAndTags),
-        in: .capsule
-      )
+      .fieldCapsule()
     }
     .padding(
       .horizontal,

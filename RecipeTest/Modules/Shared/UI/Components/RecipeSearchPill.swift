@@ -38,10 +38,7 @@ struct RecipeSearchPill: View {
           .horizontal,
           horizontalGutter
         )
-        .background(
-          Color.themeColor(.surfacesFieldsAndTags),
-          in: .capsule
-        )
+        .fieldCapsule()
       }
     )
     .buttonStyle(.plain)
