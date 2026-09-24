@@ -69,10 +69,7 @@ struct RecipeSearchFieldButton: View {
       maxWidth: .infinity,
       minHeight: height
     )
-    .background(
-      Color.themeColor(.surfacesFieldsAndTags),
-      in: .capsule
-    )
+    .fieldCapsule()
   }
 }
 

@@ -38,17 +38,7 @@ struct RecipeSearchPill: View {
           .horizontal,
           horizontalGutter
         )
-        .background(
-          Color.themeColor(.surfacesFieldsAndTags),
-          in: .capsule
-        )
-        .overlay(
-          Capsule()
-            .strokeBorder(
-              Color.themeColor(.bordersDefault),
-              lineWidth: borderWidth
-            )
-        )
+        .fieldCapsule()
       }
     )
     .buttonStyle(.plain)
@@ -78,10 +68,6 @@ private extension RecipeSearchPill {
 
   var horizontalGutter: CGFloat {
     20
-  }
-
-  var borderWidth: CGFloat {
-    1
   }
 
   var searchSymbolName: String {
