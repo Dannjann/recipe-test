@@ -9,8 +9,6 @@
 import SwiftUI
 
 struct RecipeDetailViewCoordinator: ViewCoordinator {
-  @Environment(PathRouter.self) private var pathRouter
-
   @State private var viewModel: RecipeDetailViewModel
 
   init(
@@ -24,18 +22,7 @@ struct RecipeDetailViewCoordinator: ViewCoordinator {
   }
 
   var body: some View {
-    RecipeDetailView(
-      viewModel: viewModel,
-      onBackTap: handleBackTap()
-    )
-  }
-}
-
-// MARK: - Handlers
-
-private extension RecipeDetailViewCoordinator {
-  func handleBackTap() -> VoidResult {
-    { pathRouter.pop() }
+    RecipeDetailView(viewModel: viewModel)
   }
 }
 

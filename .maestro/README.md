@@ -27,7 +27,7 @@ differently in every localisation. Identifiers read *screen, element, kind*:
 | `recipe-list-view-mode-grid-button` / `-list-button` | The results view-mode toggle |
 | `recipe-list-card-<recipe id>` | One result, in either presentation |
 | `recipe-list-facet-chip-remove-button` | A filter chip |
-| `recipe-detail-back-button` | The detail screen's floating back button |
+| `BackButton` | The detail screen's back item. UIKit's own identifier for the system back button, not one this project sets |
 | `recipe-search-field-button` | The overlay's search field, which opens the typing screen |
 | `recipe-search-field-clear-button` | Clears the text held in that field |
 | `recipe-search-close-button` | Dismisses the overlay, discarding the draft |

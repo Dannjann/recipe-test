@@ -1,0 +1,21 @@
+# A recipe's detail screen is reached and left by the interactive swipe, not only by the
+# back button. The screen drew its own navigation bar once and hid the system one, which
+# took the swipe with it — this is the flow that would have caught that.
+appId: com.danjan.recipe
+---
+- launchApp
+
+- tapOn:
+    id: "home-category-tile-cat-04"
+- tapOn:
+    id: "recipe-list-card-rcp-034"
+- assertVisible: "Ingredients"
+
+# Dragged in from the left edge, the detail screen pops back to its list.
+- swipe:
+    start: 1%, 50%
+    end: 95%, 50%
+- assertVisible:
+    id: "recipe-list-result-count-label"
+- assertVisible:
+    id: "recipe-list-card-rcp-034"
