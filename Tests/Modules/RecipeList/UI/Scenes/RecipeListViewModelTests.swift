@@ -296,8 +296,6 @@ struct RecipeListViewModelPagingTests {
     #expect(service.recipes.requests.filter { $0.page.index == 2 }.count == 1)
   }
 
-  /// A page of rows the list already holds adds no new tail row, so nothing would ever ask
-  /// again. The pager has to stop deliberately rather than sit on a cursor nobody polls.
   @Test
   func loadNextPageIfNeeded_aPageOfNothingNew_stopsThePagerRatherThanStranding() async {
     let service = RecipeListPageFactory.twoPageService(secondPageIDs: ["rcp-001"])
@@ -314,8 +312,6 @@ struct RecipeListViewModelPagingTests {
     #expect(sut.nextPageErrorText == nil)
   }
 
-  /// The guard that clears this flag must not depend on `loadFirstPage` happening to run
-  /// next — a search overlay bumping the generation would otherwise stick the footer.
   @Test
   func loadNextPageIfNeeded_supersededMidFlight_leavesNoSpinner() async {
     let service = MockRecipeService()
@@ -490,9 +486,6 @@ struct RecipeListViewModelFacetTests {
     #expect(service.recipes.lastRequest?.query.category == "Vegan")
   }
 
-  /// The removal happens *inside* the second page's response, so the page is provably still
-  /// in flight when the query changes under it. Racing the two with `async let` would leave
-  /// the interleaving to the scheduler, and the test would pass or fail by luck.
   @Test
   func remove_whileAPageIsInFlight_discardsThatPage() async {
     let service = MockRecipeService()
@@ -543,8 +536,7 @@ struct RecipeListViewModelFacetTests {
 
 // MARK: - Helpers
 
-/// Lets one stubbed response re-enter the view model exactly once, to prove the in-flight
-/// guard holds without a sleep or a continuation.
+/// Lets one stubbed response re-enter the view model exactly once.
 actor Reentry {
   private var hasRun = false
 

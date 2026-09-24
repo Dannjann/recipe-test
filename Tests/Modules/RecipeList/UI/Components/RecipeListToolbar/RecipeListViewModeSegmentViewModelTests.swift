@@ -37,7 +37,6 @@ struct RecipeListViewModeSegmentViewModelTests {
     ).foregroundColorStyle == .textPrimary)
   }
 
-  /// These exact strings are what `.maestro/switch-result-layout.yaml` taps on.
   @Test
   func accessibilityIdentifier_isTheOneTheFlowsSelectOn() {
     #expect(RecipeListViewModeSegmentViewModel(

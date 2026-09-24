@@ -8,14 +8,7 @@
 
 import Foundation
 
-/// One filter a results list shows as a removable chip.
-///
-/// `category` and `searchText` are deliberately absent: both are already the list's title,
-/// and a chip that removed the category would leave the list showing everything under a
-/// heading that still said "Desserts". `sort` is absent because the user never sets it.
-///
-/// `vegetarian` carries its value because `RecipeQuery.isVegetarian` is `Bool?` and the
-/// encoder keeps `false` — a filter the user set, not an absence.
+/// `category` and `searchText` are absent: both are already the list's title.
 nonisolated enum RecipeQueryFacet: Hashable {
   case vegetarian(Bool)
   case servings(RecipeServings)

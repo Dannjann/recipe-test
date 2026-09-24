@@ -24,8 +24,7 @@ struct RecipeListResults: View {
       SectionStateView(
         state: viewModel.recipes,
         minHeight: minHeight,
-        // Never reached: `.empty` is answered above, because this list's empty state offers
-        // to clear the filters and `SectionStateView` only models a retry.
+        // Never reached: `.empty` is answered above.
         emptyMessage: viewModel.emptyTitle,
         onRetryTap: { Task { await viewModel.loadFirstPage() } },
         content: { grid($0) }
@@ -113,16 +112,14 @@ private extension RecipeListResults {
     )
   }
 
-  /// A sibling of the row rather than a modifier on it: hung off the row, switching view mode
-  /// would tear it down and the restarted task would fetch a page nobody scrolled for.
+  /// A sibling, not a modifier: hung off the row, switching view mode would restart the task.
   func pagingTrigger(for card: RecipeCardViewModel) -> some View {
     Color.clear
       .frame(height: pagingTriggerHeight)
       .task { await viewModel.loadNextPageIfNeeded(after: card.id) }
   }
 
-  /// A `matchedGeometryEffect` would be inert: one view holds each id in both modes, so there
-  /// is no second view to interpolate against. The two presentations cross-fade instead.
+  /// A `matchedGeometryEffect` would be inert: one view holds each id in both modes.
   @ViewBuilder
   func row(for card: RecipeCardViewModel) -> some View {
     switch viewModel.viewMode {

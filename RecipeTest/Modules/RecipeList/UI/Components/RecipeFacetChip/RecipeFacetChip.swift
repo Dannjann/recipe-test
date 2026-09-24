@@ -67,8 +67,7 @@ private extension RecipeFacetChip {
     "xmark"
   }
 
-  /// The glyph alone is about 15pt across; the whole chip is the button so the target
-  /// clears 44pt without the capsule growing to match.
+  /// The whole chip is the button, so the target clears 44pt without the capsule growing.
   var minimumTargetSize: CGFloat {
     44
   }

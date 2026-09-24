@@ -19,8 +19,7 @@ nonisolated extension RecipeFacetChipViewModel {
     facet
   }
 
-  /// `RecipeServings.rawValue` is already the display string the prototype shows — "1", "2",
-  /// "4", "6+" — which is why the fourth option is an enum and not an `Int`.
+  /// `RecipeServings.rawValue` is already the display string — "1", "2", "4", "6+".
   var label: String {
     switch facet {
     case let .vegetarian(isVegetarian):

@@ -8,9 +8,7 @@
 
 import Foundation
 
-/// A struct rather than an `@Observable` class: `SectionState` constrains its value to
-/// `Equatable`, which a struct over a `Hashable` summary gets for free, and there is no
-/// mutable state here to observe.
+/// A struct, not an `@Observable` class: `SectionState` constrains its value to `Equatable`.
 nonisolated struct RecipeCardViewModel: RecipeCardViewModelProtocol, Equatable {
   let summary: RecipeSummary
 }
@@ -30,8 +28,7 @@ nonisolated extension RecipeCardViewModel {
     summary.heroImageURL
   }
 
-  /// The API stores cuisine lower-cased ("italian") and category title-cased ("Pasta"),
-  /// while the prototype prints both capitalised.
+  /// The API stores cuisine lower-cased ("italian"); the prototype prints it capitalised.
   var cuisineAndCategory: String? {
     let parts = [
       summary.cuisine?.localizedCapitalized,

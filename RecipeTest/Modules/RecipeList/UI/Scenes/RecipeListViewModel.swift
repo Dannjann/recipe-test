@@ -8,8 +8,7 @@
 
 import Foundation
 
-/// Titling is all an entry point changes, so it is overridable and each entry point
-/// subclasses rather than being handed an enum to branch on.
+/// Titling is all an entry point changes, so each one subclasses rather than being injected.
 @Observable
 class RecipeListViewModel: RecipeListViewModelProtocol {
   private(set) var recipes: SectionState<[RecipeCardViewModel]> = .loading
@@ -123,8 +122,7 @@ private extension RecipeListViewModel {
 // MARK: - Inputs
 
 extension RecipeListViewModel {
-  /// SwiftUI restarts the screen's `.task` on the way back from a pushed recipe; reloading
-  /// there would discard every page after the first and lose the scroll position.
+  /// SwiftUI restarts the screen's `.task` on the way back from a pushed recipe.
   func loadFirstPageIfNeeded() async {
     guard !hasLoadedOnce else { return }
 

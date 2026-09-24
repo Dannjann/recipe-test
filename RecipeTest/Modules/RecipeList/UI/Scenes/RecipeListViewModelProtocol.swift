@@ -8,8 +8,7 @@
 
 import Foundation
 
-/// Concrete row view models rather than their protocols: `SectionState` needs `Equatable` and
-/// `ForEach` needs `Identifiable`, neither of which an array of existentials satisfies.
+/// Concrete row view models, not protocols: an array of existentials is not `Equatable`.
 @MainActor
 protocol RecipeListViewModelProtocol: AnyObject, Observable {
   var title: String { get }
