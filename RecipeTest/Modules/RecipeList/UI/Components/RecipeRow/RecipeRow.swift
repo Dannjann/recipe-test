@@ -12,6 +12,8 @@ struct RecipeRow: View {
   let viewModel: any RecipeCardViewModelProtocol
   let onTap: SingleResult<RecipeSummary>
 
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
   @ScaledMetric(relativeTo: .body) private var scaledThumbnailSize: CGFloat = RecipeRow.baseThumbnailSize
 
   var body: some View {
@@ -83,20 +85,41 @@ private extension RecipeRow {
   var thumbnailCornerRadius: CGFloat {
     14
   }
+
+  var titleLineLimit: Int {
+    2
+  }
 }
 
 // MARK: - Subviews
 
 private extension RecipeRow {
+  /// `reservesSpace` holds both lines whether the name fills them or not, so a row is the
+  /// same height whichever recipe it carries. At accessibility sizes truncating is what a
+  /// reader raised the text size to avoid.
+  @ViewBuilder
+  var title: some View {
+    let text = Text(viewModel.title)
+      .themeTextStyle(.subheadlineSemibold)
+      .themeColor(.textPrimary)
+      .multilineTextAlignment(.leading)
+
+    if dynamicTypeSize.isAccessibilitySize {
+      text
+    } else {
+      text.lineLimit(
+        titleLineLimit,
+        reservesSpace: true
+      )
+    }
+  }
+
   var details: some View {
     VStack(
       alignment: .leading,
       spacing: textSpacing
     ) {
-      Text(viewModel.title)
-        .themeTextStyle(.subheadlineSemibold)
-        .themeColor(.textPrimary)
-        .multilineTextAlignment(.leading)
+      title
 
       if let cuisineAndCategory = viewModel.cuisineAndCategory {
         Text(cuisineAndCategory)

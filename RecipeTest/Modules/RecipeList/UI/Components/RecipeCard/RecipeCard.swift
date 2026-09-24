@@ -12,6 +12,8 @@ struct RecipeCard: View {
   let viewModel: any RecipeCardViewModelProtocol
   let onTap: SingleResult<RecipeSummary>
 
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
   var body: some View {
     Button(
       action: { onTap(viewModel.summary) },
@@ -53,20 +55,42 @@ private extension RecipeCard {
   var cornerRadius: CGFloat {
     20
   }
+
+  var titleLineLimit: Int {
+    2
+  }
 }
 
 // MARK: - Subviews
 
 private extension RecipeCard {
+  /// `reservesSpace` holds both lines whether the name fills them or not, so two cards in a
+  /// grid row are the same height. At accessibility sizes the grid is a single column, so
+  /// nothing sits alongside to line up with, and truncating is what a reader raised the text
+  /// size to avoid.
+  @ViewBuilder
+  var title: some View {
+    let text = Text(viewModel.title)
+      .themeTextStyle(.subheadlineSemibold)
+      .themeColor(.textPrimary)
+      .multilineTextAlignment(.leading)
+
+    if dynamicTypeSize.isAccessibilitySize {
+      text
+    } else {
+      text.lineLimit(
+        titleLineLimit,
+        reservesSpace: true
+      )
+    }
+  }
+
   var details: some View {
     VStack(
       alignment: .leading,
       spacing: contentSpacing
     ) {
-      Text(viewModel.title)
-        .themeTextStyle(.subheadlineSemibold)
-        .themeColor(.textPrimary)
-        .multilineTextAlignment(.leading)
+      title
 
       RecipeCardMetadata(viewModel: viewModel)
     }
