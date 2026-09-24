@@ -78,7 +78,7 @@ struct RecipeSearchInputView: View {
     // One owner for every fetch: a retry bumps the token instead of starting an unstructured
     // task that would outlive the screen and race the next keystroke.
     .task(id: taskToken) { await viewModel.update(text: text) }
-    .onAppear { isFocused = true }
+    .task { await focusFieldAfterTransition() }
   }
 }
 
@@ -87,6 +87,20 @@ struct RecipeSearchInputView: View {
 private extension RecipeSearchInputView {
   var taskToken: String {
     "\(retryToken)-\(text)"
+  }
+}
+
+// MARK: - Focus
+
+private extension RecipeSearchInputView {
+  /// Not `onAppear`: taking first responder while the zoom transition is still running makes
+  /// the push restart, so the screen grows out of the field, snaps back to it, and grows
+  /// again. Waiting for the transition to settle costs the keyboard a beat and buys a push
+  /// that only ever moves one way.
+  func focusFieldAfterTransition() async {
+    try? await Task.sleep(for: focusDelay)
+
+    isFocused = true
   }
 }
 
@@ -177,6 +191,11 @@ private extension RecipeSearchInputView {
 
   var minimumTargetSize: CGFloat {
     44
+  }
+
+  /// Measured on the zoom push rather than guessed: comfortably past the frame it settles on.
+  var focusDelay: Duration {
+    .milliseconds(350)
   }
 
   var backSymbolName: String {
