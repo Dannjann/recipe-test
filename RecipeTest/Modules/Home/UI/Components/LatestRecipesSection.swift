@@ -23,13 +23,22 @@ struct LatestRecipesSection: View {
       emptyMessage: .Home.homeLatestRecipesEmpty,
       onRetryTap: { Task { await viewModel.loadLatestRecipes() } }
     ) { recipes in
-      LatestRecipeCarousel(recipes: recipes, onRecipeTap: onRecipeTap)
+      LatestRecipeCarousel(
+        recipes: recipes,
+        onRecipeTap: onRecipeTap
+      )
     }
   }
 }
 
 #Preview {
-  LatestRecipesSection(viewModel: MockHomeViewModel.loaded(), onRecipeTap: { _ in })
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.themeColor(.surfacesBackground))
+  LatestRecipesSection(
+    viewModel: MockHomeViewModel.loaded(),
+    onRecipeTap: { _ in }
+  )
+  .frame(
+    maxWidth: .infinity,
+    maxHeight: .infinity
+  )
+  .background(Color.themeColor(.surfacesBackground))
 }

@@ -15,12 +15,21 @@ struct RecipeCategoryGrid: View {
   @ScaledMetric(relativeTo: .body) private var tileWidth: CGFloat = RecipeCategoryTile.baseWidth
 
   var body: some View {
-    LazyVGrid(columns: columns, spacing: 18) {
+    LazyVGrid(
+      columns: columns,
+      spacing: 18
+    ) {
       ForEach(categories) { category in
-        RecipeCategoryTile(category: category, onTap: onCategoryTap)
+        RecipeCategoryTile(
+          category: category,
+          onTap: onCategoryTap
+        )
       }
     }
-    .padding(.horizontal, 20)
+    .padding(
+      .horizontal,
+      20
+    )
   }
 }
 
@@ -29,12 +38,21 @@ struct RecipeCategoryGrid: View {
 private extension RecipeCategoryGrid {
   /// Adaptive, not a fixed three: the tile has to shed columns at accessibility sizes.
   var columns: [GridItem] {
-    [GridItem(.adaptive(minimum: tileWidth), spacing: 14)]
+    [GridItem(
+      .adaptive(minimum: tileWidth),
+      spacing: 14
+    )]
   }
 }
 
 #Preview {
-  RecipeCategoryGrid(categories: MockHomeViewModel.sampleCategories, onCategoryTap: { _ in })
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.themeColor(.surfacesBackground))
+  RecipeCategoryGrid(
+    categories: MockHomeViewModel.sampleCategories,
+    onCategoryTap: { _ in }
+  )
+  .frame(
+    maxWidth: .infinity,
+    maxHeight: .infinity
+  )
+  .background(Color.themeColor(.surfacesBackground))
 }

@@ -23,7 +23,10 @@ struct LatestRecipeCard: View {
       onTap(recipe.id)
     } label: {
       photograph
-        .frame(width: width, height: height)
+        .frame(
+          width: width,
+          height: height
+        )
         .overlay(alignment: .bottom) { gradient }
         .overlay(alignment: .bottomLeading) { title }
         .clipShape(.rect(cornerRadius: 28))
@@ -56,16 +59,28 @@ private extension LatestRecipeCard {
       Color.themeColor(.surfacesBackground3)
     }
     .aspectRatio(contentMode: .fill)
-    .frame(width: width, height: height)
+    .frame(
+      width: width,
+      height: height
+    )
     .clipped()
   }
 
   var gradient: some View {
     LinearGradient(
       stops: [
-        .init(color: .black.opacity(0), location: 0.35),
-        .init(color: .black.opacity(0.3), location: 0.6),
-        .init(color: .black.opacity(0.8), location: 1),
+        .init(
+          color: .black.opacity(0),
+          location: 0.35
+        ),
+        .init(
+          color: .black.opacity(0.3),
+          location: 0.6
+        ),
+        .init(
+          color: .black.opacity(0.8),
+          location: 1
+        ),
       ],
       startPoint: .top,
       endPoint: .bottom
@@ -86,23 +101,47 @@ private extension LatestRecipeCard {
 }
 
 #Preview("Card") {
-  LatestRecipeCard(recipe: .dummy(), onTap: { _ in })
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.themeColor(.surfacesBackground))
+  LatestRecipeCard(
+    recipe: .dummy(),
+    onTap: { _ in }
+  )
+  .frame(
+    maxWidth: .infinity,
+    maxHeight: .infinity
+  )
+  .background(Color.themeColor(.surfacesBackground))
 }
 
 #Preview("No photograph") {
-  LatestRecipeCard(recipe: .dummy(title: "Pão de Queijo", heroImageURL: nil), onTap: { _ in })
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.themeColor(.surfacesBackground))
+  LatestRecipeCard(
+    recipe: .dummy(
+      title: "Pão de Queijo",
+      heroImageURL: nil
+    ),
+    onTap: { _ in }
+  )
+  .frame(
+    maxWidth: .infinity,
+    maxHeight: .infinity
+  )
+  .background(Color.themeColor(.surfacesBackground))
 }
 
 #Preview("Long title, AX5") {
   LatestRecipeCard(
-    recipe: .dummy(title: "Slow-Braised Beef Short Rib with Gremolata and Soft Polenta", heroImageURL: nil),
+    recipe: .dummy(
+      title: "Slow-Braised Beef Short Rib with Gremolata and Soft Polenta",
+      heroImageURL: nil
+    ),
     onTap: { _ in }
   )
-  .environment(\.dynamicTypeSize, .accessibility5)
-  .frame(maxWidth: .infinity, maxHeight: .infinity)
+  .environment(
+    \.dynamicTypeSize,
+    .accessibility5
+  )
+  .frame(
+    maxWidth: .infinity,
+    maxHeight: .infinity
+  )
   .background(Color.themeColor(.surfacesBackground))
 }

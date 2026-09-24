@@ -25,18 +25,33 @@ struct HomeSearchPill: View {
           .themeColor(.textPrimary)
           .lineLimit(1)
       }
-      .frame(maxWidth: .infinity, minHeight: height)
-      .padding(.horizontal, 20)
-      .background(Color.themeColor(.surfacesBackground2), in: .capsule)
+      .frame(
+        maxWidth: .infinity,
+        minHeight: height
+      )
+      .padding(
+        .horizontal,
+        20
+      )
+      .background(
+        Color.themeColor(.surfacesBackground2),
+        in: .capsule
+      )
     }
     .buttonStyle(.plain)
     .cardShadow()
-    .padding(.horizontal, 20)
+    .padding(
+      .horizontal,
+      20
+    )
   }
 }
 
 #Preview {
   HomeSearchPill(onTap: {})
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .frame(
+      maxWidth: .infinity,
+      maxHeight: .infinity
+    )
     .background(Color.themeColor(.surfacesBackground))
 }

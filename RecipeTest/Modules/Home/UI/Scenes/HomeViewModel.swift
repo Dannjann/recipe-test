@@ -50,7 +50,10 @@ extension HomeViewModel {
     do {
       let page = try await recipeService.getRecipes(
         query: RecipeQuery(sort: .latest),
-        page: Page(index: 1, size: latestRecipesPageSize)
+        page: Page(
+          index: 1,
+          size: latestRecipesPageSize
+        )
       )
 
       guard generation == latestRecipesGeneration else { return }
@@ -59,7 +62,10 @@ extension HomeViewModel {
     } catch {
       guard generation == latestRecipesGeneration else { return }
 
-      latestRecipes = state(for: error, keeping: latestRecipes)
+      latestRecipes = state(
+        for: error,
+        keeping: latestRecipes
+      )
     }
   }
 
@@ -77,7 +83,10 @@ extension HomeViewModel {
     } catch {
       guard generation == categoriesGeneration else { return }
 
-      categories = state(for: error, keeping: categories)
+      categories = state(
+        for: error,
+        keeping: categories
+      )
     }
   }
 }
@@ -95,7 +104,10 @@ private extension HomeViewModel {
   }
 
   /// SwiftUI cancels `.task` on disappear; that must not paint an error.
-  func state<Value>(for error: any Error, keeping current: SectionState<Value>) -> SectionState<Value> {
+  func state<Value>(
+    for error: any Error,
+    keeping current: SectionState<Value>
+  ) -> SectionState<Value> {
     guard !error.isCancellation else { return current }
 
     return .failed(error.localizedDescription)

@@ -21,7 +21,10 @@ final class MockRecipeService: RecipeServiceProtocol {
   let categories: MockAPICall<Void, [RecipeCategory]>
 
   init(
-    recipes: RecipeListPage = RecipeListPage(recipes: [.dummy()], meta: .dummy()),
+    recipes: RecipeListPage = RecipeListPage(
+      recipes: [.dummy()],
+      meta: .dummy()
+    ),
     recipe: Recipe? = nil,
     categories: [RecipeCategory] = [.dummy()]
   ) {
@@ -52,8 +55,14 @@ final class MockRecipeService: RecipeServiceProtocol {
 // MARK: - RecipeServiceProtocol
 
 extension MockRecipeService {
-  func getRecipes(query: RecipeQuery, page: Page) async throws -> RecipeListPage {
-    try await recipes.invoke(RecipesRequest(query: query, page: page))
+  func getRecipes(
+    query: RecipeQuery,
+    page: Page
+  ) async throws -> RecipeListPage {
+    try await recipes.invoke(RecipesRequest(
+      query: query,
+      page: page
+    ))
   }
 
   func getRecipe(id: String) async throws -> Recipe {

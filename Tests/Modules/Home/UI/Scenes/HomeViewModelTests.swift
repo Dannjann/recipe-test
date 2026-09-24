@@ -16,7 +16,10 @@ struct HomeViewModelTests {
   @Test
   func loadContent_bothSucceed_loadsBothSections() async {
     let service = MockRecipeService(
-      recipes: RecipeListPage(recipes: [.dummy(id: "rcp-001")], meta: .dummy()),
+      recipes: RecipeListPage(
+        recipes: [.dummy(id: "rcp-001")],
+        meta: .dummy()
+      ),
       categories: [.dummy(id: "cat-01")]
     )
     let sut = HomeViewModel(recipeService: service)
@@ -35,7 +38,10 @@ struct HomeViewModelTests {
     await sut.loadContent()
 
     #expect(service.recipes.lastRequest?.query.sort == .latest)
-    #expect(service.recipes.lastRequest?.page == Page(index: 1, size: 6))
+    #expect(service.recipes.lastRequest?.page == Page(
+      index: 1,
+      size: 6
+    ))
   }
 
   @Test
@@ -65,7 +71,10 @@ struct HomeViewModelTests {
   @Test
   func loadContent_noRows_reportsEmptyRatherThanAnEmptyLoad() async {
     let service = MockRecipeService(
-      recipes: RecipeListPage(recipes: [], meta: .dummy()),
+      recipes: RecipeListPage(
+        recipes: [],
+        meta: .dummy()
+      ),
       categories: []
     )
     let sut = HomeViewModel(recipeService: service)
@@ -83,7 +92,10 @@ struct HomeViewModelTests {
     let sut = HomeViewModel(recipeService: service)
     await sut.loadContent()
 
-    service.recipes.returns(RecipeListPage(recipes: [.dummy(id: "rcp-002")], meta: .dummy()))
+    service.recipes.returns(RecipeListPage(
+      recipes: [.dummy(id: "rcp-002")],
+      meta: .dummy()
+    ))
     await sut.loadLatestRecipes()
 
     #expect(sut.latestRecipes.value?.map(\.id) == ["rcp-002"])
@@ -100,7 +112,10 @@ struct HomeViewModelTests {
     service.recipes.responds { _ in
       await observed.record(sut.latestRecipes)
 
-      return RecipeListPage(recipes: [.dummy()], meta: .dummy())
+      return RecipeListPage(
+        recipes: [.dummy()],
+        meta: .dummy()
+      )
     }
     await sut.loadLatestRecipes()
 
@@ -117,7 +132,10 @@ struct HomeViewModelTests {
     service.recipes.responds { _ in
       await observed.record(sut.latestRecipes)
 
-      return RecipeListPage(recipes: [.dummy()], meta: .dummy())
+      return RecipeListPage(
+        recipes: [.dummy()],
+        meta: .dummy()
+      )
     }
     await sut.loadContent()
 
@@ -192,7 +210,10 @@ struct HomeViewModelTests {
     let slow = Task { await sut.loadLatestRecipes() }
     await slowStarted.wait()
 
-    service.recipes.returns(RecipeListPage(recipes: [.dummy(id: "fresh")], meta: .dummy()))
+    service.recipes.returns(RecipeListPage(
+      recipes: [.dummy(id: "fresh")],
+      meta: .dummy()
+    ))
     await sut.loadLatestRecipes()
     slowMayFinish.signal()
     await slow.value

@@ -15,10 +15,22 @@ struct HomeSectionHeader: View {
     Text(title)
       .themeTextStyle(.title2)
       .themeColor(.textPrimary)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(.horizontal, 20)
-      .padding(.top, 30)
-      .padding(.bottom, 14)
+      .frame(
+        maxWidth: .infinity,
+        alignment: .leading
+      )
+      .padding(
+        .horizontal,
+        20
+      )
+      .padding(
+        .top,
+        30
+      )
+      .padding(
+        .bottom,
+        14
+      )
       .accessibilityAddTraits(.isHeader)
   }
 }
@@ -28,6 +40,9 @@ struct HomeSectionHeader: View {
     HomeSectionHeader(title: .Home.homeLatestRecipesTitle)
     HomeSectionHeader(title: .Home.homeCategoriesTitle)
   }
-  .frame(maxWidth: .infinity, maxHeight: .infinity)
+  .frame(
+    maxWidth: .infinity,
+    maxHeight: .infinity
+  )
   .background(Color.themeColor(.surfacesBackground))
 }

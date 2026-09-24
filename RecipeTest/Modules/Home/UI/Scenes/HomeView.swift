@@ -16,22 +16,38 @@ struct HomeView: View {
 
   var body: some View {
     ScrollView(.vertical) {
-      VStack(alignment: .leading, spacing: 0) {
+      VStack(
+        alignment: .leading,
+        spacing: 0
+      ) {
         logo
 
         HomeSearchPill(onTap: onSearchTap)
 
         HomeSectionHeader(title: .Home.homeLatestRecipesTitle)
-        LatestRecipesSection(viewModel: viewModel, onRecipeTap: onRecipeTap)
+
+        LatestRecipesSection(
+          viewModel: viewModel,
+          onRecipeTap: onRecipeTap
+        )
 
         HomeSectionHeader(title: .Home.homeCategoriesTitle)
-        CategoriesSection(viewModel: viewModel, onCategoryTap: onCategoryTap)
+        CategoriesSection(
+          viewModel: viewModel,
+          onCategoryTap: onCategoryTap
+        )
       }
-      .padding(.bottom, 40)
+      .padding(
+        .bottom,
+        40
+      )
     }
     .scrollIndicators(.hidden)
     .background(Color.themeColor(.surfacesBackground))
-    .toolbarVisibility(.hidden, for: .navigationBar)
+    .toolbarVisibility(
+      .hidden,
+      for: .navigationBar
+    )
     .refreshable { await viewModel.loadContent() }
     .task { await viewModel.loadContent() }
   }
@@ -45,9 +61,18 @@ private extension HomeView {
       .resizable()
       .scaledToFit()
       .frame(width: 112)
-      .padding(.leading, 20)
-      .padding(.top, 8)
-      .padding(.bottom, 20)
+      .padding(
+        .leading,
+        20
+      )
+      .padding(
+        .top,
+        8
+      )
+      .padding(
+        .bottom,
+        20
+      )
       .accessibilityLabel(Text(.Home.homeLogoAccessibilityLabel))
       .accessibilityAddTraits(.isHeader)
   }
@@ -106,5 +131,8 @@ private extension HomeView {
       onCategoryTap: { _ in }
     )
   }
-  .environment(\.dynamicTypeSize, .accessibility3)
+  .environment(
+    \.dynamicTypeSize,
+    .accessibility3
+  )
 }

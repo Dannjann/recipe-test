@@ -21,13 +21,22 @@ struct CategoriesSection: View {
       emptyMessage: .Home.homeCategoriesEmpty,
       onRetryTap: { Task { await viewModel.loadCategories() } }
     ) { categories in
-      RecipeCategoryGrid(categories: categories, onCategoryTap: onCategoryTap)
+      RecipeCategoryGrid(
+        categories: categories,
+        onCategoryTap: onCategoryTap
+      )
     }
   }
 }
 
 #Preview {
-  CategoriesSection(viewModel: MockHomeViewModel.loaded(), onCategoryTap: { _ in })
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.themeColor(.surfacesBackground))
+  CategoriesSection(
+    viewModel: MockHomeViewModel.loaded(),
+    onCategoryTap: { _ in }
+  )
+  .frame(
+    maxWidth: .infinity,
+    maxHeight: .infinity
+  )
+  .background(Color.themeColor(.surfacesBackground))
 }

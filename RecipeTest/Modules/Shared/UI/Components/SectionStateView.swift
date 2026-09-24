@@ -22,13 +22,20 @@ struct SectionStateView<Value: Equatable, Content: View>: View {
     case .loading:
       ProgressView()
         .tint(.themeColor(.iconsBrandDefault))
-        .frame(maxWidth: .infinity, minHeight: minHeight)
+        .frame(
+          maxWidth: .infinity,
+          minHeight: minHeight
+        )
 
     case let .loaded(value):
       content(value)
 
     case .empty:
-      message(title: Text(emptyMessage), description: nil, showsRetry: false)
+      message(
+        title: Text(emptyMessage),
+        description: nil,
+        showsRetry: false
+      )
 
     case let .failed(description):
       failure(description: description)
@@ -50,7 +57,11 @@ private extension SectionStateView {
     )
   }
 
-  func message(title: Text, description: Text?, showsRetry: Bool) -> some View {
+  func message(
+    title: Text,
+    description: Text?,
+    showsRetry: Bool
+  ) -> some View {
     VStack(spacing: 12) {
       title
         .themeTextStyle(.bodyBold)
@@ -64,13 +75,22 @@ private extension SectionStateView {
       }
 
       if showsRetry {
-        Button(String(localized: .Shared.sharedRetry), action: onRetryTap)
-          .themeTextStyle(.bodyBold)
-          .foregroundStyle(.themeColor(.textBrandDefault))
+        Button(
+          String(localized: .Shared.sharedRetry),
+          action: onRetryTap
+        )
+        .themeTextStyle(.bodyBold)
+        .foregroundStyle(.themeColor(.textBrandDefault))
       }
     }
-    .frame(maxWidth: .infinity, minHeight: minHeight)
-    .padding(.horizontal, 20)
+    .frame(
+      maxWidth: .infinity,
+      minHeight: minHeight
+    )
+    .padding(
+      .horizontal,
+      20
+    )
   }
 }
 
