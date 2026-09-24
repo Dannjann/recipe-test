@@ -98,7 +98,11 @@ private extension RecipeSearchInputView {
   /// again. Waiting for the transition to settle costs the keyboard a beat and buys a push
   /// that only ever moves one way.
   func focusFieldAfterTransition() async {
-    try? await Task.sleep(for: focusDelay)
+    do {
+      try await Task.sleep(for: focusDelay)
+    } catch {
+      return
+    }
 
     isFocused = true
   }
