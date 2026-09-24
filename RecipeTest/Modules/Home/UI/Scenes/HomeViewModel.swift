@@ -18,7 +18,7 @@ final class HomeViewModel: HomeViewModelProtocol {
 
   private let recipeService: RecipeServiceProtocol
 
-  init(recipeService: RecipeServiceProtocol = AppContainer.shared.recipeService) {
+  init(recipeService: RecipeServiceProtocol) {
     self.recipeService = recipeService
   }
 }
