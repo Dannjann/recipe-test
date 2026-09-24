@@ -150,6 +150,34 @@ struct RecipeListViewModelTests {
   }
 
   @Test
+  func loadFirstPageIfNeeded_onASecondAppearance_keepsThePagesAlreadyLoaded() async {
+    let service = RecipeListPageFactory.twoPageService()
+    let sut = RecipeListViewModelFactory.make(service: service)
+    await sut.loadFirstPageIfNeeded()
+    await sut.loadNextPageIfNeeded(after: "rcp-001")
+    let callsBeforeReturning = service.recipes.callCount
+
+    // Coming back from a pushed recipe re-runs the screen's `.task`.
+    await sut.loadFirstPageIfNeeded()
+
+    #expect(service.recipes.callCount == callsBeforeReturning)
+    #expect(sut.recipes.value?.map(\.id) == ["rcp-001", "rcp-002"])
+  }
+
+  @Test
+  func loadFirstPageIfNeeded_afterAFailure_triesAgain() async {
+    let service = MockRecipeService()
+    service.recipes.fails(with: AppError.unknown)
+    let sut = RecipeListViewModelFactory.make(service: service)
+    await sut.loadFirstPageIfNeeded()
+    service.recipes.returns(RecipeListPageFactory.page(ids: ["rcp-001"]))
+
+    await sut.loadFirstPageIfNeeded()
+
+    #expect(sut.recipes.value?.map(\.id) == ["rcp-001"])
+  }
+
+  @Test
   func viewMode_startsOnTheGridAndFollowsTheToggle() {
     let sut = RecipeListViewModelFactory.make()
 
@@ -242,6 +270,51 @@ struct RecipeListViewModelPagingTests {
     await sut.loadNextPageIfNeeded(after: "rcp-001")
 
     #expect(service.recipes.requests.filter { $0.page.index == 2 }.count == 1)
+  }
+
+  /// A page of rows the list already holds adds no new tail row, so nothing would ever ask
+  /// again. The pager has to stop deliberately rather than sit on a cursor nobody polls.
+  @Test
+  func loadNextPageIfNeeded_aPageOfNothingNew_stopsThePagerRatherThanStranding() async {
+    let service = RecipeListPageFactory.twoPageService(secondPageIDs: ["rcp-001"])
+    let sut = RecipeListViewModelFactory.make(service: service)
+    await sut.loadFirstPage()
+    await sut.loadNextPageIfNeeded(after: "rcp-001")
+    let callsAfterTheDuplicatePage = service.recipes.callCount
+
+    await sut.loadNextPageIfNeeded(after: "rcp-001")
+
+    #expect(sut.recipes.value?.map(\.id) == ["rcp-001"])
+    #expect(service.recipes.callCount == callsAfterTheDuplicatePage)
+    #expect(sut.isLoadingNextPage == false)
+    #expect(sut.nextPageError == nil)
+  }
+
+  /// The guard that clears this flag must not depend on `loadFirstPage` happening to run
+  /// next — a search overlay bumping the generation would otherwise stick the footer.
+  @Test
+  func loadNextPageIfNeeded_supersededMidFlight_leavesNoSpinner() async {
+    let service = MockRecipeService()
+    let supersede = Reentry()
+    let sut = RecipeListViewModelFactory.make(service: service)
+
+    service.recipes.responds { request in
+      if request.page.index == 2, await supersede.isFirstTime() {
+        await sut.remove(facet: .vegetarian(true))
+      }
+
+      return RecipeListPageFactory.page(
+        ids: [request.page.index == 1 ? "rcp-001" : "rcp-002"],
+        total: 40,
+        currentPage: request.page.index,
+        lastPage: 2
+      )
+    }
+
+    await sut.loadFirstPage()
+    await sut.loadNextPageIfNeeded(after: "rcp-001")
+
+    #expect(sut.isLoadingNextPage == false)
   }
 
   @Test

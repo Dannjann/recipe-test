@@ -61,6 +61,8 @@ import SwiftUI
   // MARK: - Inputs
 
   extension MockRecipeListViewModel {
+    func loadFirstPageIfNeeded() async {}
+
     func loadFirstPage() async {}
 
     func loadNextPageIfNeeded(after cardID: String) async {}

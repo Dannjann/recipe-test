@@ -14,8 +14,6 @@ struct RecipeListResults: View {
 
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-  @Namespace private var cards
-
   var body: some View {
     if case .empty = viewModel.recipes {
       RecipeListEmptyState(
@@ -83,10 +81,7 @@ private extension RecipeListResults {
     ) {
       ForEach(loaded) { card in
         row(for: card)
-          .matchedGeometryEffect(
-            id: card.id,
-            in: cards
-          )
+          .transition(.opacity)
           .task { await viewModel.loadNextPageIfNeeded(after: card.id) }
       }
     }
@@ -100,6 +95,10 @@ private extension RecipeListResults {
     )
   }
 
+  /// A `matchedGeometryEffect` here would be inert: one view holds each id in both modes, so
+  /// there is no second view to interpolate against, while the real swap happens inside this
+  /// builder and tears the cell down beneath it. The spec's named fallback ships instead —
+  /// the column change animates the frame, and the two presentations cross-fade.
   @ViewBuilder
   func row(for card: RecipeCardViewModel) -> some View {
     switch viewModel.viewMode {

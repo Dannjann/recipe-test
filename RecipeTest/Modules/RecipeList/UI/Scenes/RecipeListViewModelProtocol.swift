@@ -34,6 +34,7 @@ protocol RecipeListViewModelProtocol: AnyObject, Observable {
 
   var viewMode: RecipeListViewMode { get }
 
+  func loadFirstPageIfNeeded() async
   func loadFirstPage() async
   func loadNextPageIfNeeded(after cardID: String) async
   func retryNextPage() async

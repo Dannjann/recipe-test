@@ -13,33 +13,37 @@ struct RecipeFacetChip: View {
   let onRemoveTap: SingleResult<RecipeQueryFacet>
 
   var body: some View {
-    HStack(spacing: contentSpacing) {
-      Text(viewModel.label)
-        .themeTextStyle(.captionRegular)
-        .themeColor(.textPrimary)
+    Button(
+      action: { onRemoveTap(viewModel.id) },
+      label: {
+        HStack(spacing: contentSpacing) {
+          Text(viewModel.label)
+            .themeTextStyle(.captionRegular)
+            .themeColor(.textPrimary)
 
-      Button(
-        action: { onRemoveTap(viewModel.id) },
-        label: {
           Image(systemName: removeSymbolName)
             .foregroundStyle(.themeColor(.iconsSecondary))
         }
-      )
-      .buttonStyle(.plain)
-      .accessibilityLabel(Text(viewModel.removeAccessibilityLabel))
-    }
-    .padding(
-      .horizontal,
-      horizontalGutter
+        .padding(
+          .horizontal,
+          horizontalGutter
+        )
+        .padding(
+          .vertical,
+          verticalGutter
+        )
+        .frame(minHeight: minimumTargetSize)
+        .background(
+          Color.themeColor(background),
+          in: .capsule
+        )
+        .contentShape(.capsule)
+      }
     )
-    .padding(
-      .vertical,
-      verticalGutter
-    )
-    .background(
-      Color.themeColor(background),
-      in: .capsule
-    )
+    .buttonStyle(.plain)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(Text(viewModel.removeAccessibilityLabel))
+    .accessibilityAddTraits(.isButton)
   }
 }
 
@@ -64,6 +68,12 @@ private extension RecipeFacetChip {
 
   var removeSymbolName: String {
     "xmark"
+  }
+
+  /// The glyph alone is about 15pt across. The whole chip is the button so the target
+  /// clears the 44pt minimum without the capsule growing to match it visually.
+  var minimumTargetSize: CGFloat {
+    44
   }
 }
 

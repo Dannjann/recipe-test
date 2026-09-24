@@ -22,6 +22,9 @@ nonisolated protocol RecipeCardViewModelProtocol: Identifiable {
   var servingsText: String? { get }
   var accessibilityLabel: String { get }
 
+  /// The list row also prints cuisine and category, so it announces more than the grid card.
+  var rowAccessibilityLabel: String { get }
+
   /// The payload a row tap pushes. Not rendered by anything.
   var summary: RecipeSummary { get }
 }

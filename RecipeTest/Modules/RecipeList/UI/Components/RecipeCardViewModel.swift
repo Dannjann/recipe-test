@@ -75,6 +75,21 @@ nonisolated extension RecipeCardViewModel {
 
     return parts.joined(separator: accessibilitySeparator)
   }
+
+  /// The grid card draws no cuisine or category, so only the row speaks them — otherwise a
+  /// VoiceOver user in list mode misses a line every sighted user can read.
+  var rowAccessibilityLabel: String {
+    guard let cuisineAndCategory else { return accessibilityLabel }
+
+    return [
+      title,
+      cuisineAndCategory,
+      cookingTimeText,
+      summary.servings.map { String(localized: .RecipeList.recipeListCardServingsAccessibilityLabel($0)) },
+    ]
+    .compactMap(\.self)
+    .joined(separator: accessibilitySeparator)
+  }
 }
 
 // MARK: - Getters > Constants

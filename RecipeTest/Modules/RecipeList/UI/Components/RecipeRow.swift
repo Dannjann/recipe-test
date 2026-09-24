@@ -14,7 +14,7 @@ struct RecipeRow: View {
   let viewModel: any RecipeCardViewModelProtocol
   let onTap: SingleResult<RecipeSummary>
 
-  @ScaledMetric(relativeTo: .body) private var thumbnailSize: CGFloat = RecipeRow.baseThumbnailSize
+  @ScaledMetric(relativeTo: .body) private var scaledThumbnailSize: CGFloat = RecipeRow.baseThumbnailSize
 
   var body: some View {
     Button(
@@ -53,7 +53,7 @@ struct RecipeRow: View {
     .buttonStyle(.plain)
     .cardShadow()
     .accessibilityElement(children: .combine)
-    .accessibilityLabel(Text(viewModel.accessibilityLabel))
+    .accessibilityLabel(Text(viewModel.rowAccessibilityLabel))
     .accessibilityAddTraits(.isButton)
   }
 }
@@ -67,6 +67,19 @@ extension RecipeRow {
 }
 
 private extension RecipeRow {
+  /// Clamped rather than left to scale freely: at AX5 the raw scale takes 88pt past 270pt,
+  /// which on a 393pt screen leaves the title about two characters of width.
+  var thumbnailSize: CGFloat {
+    min(
+      scaledThumbnailSize,
+      maxThumbnailSize
+    )
+  }
+
+  var maxThumbnailSize: CGFloat {
+    132
+  }
+
   var contentSpacing: CGFloat {
     12
   }

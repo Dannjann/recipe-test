@@ -109,6 +109,33 @@ struct RecipeCardViewModelTests {
   }
 
   @Test
+  func rowAccessibilityLabel_announcesTheCuisineAndCategoryTheRowPrints() {
+    let sut = RecipeCardViewModel(summary: .dummy(
+      title: "Chicken Adobo",
+      category: "Meal",
+      cuisine: "filipino",
+      totalTimeMinutes: 45,
+      servings: 4
+    ))
+
+    #expect(sut.rowAccessibilityLabel == "Chicken Adobo, Filipino · Meal, 45 min, serves 4")
+  }
+
+  @Test
+  func rowAccessibilityLabel_withNothingToPrint_matchesTheCardsLabel() {
+    let sut = RecipeCardViewModel(summary: .dummy(
+      title: "Sinangag",
+      category: nil,
+      cuisine: nil,
+      totalTimeMinutes: nil,
+      servings: nil
+    ))
+
+    #expect(sut.rowAccessibilityLabel == sut.accessibilityLabel)
+    #expect(sut.rowAccessibilityLabel == "Sinangag")
+  }
+
+  @Test
   func identity_isTheRecipeID() {
     let sut = RecipeCardViewModel(summary: .dummy(id: "rcp-042"))
 

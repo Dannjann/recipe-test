@@ -291,6 +291,13 @@ off scrolling would be the product bending to the fixture.
   again.
 - `remove(facet:)` and `clearFacets()` rewrite the query, reset the cursor, and run
   `loadFirstPage()`. Rows are discarded; the count and chips are recomputed from the response.
+- The screen's `.task` calls `loadFirstPageIfNeeded()`, which is a no-op once a first page has
+  landed. SwiftUI cancels that task when a pushed recipe covers the list and restarts it on the
+  way back; reloading there would throw away every page after the first along with the user's
+  place. A failed or cancelled first load does retry on return.
+- A page that appends nothing — every row already held — stops the pager instead of advancing
+  the cursor. The trigger is the tail row appearing, so with no new tail row nothing would ever
+  ask again and the cursor would sit there unpolled.
 
 ### Cancellation
 
@@ -410,11 +417,18 @@ matching the prototype:
 Both read from the same `RecipeCardViewModelProtocol`; the grid simply does not draw
 `cuisineAndCategory`.
 
-The prototype morphs each card from its old box to its new one. The SwiftUI equivalent is
-`matchedGeometryEffect` in a namespace owned by `RecipeListResults`, keyed on the card's id,
-with the column change inside `withAnimation`. If matching across two different view types
-proves unstable, the fallback is a crossfade plus the column change — the spec records which
-one shipped rather than pretending the first choice is guaranteed.
+The prototype morphs each card from its old box to its new one. **The fallback shipped: a
+crossfade plus the animated column change.**
+
+`matchedGeometryEffect` was tried first and removed, because it cannot work at this seam.
+The effect interpolates between two views sharing an id in one transaction; here the
+`ForEach` element identity is stable across the toggle, so exactly one view ever holds each
+id and the modifier resolves to a no-op. The swap that actually happens is one level below
+it — `row(for:)` is a `@ViewBuilder` switch, so changing mode tears down the `RecipeCard`
+subtree and builds a `RecipeRow` at the same identity, beneath the effect that was supposed
+to observe it. Moving the effect inside both branches puts two `isSource: true` views in the
+group during the transition, which SwiftUI warns about. So the cell frame animates with the
+column change and the two presentations cross-fade.
 
 ### Empty and failed
 
@@ -441,15 +455,19 @@ with `textInverted`. Card names are `subheadlineSemibold`, metadata `captionRegu
 count `footnoteRegular`.
 
 Every numeric constant is a computed `var` in a `// MARK: - Getters` extension. Anything tied
-to text size — the pill's height, the chip's height, the row's thumbnail — is `@ScaledMetric`.
+to text size — the pill's height, the row's thumbnail — is `@ScaledMetric`, and the
+thumbnail is clamped: at AX5 the raw scale takes 88pt past 270pt and leaves the title about
+two characters of width on a 393pt screen. The chip sizes from its padding rather than a
+scaled height, so it grows with its own text.
 At accessibility sizes both modes render a single column — grid mode keeps the card
 presentation and simply stops being two-up, so the toggle still visibly changes something —
 and the row's metadata wraps instead of truncating.
 
 ### Accessibility
 
-Each card and row is one combined element labelled by the card view model's
-`accessibilityLabel`, with `.isButton`. That label is the card's non-nil parts joined with
+Each card and row is one combined element labelled by the card view model, with `.isButton`
+— the grid card by `accessibilityLabel`, the row by `rowAccessibilityLabel`, which also
+speaks the `cuisine · category` line only the row prints. That label is the card's non-nil parts joined with
 ", " — title, cooking time, then `recipeList.card.servings.accessibilityLabel` — giving
 "Chicken Adobo, 45 min, serves 4", or just "Chicken Adobo" for a recipe carrying neither
 metric. The visible servings text is the bare number beside an icon; only the spoken form

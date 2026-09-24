@@ -21,6 +21,7 @@ final class RecipeListViewModel: RecipeListViewModelProtocol {
   /// `nil` once the last page has landed — the pager reads this as "stop asking".
   private var nextPage: Page?
   private var resultTotal: Int?
+  private var hasLoadedOnce = false
   private var generation = 0
 
   private let recipeService: RecipeServiceProtocol
@@ -122,6 +123,16 @@ private extension RecipeListViewModel {
 // MARK: - Inputs
 
 extension RecipeListViewModel {
+  /// What the screen's `.task` calls. SwiftUI cancels that task when the list is covered by a
+  /// pushed recipe and restarts it on the way back; reloading there would discard every page
+  /// after the first and drop the user's scroll position. A failed or cancelled first load
+  /// leaves this false, so returning to the screen does retry.
+  func loadFirstPageIfNeeded() async {
+    guard !hasLoadedOnce else { return }
+
+    await loadFirstPage()
+  }
+
   func loadFirstPage() async {
     generation += 1
     let generation = self.generation
@@ -142,6 +153,7 @@ extension RecipeListViewModel {
       resultTotal = page.meta.total
       recipes = .rows(page.recipes.map(RecipeCardViewModel.init))
       nextPage = page.hasLoadedAllData ? nil : firstPage.next
+      hasLoadedOnce = true
     } catch {
       guard generation == self.generation else { return }
 
@@ -198,6 +210,10 @@ private extension RecipeListViewModel {
     let generation = self.generation
     isLoadingNextPage = true
 
+    // Unconditional: a stale-generation return would otherwise leave the footer spinning,
+    // and today it is only cleared by `loadFirstPage` happening to run next.
+    defer { isLoadingNextPage = false }
+
     do {
       let loaded = try await recipeService.getRecipes(
         query: request.query,
@@ -209,13 +225,14 @@ private extension RecipeListViewModel {
       guard generation == self.generation else { return }
 
       resultTotal = loaded.meta.total
-      append(loaded.recipes)
-      nextPage = loaded.hasLoadedAllData ? nil : page.next
-      isLoadingNextPage = false
+      let didAppend = append(loaded.recipes)
+
+      // A page that adds nothing new means the server is repeating itself. Advancing the
+      // cursor would strand the list: the trigger is the tail row appearing, and without a
+      // new tail row nothing ever asks again.
+      nextPage = loaded.hasLoadedAllData || !didAppend ? nil : page.next
     } catch {
       guard generation == self.generation else { return }
-
-      isLoadingNextPage = false
 
       // Leaving the screen must not leave a failure waiting for the next visit.
       guard !error.isCancellation else { return }
@@ -226,7 +243,9 @@ private extension RecipeListViewModel {
 
   /// Ids already held are dropped rather than appended: a repeated row would put a duplicate
   /// id into a `ForEach`, and SwiftUI's diffing stops being able to tell the rows apart.
-  func append(_ summaries: [RecipeSummary]) {
+  /// Returns whether the page actually added anything.
+  @discardableResult
+  func append(_ summaries: [RecipeSummary]) -> Bool {
     let current = recipes.value ?? []
     let known = Set(current.map(\.id))
     let appended = summaries
@@ -234,5 +253,7 @@ private extension RecipeListViewModel {
       .map(RecipeCardViewModel.init)
 
     recipes = .rows(current + appended)
+
+    return !appended.isEmpty
   }
 }

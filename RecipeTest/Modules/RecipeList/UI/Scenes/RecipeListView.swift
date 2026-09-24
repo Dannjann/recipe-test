@@ -60,7 +60,7 @@ struct RecipeListView: View {
       .visible,
       for: .navigationBar
     )
-    .task { await viewModel.loadFirstPage() }
+    .task { await viewModel.loadFirstPageIfNeeded() }
   }
 }
 
