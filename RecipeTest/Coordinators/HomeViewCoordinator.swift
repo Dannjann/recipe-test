@@ -41,9 +41,7 @@ private extension HomeViewCoordinator {
   }
 
   var handleCategoryTap: SingleResult<RecipeCategory> {
-    { _ in
-      // TODO: Push the category listing scene once it exists
-    }
+    { pathRouter.push(Route.Recipe.list(.category($0))) }
   }
 }
 

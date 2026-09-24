@@ -27,5 +27,6 @@ import Foundation
 enum Route {
   enum Recipe: Hashable {
     case detail(RecipeSummary)
+    case list(RecipeListRequest)
   }
 }
