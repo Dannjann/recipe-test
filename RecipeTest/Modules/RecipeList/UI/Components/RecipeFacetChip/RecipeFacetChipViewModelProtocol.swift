@@ -6,14 +6,15 @@
 //  Copyright © 2026 Danjan. All rights reserved.
 //
 
-import Foundation
+import SwiftUI
 
 nonisolated protocol RecipeFacetChipViewModelProtocol: Identifiable {
   var id: RecipeQueryFacet { get }
   var label: String { get }
   var removeAccessibilityLabel: String { get }
 
-  /// The prototype tints an excluded ingredient differently. A presentation fact the view
-  /// model owns, so the chip branches on a flag rather than inspecting the facet.
-  var isExclusion: Bool { get }
+  var backgroundColorStyle: Color.ThemeColor { get }
+
+  /// Not derived from the label: an identifier a flow selects on must not move with the copy.
+  var accessibilityIdentifier: String { get }
 }

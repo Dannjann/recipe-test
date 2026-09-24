@@ -8,8 +8,6 @@
 
 import SwiftUI
 
-/// Sits below the last loaded row. A failed page is reported here and never over the rows the
-/// user already has.
 struct RecipeListFooter: View {
   let viewModel: any RecipeListViewModelProtocol
   let onRetryTap: VoidResult
@@ -23,8 +21,8 @@ struct RecipeListFooter: View {
           minHeight: minHeight
         )
         .accessibilityLabel(Text(.RecipeList.recipeListFooterLoadingAccessibilityLabel))
-    } else if let nextPageError = viewModel.nextPageError {
-      failure(nextPageError)
+    } else if let nextPageErrorText = viewModel.nextPageErrorText {
+      failure(nextPageErrorText)
     }
   }
 }

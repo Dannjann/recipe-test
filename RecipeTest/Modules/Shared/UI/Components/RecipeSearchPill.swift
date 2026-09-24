@@ -8,10 +8,7 @@
 
 import SwiftUI
 
-/// A `Button`, not a `TextField`: it opens the search overlay rather than accepting input.
-///
-/// The placeholder arrives as a `String` rather than a `LocalizedStringResource` because on
-/// the results list it is a value a view model produced, splicing in a category name.
+/// Opens the search overlay rather than accepting input.
 struct RecipeSearchPill: View {
   let placeholder: String
   let onTap: VoidResult
@@ -64,6 +61,8 @@ extension RecipeSearchPill {
     56
   }
 }
+
+// MARK: - Getters > Constants
 
 private extension RecipeSearchPill {
   var contentSpacing: CGFloat {

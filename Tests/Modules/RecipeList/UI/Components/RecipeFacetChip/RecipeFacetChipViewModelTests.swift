@@ -6,8 +6,8 @@
 //  Copyright © 2026 Danjan. All rights reserved.
 //
 
-import Foundation
 @testable import RecipeTest
+import SwiftUI
 import Testing
 
 struct RecipeFacetChipViewModelTests {
@@ -52,10 +52,33 @@ struct RecipeFacetChipViewModelTests {
   }
 
   @Test
-  func isExclusion_isTrueOnlyForAnExcludedIngredient() {
-    #expect(RecipeFacetChipViewModel(facet: .exclude("peanuts")).isExclusion)
-    #expect(RecipeFacetChipViewModel(facet: .include("garlic")).isExclusion == false)
-    #expect(RecipeFacetChipViewModel(facet: .vegetarian(true)).isExclusion == false)
+  func backgroundColorStyle_tintsOnlyAnExcludedIngredientDifferently() {
+    #expect(RecipeFacetChipViewModel(facet: .exclude("peanuts")).backgroundColorStyle == .complementaryShade3)
+    #expect(RecipeFacetChipViewModel(facet: .include("garlic")).backgroundColorStyle == .surfacesFieldsAndTags)
+    #expect(RecipeFacetChipViewModel(facet: .vegetarian(true)).backgroundColorStyle == .surfacesFieldsAndTags)
+  }
+
+  @Test
+  func accessibilityIdentifier_distinguishesOneChipFromAnother() {
+    #expect(
+      RecipeFacetChipViewModel(facet: .include("garlic")).accessibilityIdentifier
+        == "recipe-list-facet-chip-include-garlic-remove-button"
+    )
+    #expect(
+      RecipeFacetChipViewModel(facet: .exclude("garlic")).accessibilityIdentifier
+        == "recipe-list-facet-chip-exclude-garlic-remove-button"
+    )
+    #expect(
+      RecipeFacetChipViewModel(facet: .vegetarian(true)).accessibilityIdentifier
+        == "recipe-list-facet-chip-vegetarian-remove-button"
+    )
+  }
+
+  @Test
+  func accessibilityIdentifier_doesNotTrackTheLabel() {
+    let sut = RecipeFacetChipViewModel(facet: .searchesSteps)
+
+    #expect(sut.accessibilityIdentifier.contains(sut.label) == false)
   }
 
   @Test

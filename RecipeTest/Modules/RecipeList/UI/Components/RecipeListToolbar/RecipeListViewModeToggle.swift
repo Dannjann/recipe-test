@@ -8,21 +8,16 @@
 
 import SwiftUI
 
-/// The prototype's segmented control, indicator and all. A pair of `Button`s rather than a
-/// `Picker`, because the selected capsule slides between them.
 struct RecipeListViewModeToggle: View {
-  let selected: RecipeListViewMode
+  let viewModel: any RecipeListViewModelProtocol
   let onSelect: SingleResult<RecipeListViewMode>
 
   @Namespace private var indicator
 
   var body: some View {
-    HStack(spacing: 0) {
-      ForEach(
-        RecipeListViewMode.allCases,
-        id: \.self
-      ) { mode in
-        segment(for: mode)
+    HStack(spacing: trackSpacing) {
+      ForEach(viewModel.viewModeSegments) { segment in
+        segmentView(for: segment)
       }
     }
     .padding(trackInset)
@@ -32,7 +27,7 @@ struct RecipeListViewModeToggle: View {
     )
     .animation(
       .snappy,
-      value: selected
+      value: viewModel.viewMode
     )
     .accessibilityElement(children: .contain)
   }
@@ -43,6 +38,10 @@ struct RecipeListViewModeToggle: View {
 private extension RecipeListViewModeToggle {
   var contentSpacing: CGFloat {
     6
+  }
+
+  var trackSpacing: CGFloat {
+    0
   }
 
   var trackInset: CGFloat {
@@ -60,56 +59,22 @@ private extension RecipeListViewModeToggle {
   var indicatorID: String {
     "selected"
   }
-
-  func label(for mode: RecipeListViewMode) -> LocalizedStringResource {
-    switch mode {
-    case .grid:
-      .RecipeList.recipeListViewModeGrid
-
-    case .list:
-      .RecipeList.recipeListViewModeList
-    }
-  }
-
-  /// Deliberately not the localized label: an identifier a flow selects on must not move
-  /// when the copy does.
-  func identifierSuffix(for mode: RecipeListViewMode) -> String {
-    switch mode {
-    case .grid:
-      "grid"
-
-    case .list:
-      "list"
-    }
-  }
-
-  func symbolName(for mode: RecipeListViewMode) -> String {
-    switch mode {
-    case .grid:
-      "square.grid.2x2"
-
-    case .list:
-      "list.bullet"
-    }
-  }
 }
 
 // MARK: - Subviews
 
 private extension RecipeListViewModeToggle {
-  func segment(for mode: RecipeListViewMode) -> some View {
-    let isSelected = mode == selected
-
-    return Button(
-      action: { onSelect(mode) },
+  func segmentView(for segment: any RecipeListViewModeSegmentViewModelProtocol) -> some View {
+    Button(
+      action: { onSelect(segment.mode) },
       label: {
         HStack(spacing: contentSpacing) {
-          Image(systemName: symbolName(for: mode))
+          Image(systemName: segment.symbolName)
 
-          Text(label(for: mode))
+          Text(segment.label)
             .themeTextStyle(.captionBold)
         }
-        .foregroundStyle(.themeColor(isSelected ? .textInverted : .textPrimary))
+        .foregroundStyle(.themeColor(segment.foregroundColorStyle))
         .padding(
           .horizontal,
           horizontalGutter
@@ -118,36 +83,39 @@ private extension RecipeListViewModeToggle {
           .vertical,
           verticalGutter
         )
-        .background {
-          if isSelected {
-            Capsule()
-              .fill(Color.themeColor(.surfacesBrandDefault))
-              .matchedGeometryEffect(
-                id: indicatorID,
-                in: indicator
-              )
-          }
-        }
+        .background { indicatorView(for: segment) }
       }
     )
     .buttonStyle(.plain)
-    .accessibilityIdentifier("recipe-list-view-mode-\(identifierSuffix(for: mode))-button")
-    .accessibilityLabel(Text(label(for: mode)))
-    .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+    .accessibilityIdentifier(segment.accessibilityIdentifier)
+    .accessibilityLabel(Text(segment.label))
+    .accessibilityAddTraits(segment.showsIndicator ? [.isButton, .isSelected] : .isButton)
+  }
+
+  @ViewBuilder
+  func indicatorView(for segment: any RecipeListViewModeSegmentViewModelProtocol) -> some View {
+    if segment.showsIndicator {
+      Capsule()
+        .fill(Color.themeColor(.surfacesBrandDefault))
+        .matchedGeometryEffect(
+          id: indicatorID,
+          in: indicator
+        )
+    }
   }
 }
 
 #if DEBUG
   #Preview("Grid selected") {
     RecipeListViewModeToggle(
-      selected: .grid,
+      viewModel: MockRecipeListViewModel.loaded(),
       onSelect: { _ in }
     )
   }
 
   #Preview("List selected") {
     RecipeListViewModeToggle(
-      selected: .list,
+      viewModel: MockRecipeListViewModel.loaded(viewMode: .list),
       onSelect: { _ in }
     )
   }

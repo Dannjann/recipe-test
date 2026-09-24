@@ -6,7 +6,7 @@
 //  Copyright © 2026 Danjan. All rights reserved.
 //
 
-import Foundation
+import SwiftUI
 
 nonisolated struct RecipeFacetChipViewModel: RecipeFacetChipViewModelProtocol {
   let facet: RecipeQueryFacet
@@ -46,11 +46,42 @@ nonisolated extension RecipeFacetChipViewModel {
     String(localized: .RecipeList.recipeListFacetRemoveAccessibilityLabel(label))
   }
 
+  var backgroundColorStyle: Color.ThemeColor {
+    isExclusion ? .complementaryShade3 : .surfacesFieldsAndTags
+  }
+
+  var accessibilityIdentifier: String {
+    "recipe-list-facet-chip-\(identifierSuffix)-remove-button"
+  }
+}
+
+// MARK: - Getters > Constants
+
+private nonisolated extension RecipeFacetChipViewModel {
   var isExclusion: Bool {
     if case .exclude = facet {
       return true
     }
 
     return false
+  }
+
+  var identifierSuffix: String {
+    switch facet {
+    case .vegetarian:
+      "vegetarian"
+
+    case .servings:
+      "servings"
+
+    case let .include(ingredient):
+      "include-\(ingredient)"
+
+    case let .exclude(ingredient):
+      "exclude-\(ingredient)"
+
+    case .searchesSteps:
+      "searches-steps"
+    }
   }
 }

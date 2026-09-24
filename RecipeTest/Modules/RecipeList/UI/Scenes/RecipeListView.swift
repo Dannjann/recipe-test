@@ -32,7 +32,7 @@ struct RecipeListView: View {
 
         RecipeListToolbar(
           viewModel: viewModel,
-          onViewModeSelect: { viewModel.select(viewMode: $0) }
+          onViewModeSelect: { viewMode in viewModel.select(viewMode: viewMode) }
         )
 
         RecipeListResults(
@@ -53,8 +53,7 @@ struct RecipeListView: View {
     .scrollIndicators(.hidden)
     .background(Color.themeColor(.surfacesBackground))
     .navigationTitle(viewModel.title)
-    // The large title collapsing to inline is the prototype's sticky bar, and keeping the
-    // system back button is what keeps the interactive swipe-back the detail screen lost.
+    // The system back button is what keeps the interactive swipe-back the detail screen lost.
     .navigationBarTitleDisplayMode(.large)
     .toolbarVisibility(
       .visible,

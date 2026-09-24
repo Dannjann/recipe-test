@@ -157,7 +157,6 @@ struct RecipeListViewModelTests {
     await sut.loadNextPageIfNeeded(after: "rcp-001")
     let callsBeforeReturning = service.recipes.callCount
 
-    // Coming back from a pushed recipe re-runs the screen's `.task`.
     await sut.loadFirstPageIfNeeded()
 
     #expect(service.recipes.callCount == callsBeforeReturning)
@@ -175,6 +174,31 @@ struct RecipeListViewModelTests {
     await sut.loadFirstPageIfNeeded()
 
     #expect(sut.recipes.value?.map(\.id) == ["rcp-001"])
+  }
+
+  @Test
+  func viewModeSegments_markOnlyTheSelectedMode() {
+    let sut = RecipeListViewModelFactory.make()
+
+    #expect(sut.viewModeSegments.map(\.mode) == [.grid, .list])
+    #expect(sut.viewModeSegments.filter(\.isSelected).map(\.mode) == [.grid])
+
+    sut.select(viewMode: .list)
+
+    #expect(sut.viewModeSegments.filter(\.isSelected).map(\.mode) == [.list])
+  }
+
+  @Test
+  func select_viewMode_asksForNothing() async {
+    let service = RecipeListPageFactory.twoPageService()
+    let sut = RecipeListViewModelFactory.make(service: service)
+    await sut.loadFirstPage()
+    let callsBeforeToggling = service.recipes.callCount
+
+    sut.select(viewMode: .list)
+    sut.select(viewMode: .grid)
+
+    #expect(service.recipes.callCount == callsBeforeToggling)
   }
 
   @Test
@@ -287,7 +311,7 @@ struct RecipeListViewModelPagingTests {
     #expect(sut.recipes.value?.map(\.id) == ["rcp-001"])
     #expect(service.recipes.callCount == callsAfterTheDuplicatePage)
     #expect(sut.isLoadingNextPage == false)
-    #expect(sut.nextPageError == nil)
+    #expect(sut.nextPageErrorText == nil)
   }
 
   /// The guard that clears this flag must not depend on `loadFirstPage` happening to run
@@ -327,7 +351,7 @@ struct RecipeListViewModelPagingTests {
     await sut.loadNextPageIfNeeded(after: "rcp-001")
 
     #expect(sut.recipes.value?.map(\.id) == ["rcp-001"])
-    #expect(sut.nextPageError != nil)
+    #expect(sut.nextPageErrorText != nil)
     #expect(sut.isLoadingNextPage == false)
   }
 
@@ -362,7 +386,7 @@ struct RecipeListViewModelPagingTests {
     await sut.retryNextPage()
 
     #expect(service.recipes.lastRequest?.page.index == 2)
-    #expect(sut.nextPageError == nil)
+    #expect(sut.nextPageErrorText == nil)
     #expect(sut.recipes.value?.map(\.id) == ["rcp-001", "rcp-002"])
   }
 
@@ -375,7 +399,7 @@ struct RecipeListViewModelPagingTests {
 
     await sut.loadNextPageIfNeeded(after: "rcp-001")
 
-    #expect(sut.nextPageError == nil)
+    #expect(sut.nextPageErrorText == nil)
     #expect(sut.isLoadingNextPage == false)
     #expect(sut.recipes.value?.map(\.id) == ["rcp-001"])
   }
@@ -537,10 +561,27 @@ enum RecipeListViewModelFactory {
     request: RecipeListRequest = .all(),
     service: RecipeServiceProtocol = MockRecipeService()
   ) -> RecipeListViewModel {
-    RecipeListViewModel(
-      request: request,
-      recipeService: service
-    )
+    switch request.title {
+    case let .category(name):
+      CategoryRecipeListViewModel(
+        categoryName: name,
+        query: request.query,
+        recipeService: service
+      )
+
+    case let .search(text):
+      SearchRecipeListViewModel(
+        searchText: text,
+        query: request.query,
+        recipeService: service
+      )
+
+    case .all:
+      RecipeListViewModel(
+        query: request.query,
+        recipeService: service
+      )
+    }
   }
 }
 
@@ -564,7 +605,6 @@ enum RecipeListPageFactory {
     )
   }
 
-  /// Two pages of one row each, so the tail row's id is predictable.
   static func twoPageService(
     firstPageIDs: [String] = ["rcp-001"],
     secondPageIDs: [String] = ["rcp-002"]

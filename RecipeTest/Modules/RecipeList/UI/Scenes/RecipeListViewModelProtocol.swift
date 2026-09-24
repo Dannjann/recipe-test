@@ -8,12 +8,8 @@
 
 import Foundation
 
-/// The concrete `RecipeCardViewModel` and `RecipeFacetChipViewModel` are named here rather
-/// than their protocols because `SectionState` constrains its value to `Equatable`, which an
-/// array of existentials is not. The card and chip *views* still depend on the protocols.
-///
-/// `viewMode` is read-only with a `select` input rather than a settable property, so the
-/// screen keeps the project's callback style and no view needs `@Bindable` over an existential.
+/// Concrete row view models rather than their protocols: `SectionState` needs `Equatable` and
+/// `ForEach` needs `Identifiable`, neither of which an array of existentials satisfies.
 @MainActor
 protocol RecipeListViewModelProtocol: AnyObject, Observable {
   var title: String { get }
@@ -30,9 +26,10 @@ protocol RecipeListViewModelProtocol: AnyObject, Observable {
   var showsClearFiltersButton: Bool { get }
 
   var isLoadingNextPage: Bool { get }
-  var nextPageError: String? { get }
+  var nextPageErrorText: String? { get }
 
   var viewMode: RecipeListViewMode { get }
+  var viewModeSegments: [RecipeListViewModeSegmentViewModel] { get }
 
   func loadFirstPageIfNeeded() async
   func loadFirstPage() async

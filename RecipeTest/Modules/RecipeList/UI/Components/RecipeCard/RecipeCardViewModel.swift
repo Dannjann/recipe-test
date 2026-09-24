@@ -43,25 +43,14 @@ nonisolated extension RecipeCardViewModel {
     return parts.joined(separator: metadataSeparator)
   }
 
-  /// The same expression `RecipeDetailViewModel` uses, so one duration is never spelled two
-  /// ways — the units localize themselves rather than coming from a catalog.
   var cookingTimeText: String? {
-    guard let totalTimeMinutes = summary.totalTimeMinutes else { return nil }
-
-    return Duration
-      .seconds(totalTimeMinutes * 60)
-      .formatted(.units(
-        allowed: [.hours, .minutes],
-        width: .abbreviated
-      ))
+    Duration.cookingTimeText(totalMinutes: summary.totalTimeMinutes)
   }
 
   var servingsText: String? {
     summary.servings.map { String($0) }
   }
 
-  /// The visible servings text is a bare number beside an icon; only the spoken form says
-  /// "serves".
   var accessibilityLabel: String {
     var parts = [title]
 
@@ -76,8 +65,7 @@ nonisolated extension RecipeCardViewModel {
     return parts.joined(separator: accessibilitySeparator)
   }
 
-  /// The grid card draws no cuisine or category, so only the row speaks them — otherwise a
-  /// VoiceOver user in list mode misses a line every sighted user can read.
+  /// The grid card draws no cuisine or category, so only the row speaks them.
   var rowAccessibilityLabel: String {
     guard let cuisineAndCategory else { return accessibilityLabel }
 
@@ -96,10 +84,10 @@ nonisolated extension RecipeCardViewModel {
 
 private nonisolated extension RecipeCardViewModel {
   var metadataSeparator: String {
-    " · "
+    String(localized: .RecipeList.recipeListCardMetadataSeparator)
   }
 
   var accessibilitySeparator: String {
-    ", "
+    String(localized: .RecipeList.recipeListCardAccessibilitySeparator)
   }
 }

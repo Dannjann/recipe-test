@@ -43,6 +43,20 @@ struct RecipeQueryFacetTests {
   }
 
   @Test
+  func activeFacets_aRepeatedIngredient_isOneFacet() {
+    let query = RecipeQuery(
+      includeIngredients: ["garlic", "garlic", "ginger"],
+      excludeIngredients: ["peanuts", "peanuts"]
+    )
+
+    #expect(query.activeFacets == [
+      .include("garlic"),
+      .include("ginger"),
+      .exclude("peanuts"),
+    ])
+  }
+
+  @Test
   func activeFacets_categorySearchTextAndSort_areNotFacets() {
     let query = RecipeQuery(
       searchText: "adobo",

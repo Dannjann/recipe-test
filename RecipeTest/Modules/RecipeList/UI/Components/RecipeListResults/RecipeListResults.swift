@@ -47,15 +47,22 @@ private extension RecipeListResults {
     )
   }
 
-  /// One column in list mode, and one at accessibility sizes whatever the toggle says — a
-  /// two-up grid at those sizes clips the name off every card.
+  /// A two-up grid at accessibility sizes clips the name off every card.
   var columnCount: Int {
     guard
       viewModel.viewMode == .grid,
       !dynamicTypeSize.isAccessibilitySize
-    else { return 1 }
+    else { return singleColumnCount }
 
-    return 2
+    return gridColumnCount
+  }
+
+  var singleColumnCount: Int {
+    1
+  }
+
+  var gridColumnCount: Int {
+    2
   }
 
   var itemSpacing: CGFloat {
@@ -69,6 +76,14 @@ private extension RecipeListResults {
   var minHeight: CGFloat {
     240
   }
+
+  var rowSpacing: CGFloat {
+    0
+  }
+
+  var pagingTriggerHeight: CGFloat {
+    0
+  }
 }
 
 // MARK: - Subviews
@@ -80,9 +95,12 @@ private extension RecipeListResults {
       spacing: itemSpacing
     ) {
       ForEach(loaded) { card in
-        row(for: card)
-          .transition(.opacity)
-          .task { await viewModel.loadNextPageIfNeeded(after: card.id) }
+        VStack(spacing: rowSpacing) {
+          row(for: card)
+            .transition(.opacity)
+
+          pagingTrigger(for: card)
+        }
       }
     }
     .padding(
@@ -95,10 +113,16 @@ private extension RecipeListResults {
     )
   }
 
-  /// A `matchedGeometryEffect` here would be inert: one view holds each id in both modes, so
-  /// there is no second view to interpolate against, while the real swap happens inside this
-  /// builder and tears the cell down beneath it. The spec's named fallback ships instead —
-  /// the column change animates the frame, and the two presentations cross-fade.
+  /// A sibling of the row rather than a modifier on it: hung off the row, switching view mode
+  /// would tear it down and the restarted task would fetch a page nobody scrolled for.
+  func pagingTrigger(for card: RecipeCardViewModel) -> some View {
+    Color.clear
+      .frame(height: pagingTriggerHeight)
+      .task { await viewModel.loadNextPageIfNeeded(after: card.id) }
+  }
+
+  /// A `matchedGeometryEffect` would be inert: one view holds each id in both modes, so there
+  /// is no second view to interpolate against. The two presentations cross-fade instead.
   @ViewBuilder
   func row(for card: RecipeCardViewModel) -> some View {
     switch viewModel.viewMode {

@@ -42,17 +42,8 @@ extension RecipeDetailViewModel {
     detail.value?.description ?? ""
   }
 
-  /// Reproduces the prototype's `fmtTime` — "25 min", "1 hr 25 min" — and localizes the
-  /// units rather than assembling them by hand.
   var cookingTimeText: String? {
-    guard let totalTimeMinutes else { return nil }
-
-    return Duration
-      .seconds(totalTimeMinutes * 60)
-      .formatted(.units(
-        allowed: [.hours, .minutes],
-        width: .abbreviated
-      ))
+    Duration.cookingTimeText(totalMinutes: totalTimeMinutes)
   }
 
   var servingsText: String? {

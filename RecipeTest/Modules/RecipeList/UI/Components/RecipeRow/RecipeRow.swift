@@ -8,8 +8,6 @@
 
 import SwiftUI
 
-/// The list presentation of one result: a thumbnail beside the name, its cuisine and
-/// category, and the same metrics the grid card draws.
 struct RecipeRow: View {
   let viewModel: any RecipeCardViewModelProtocol
   let onTap: SingleResult<RecipeSummary>
@@ -23,23 +21,7 @@ struct RecipeRow: View {
         HStack(spacing: contentSpacing) {
           photograph
 
-          VStack(
-            alignment: .leading,
-            spacing: textSpacing
-          ) {
-            Text(viewModel.title)
-              .themeTextStyle(.subheadlineSemibold)
-              .themeColor(.textPrimary)
-              .multilineTextAlignment(.leading)
-
-            if let cuisineAndCategory = viewModel.cuisineAndCategory {
-              Text(cuisineAndCategory)
-                .themeTextStyle(.captionRegular)
-                .themeColor(.textSecondary)
-            }
-
-            RecipeCardMetadata(viewModel: viewModel)
-          }
+          details
 
           Spacer(minLength: 0)
         }
@@ -67,9 +49,10 @@ extension RecipeRow {
   }
 }
 
+// MARK: - Getters > Constants
+
 private extension RecipeRow {
-  /// Clamped rather than left to scale freely: at AX5 the raw scale takes 88pt past 270pt,
-  /// which on a 393pt screen leaves the title about two characters of width.
+  /// At AX5 the raw scale takes 88pt past 270pt, leaving the title no room on a 393pt screen.
   var thumbnailSize: CGFloat {
     min(
       scaledThumbnailSize,
@@ -105,10 +88,31 @@ private extension RecipeRow {
 // MARK: - Subviews
 
 private extension RecipeRow {
-  var photograph: some View {
-    CachedAsyncImage(url: viewModel.imageURL) {
-      Color.themeColor(.surfacesBackground3)
+  var details: some View {
+    VStack(
+      alignment: .leading,
+      spacing: textSpacing
+    ) {
+      Text(viewModel.title)
+        .themeTextStyle(.subheadlineSemibold)
+        .themeColor(.textPrimary)
+        .multilineTextAlignment(.leading)
+
+      if let cuisineAndCategory = viewModel.cuisineAndCategory {
+        Text(cuisineAndCategory)
+          .themeTextStyle(.captionRegular)
+          .themeColor(.textSecondary)
+      }
+
+      RecipeCardMetadata(viewModel: viewModel)
     }
+  }
+
+  var photograph: some View {
+    CachedAsyncImage(
+      url: viewModel.imageURL,
+      placeholder: { Color.themeColor(.surfacesBackground3) }
+    )
     .aspectRatio(contentMode: .fill)
     .frame(
       width: thumbnailSize,

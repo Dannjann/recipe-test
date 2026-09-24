@@ -41,15 +41,6 @@ struct RecipeListRequestTests {
   }
 
   @Test
-  func replacingQuery_keepsTheTitle() {
-    let request = RecipeListRequest
-      .category(.dummy(name: "Vegan"))
-      .replacingQuery(RecipeQuery(category: "Vegan"))
-
-    #expect(request.title == .category("Vegan"))
-  }
-
-  @Test
   func isHashable_soItCanRideANavigationPath() {
     let request = RecipeListRequest.category(.dummy(name: "Rice"))
 

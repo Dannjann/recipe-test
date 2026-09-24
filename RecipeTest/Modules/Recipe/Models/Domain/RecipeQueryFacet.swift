@@ -39,8 +39,9 @@ nonisolated extension RecipeQuery {
       facets.append(.servings(servings))
     }
 
-    facets.append(contentsOf: includeIngredients.map(RecipeQueryFacet.include))
-    facets.append(contentsOf: excludeIngredients.map(RecipeQueryFacet.exclude))
+    // A repeated ingredient would put the same chip id into a `ForEach` twice.
+    facets.append(contentsOf: includeIngredients.uniqued().map(RecipeQueryFacet.include))
+    facets.append(contentsOf: excludeIngredients.uniqued().map(RecipeQueryFacet.exclude))
 
     if searchesSteps {
       facets.append(.searchesSteps)
@@ -76,7 +77,6 @@ nonisolated extension RecipeQuery {
     return query
   }
 
-  /// Drops every facet and keeps what scopes the list — its category and its search text.
   func clearingFacets() -> RecipeQuery {
     var query = self
     query.isVegetarian = nil

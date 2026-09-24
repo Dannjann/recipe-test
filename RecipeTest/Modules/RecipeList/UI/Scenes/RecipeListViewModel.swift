@@ -8,15 +8,16 @@
 
 import Foundation
 
+/// Titling is all an entry point changes, so it is overridable and each entry point
+/// subclasses rather than being handed an enum to branch on.
 @Observable
-final class RecipeListViewModel: RecipeListViewModelProtocol {
+class RecipeListViewModel: RecipeListViewModelProtocol {
   private(set) var recipes: SectionState<[RecipeCardViewModel]> = .loading
   private(set) var isLoadingNextPage = false
-  private(set) var nextPageError: String?
+  private(set) var nextPageErrorText: String?
   private(set) var viewMode: RecipeListViewMode = .grid
 
-  /// Mutable: removing a facet rewrites the query and reloads, without rebuilding the screen.
-  private var request: RecipeListRequest
+  private var query: RecipeQuery
 
   /// `nil` once the last page has landed — the pager reads this as "stop asking".
   private var nextPage: Page?
@@ -27,45 +28,27 @@ final class RecipeListViewModel: RecipeListViewModelProtocol {
   private let recipeService: RecipeServiceProtocol
 
   init(
-    request: RecipeListRequest,
+    query: RecipeQuery,
     recipeService: RecipeServiceProtocol
   ) {
-    self.request = request
+    self.query = query
     self.recipeService = recipeService
+  }
+
+  // MARK: - Overridables
+
+  var title: String {
+    String(localized: .RecipeList.recipeListTitleAll)
+  }
+
+  var searchPlaceholder: String {
+    String(localized: .RecipeList.recipeListSearchPlaceholderAll)
   }
 }
 
 // MARK: - Getters
 
 extension RecipeListViewModel {
-  var title: String {
-    switch request.title {
-    case let .category(name):
-      name
-
-    case .search:
-      String(localized: .RecipeList.recipeListTitleSearchResults)
-
-    case .all:
-      String(localized: .RecipeList.recipeListTitleAll)
-    }
-  }
-
-  var searchPlaceholder: String {
-    switch request.title {
-    case let .category(name):
-      String(localized: .RecipeList.recipeListSearchPlaceholderCategory(name))
-
-    case let .search(text):
-      String(localized: .RecipeList.recipeListSearchPlaceholderSearch(text))
-
-    case .all:
-      String(localized: .RecipeList.recipeListSearchPlaceholderAll)
-    }
-  }
-
-  /// Gated on `isLoaded` rather than cleared by hand on every failure: a count only means
-  /// something beside the rows it counts.
   var resultCountText: String? {
     guard
       recipes.isLoaded,
@@ -76,16 +59,14 @@ extension RecipeListViewModel {
   }
 
   var facetChips: [RecipeFacetChipViewModel] {
-    request.query.activeFacets.map(RecipeFacetChipViewModel.init)
+    query.activeFacets.map(RecipeFacetChipViewModel.init)
   }
 
-  /// One chip removes itself; "Clear all" only earns its place once there are several.
   var showsClearAllChips: Bool {
     facetChips.count > 1
   }
 
-  /// "No recipes match your filters" is a lie when the user set no filter — which is every
-  /// empty category, the only empty state the category entry point can reach today.
+  /// An empty category set no filters, so blaming them would be a lie.
   var emptyTitle: LocalizedStringResource {
     hasFacets
       ? .RecipeList.recipeListEmptyTitle
@@ -99,15 +80,34 @@ extension RecipeListViewModel {
   var showsClearFiltersButton: Bool {
     hasFacets
   }
+
+  var viewModeSegments: [RecipeListViewModeSegmentViewModel] {
+    RecipeListViewMode.allCases.map {
+      RecipeListViewModeSegmentViewModel(
+        mode: $0,
+        isSelected: $0 == viewMode
+      )
+    }
+  }
+}
+
+// MARK: - Getters > Private
+
+private extension RecipeListViewModel {
+  var hasFacets: Bool {
+    !query.activeFacets.isEmpty
+  }
+
+  var lastCardID: String? {
+    guard let cards = recipes.value else { return nil }
+
+    return cards.last?.id
+  }
 }
 
 // MARK: - Getters > Constants
 
 private extension RecipeListViewModel {
-  var hasFacets: Bool {
-    !request.query.activeFacets.isEmpty
-  }
-
   var pageSize: Int {
     20
   }
@@ -123,10 +123,8 @@ private extension RecipeListViewModel {
 // MARK: - Inputs
 
 extension RecipeListViewModel {
-  /// What the screen's `.task` calls. SwiftUI cancels that task when the list is covered by a
-  /// pushed recipe and restarts it on the way back; reloading there would discard every page
-  /// after the first and drop the user's scroll position. A failed or cancelled first load
-  /// leaves this false, so returning to the screen does retry.
+  /// SwiftUI restarts the screen's `.task` on the way back from a pushed recipe; reloading
+  /// there would discard every page after the first and lose the scroll position.
   func loadFirstPageIfNeeded() async {
     guard !hasLoadedOnce else { return }
 
@@ -139,12 +137,12 @@ extension RecipeListViewModel {
     let previous = recipes
     recipes = previous.refreshing
     isLoadingNextPage = false
-    nextPageError = nil
+    nextPageErrorText = nil
     nextPage = nil
 
     do {
       let page = try await recipeService.getRecipes(
-        query: request.query,
+        query: query,
         page: firstPage
       )
 
@@ -161,15 +159,12 @@ extension RecipeListViewModel {
     }
   }
 
-  /// The view reports which row appeared; this decides whether that means anything. Guards
-  /// against a tail row reappearing, a page already in flight, and a failure the user has
-  /// not retried yet.
   func loadNextPageIfNeeded(after cardID: String) async {
     guard
       let nextPage,
       !isLoadingNextPage,
-      nextPageError == nil,
-      recipes.value?.last?.id == cardID
+      nextPageErrorText == nil,
+      lastCardID == cardID
     else { return }
 
     await loadNextPage(nextPage)
@@ -181,19 +176,19 @@ extension RecipeListViewModel {
       !isLoadingNextPage
     else { return }
 
-    nextPageError = nil
+    nextPageErrorText = nil
 
     await loadNextPage(nextPage)
   }
 
   func remove(facet: RecipeQueryFacet) async {
-    request = request.replacingQuery(request.query.removing(facet))
+    query = query.removing(facet)
 
     await loadFirstPage()
   }
 
   func clearFacets() async {
-    request = request.replacingQuery(request.query.clearingFacets())
+    query = query.clearingFacets()
 
     await loadFirstPage()
   }
@@ -210,26 +205,22 @@ private extension RecipeListViewModel {
     let generation = self.generation
     isLoadingNextPage = true
 
-    // Unconditional: a stale-generation return would otherwise leave the footer spinning,
-    // and today it is only cleared by `loadFirstPage` happening to run next.
+    // Unconditional: a stale-generation return would otherwise leave the footer spinning.
     defer { isLoadingNextPage = false }
 
     do {
       let loaded = try await recipeService.getRecipes(
-        query: request.query,
+        query: query,
         page: page
       )
 
-      // A facet was removed while this was in flight: it answers a query the screen no
-      // longer shows, and appending it would mix two result sets.
+      // A facet changed mid-flight: appending now would mix two result sets.
       guard generation == self.generation else { return }
 
       resultTotal = loaded.meta.total
       let didAppend = append(loaded.recipes)
 
-      // A page that adds nothing new means the server is repeating itself. Advancing the
-      // cursor would strand the list: the trigger is the tail row appearing, and without a
-      // new tail row nothing ever asks again.
+      // Without a new tail row nothing would ask again, so stop rather than strand.
       nextPage = loaded.hasLoadedAllData || !didAppend ? nil : page.next
     } catch {
       guard generation == self.generation else { return }
@@ -237,14 +228,11 @@ private extension RecipeListViewModel {
       // Leaving the screen must not leave a failure waiting for the next visit.
       guard !error.isCancellation else { return }
 
-      nextPageError = error.failureDetail ?? String(localized: .Shared.sharedErrorSomethingWentWrong)
+      nextPageErrorText = error.failureDetail ?? String(localized: .Shared.sharedErrorSomethingWentWrong)
     }
   }
 
-  /// Ids already held are dropped rather than appended: a repeated row would put a duplicate
-  /// id into a `ForEach`, and SwiftUI's diffing stops being able to tell the rows apart.
-  /// Returns whether the page actually added anything.
-  @discardableResult
+  /// Drops ids already held: a duplicate in a `ForEach` breaks SwiftUI's diffing.
   func append(_ summaries: [RecipeSummary]) -> Bool {
     let current = recipes.value ?? []
     let known = Set(current.map(\.id))

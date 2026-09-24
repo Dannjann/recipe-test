@@ -1,6 +1,30 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "recipeList.card.accessibilitySeparator": {
+      "comment": "Sits between the parts a results row speaks to VoiceOver.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", "
+          }
+        }
+      }
+    },
+    "recipeList.card.metadataSeparator": {
+      "comment": "Sits between a recipe's cuisine and its category on a results row.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · "
+          }
+        }
+      }
+    },
     "recipeList.card.servings.accessibilityLabel": {
       "extractionState": "manual",
       "localizations": {

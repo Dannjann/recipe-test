@@ -8,7 +8,6 @@
 
 import SwiftUI
 
-/// The grid presentation of one result: a square photograph above the name and metrics.
 struct RecipeCard: View {
   let viewModel: any RecipeCardViewModelProtocol
   let onTap: SingleResult<RecipeSummary>
@@ -23,29 +22,7 @@ struct RecipeCard: View {
         ) {
           photograph
 
-          VStack(
-            alignment: .leading,
-            spacing: contentSpacing
-          ) {
-            Text(viewModel.title)
-              .themeTextStyle(.subheadlineSemibold)
-              .themeColor(.textPrimary)
-              .multilineTextAlignment(.leading)
-
-            RecipeCardMetadata(viewModel: viewModel)
-          }
-          .frame(
-            maxWidth: .infinity,
-            alignment: .leading
-          )
-          .padding(
-            .horizontal,
-            textGutter
-          )
-          .padding(
-            .bottom,
-            textGutter
-          )
+          details
         }
         .background(
           Color.themeColor(.surfacesBackground2),
@@ -81,10 +58,37 @@ private extension RecipeCard {
 // MARK: - Subviews
 
 private extension RecipeCard {
-  var photograph: some View {
-    CachedAsyncImage(url: viewModel.imageURL) {
-      Color.themeColor(.surfacesBackground3)
+  var details: some View {
+    VStack(
+      alignment: .leading,
+      spacing: contentSpacing
+    ) {
+      Text(viewModel.title)
+        .themeTextStyle(.subheadlineSemibold)
+        .themeColor(.textPrimary)
+        .multilineTextAlignment(.leading)
+
+      RecipeCardMetadata(viewModel: viewModel)
     }
+    .frame(
+      maxWidth: .infinity,
+      alignment: .leading
+    )
+    .padding(
+      .horizontal,
+      textGutter
+    )
+    .padding(
+      .bottom,
+      textGutter
+    )
+  }
+
+  var photograph: some View {
+    CachedAsyncImage(
+      url: viewModel.imageURL,
+      placeholder: { Color.themeColor(.surfacesBackground3) }
+    )
     .aspectRatio(contentMode: .fill)
     .frame(maxWidth: .infinity)
     .aspectRatio(

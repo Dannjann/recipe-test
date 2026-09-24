@@ -24,7 +24,7 @@ struct RecipeListToolbar: View {
       Spacer(minLength: 0)
 
       RecipeListViewModeToggle(
-        selected: viewModel.viewMode,
+        viewModel: viewModel,
         onSelect: onViewModeSelect
       )
     }

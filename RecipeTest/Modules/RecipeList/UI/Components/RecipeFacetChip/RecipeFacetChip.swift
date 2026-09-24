@@ -34,7 +34,7 @@ struct RecipeFacetChip: View {
         )
         .frame(minHeight: minimumTargetSize)
         .background(
-          Color.themeColor(background),
+          Color.themeColor(viewModel.backgroundColorStyle),
           in: .capsule
         )
         .contentShape(.capsule)
@@ -42,7 +42,7 @@ struct RecipeFacetChip: View {
     )
     .buttonStyle(.plain)
     .accessibilityElement(children: .ignore)
-    .accessibilityIdentifier("recipe-list-facet-chip-remove-button")
+    .accessibilityIdentifier(viewModel.accessibilityIdentifier)
     .accessibilityLabel(Text(viewModel.removeAccessibilityLabel))
     .accessibilityAddTraits(.isButton)
   }
@@ -51,10 +51,6 @@ struct RecipeFacetChip: View {
 // MARK: - Getters
 
 private extension RecipeFacetChip {
-  var background: Color.ThemeColor {
-    viewModel.isExclusion ? .complementaryShade3 : .surfacesFieldsAndTags
-  }
-
   var contentSpacing: CGFloat {
     6
   }
@@ -71,8 +67,8 @@ private extension RecipeFacetChip {
     "xmark"
   }
 
-  /// The glyph alone is about 15pt across. The whole chip is the button so the target
-  /// clears the 44pt minimum without the capsule growing to match it visually.
+  /// The glyph alone is about 15pt across; the whole chip is the button so the target
+  /// clears 44pt without the capsule growing to match.
   var minimumTargetSize: CGFloat {
     44
   }

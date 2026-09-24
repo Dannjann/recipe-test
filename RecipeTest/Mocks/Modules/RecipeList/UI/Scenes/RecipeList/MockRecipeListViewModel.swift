@@ -20,7 +20,7 @@ import SwiftUI
     var emptyDetail: LocalizedStringResource?
     var showsClearFiltersButton: Bool
     var isLoadingNextPage: Bool
-    var nextPageError: String?
+    var nextPageErrorText: String?
     var viewMode: RecipeListViewMode
 
     init(
@@ -33,7 +33,7 @@ import SwiftUI
       emptyDetail: LocalizedStringResource? = nil,
       showsClearFiltersButton: Bool = false,
       isLoadingNextPage: Bool = false,
-      nextPageError: String? = nil,
+      nextPageErrorText: String? = nil,
       viewMode: RecipeListViewMode = .grid
     ) {
       self.title = title
@@ -45,7 +45,7 @@ import SwiftUI
       self.emptyDetail = emptyDetail
       self.showsClearFiltersButton = showsClearFiltersButton
       self.isLoadingNextPage = isLoadingNextPage
-      self.nextPageError = nextPageError
+      self.nextPageErrorText = nextPageErrorText
       self.viewMode = viewMode
     }
   }
@@ -55,6 +55,15 @@ import SwiftUI
   extension MockRecipeListViewModel {
     var showsClearAllChips: Bool {
       facetChips.count > 1
+    }
+
+    var viewModeSegments: [RecipeListViewModeSegmentViewModel] {
+      RecipeListViewMode.allCases.map {
+        RecipeListViewModeSegmentViewModel(
+          mode: $0,
+          isSelected: $0 == viewMode
+        )
+      }
     }
   }
 
@@ -135,7 +144,7 @@ import SwiftUI
       MockRecipeListViewModel(
         recipes: .loaded(sampleCards),
         resultCountText: "36 recipes",
-        nextPageError: "The Internet connection appears to be offline."
+        nextPageErrorText: "The Internet connection appears to be offline."
       )
     }
   }
@@ -172,7 +181,6 @@ import SwiftUI
       ]
     }
 
-    /// No cooking time and no servings — the row must still draw, and still announce.
     static var bareCard: RecipeCardViewModel {
       RecipeCardViewModel(summary: .dummy(
         id: "rcp-099",
