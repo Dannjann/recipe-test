@@ -11,6 +11,9 @@ import SwiftUI
 /// Pages one photograph at a time. `urls` is allowed to be empty: a recipe with no
 /// photograph anywhere shows the placeholder fill at full height rather than collapsing
 /// and pulling the sheet up over the top bar.
+///
+/// Paged by position rather than by URL: a recipe that repeats a photograph would give two
+/// pages the same identity, and `scrollPosition` the same id to scroll to.
 struct RecipeGallery: View {
   let urls: [URL]
   let accessibilityTitle: String
@@ -78,7 +81,7 @@ private extension RecipeGallery {
   var photographs: some View {
     ScrollView(.horizontal) {
       LazyHStack(spacing: 0) {
-        ForEach(urls, id: \.self) { url in
+        ForEach(Array(urls.enumerated()), id: \.offset) { index, url in
           CachedAsyncImage(url: url) {
             Color.themeColor(.surfacesBackground3)
           }
@@ -86,7 +89,7 @@ private extension RecipeGallery {
           .containerRelativeFrame(.horizontal)
           .frame(height: Self.baseHeight)
           .clipped()
-          .id(urls.firstIndex(of: url) ?? 0)
+          .id(index)
         }
       }
       .scrollTargetLayout()

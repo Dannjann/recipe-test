@@ -44,7 +44,12 @@ private extension RecipeDetailView {
   /// Derived from the gallery's height rather than measured, so a change to the sheet's
   /// overlap or its top paddings has to be re-tuned here.
   var stickyBarThreshold: CGFloat {
-    RecipeGallery.baseHeight - 78
+    RecipeGallery.baseHeight - stickyBarLead
+  }
+
+  /// How far above the gallery's bottom edge the title has already scrolled out of reach.
+  var stickyBarLead: CGFloat {
+    78
   }
 }
 
@@ -71,11 +76,15 @@ private extension RecipeDetailView {
     }
     .scrollIndicators(.hidden)
     .ignoresSafeArea(edges: .top)
-    .onScrollGeometryChange(for: Bool.self) { geometry in
-      geometry.contentOffset.y > stickyBarThreshold
-    } action: { _, isOffscreen in
-      isTitleOffscreen = isOffscreen
-    }
+    .onScrollGeometryChange(
+      for: Bool.self,
+      of: { geometry in
+        geometry.contentOffset.y > stickyBarThreshold
+      },
+      action: { _, isOffscreen in
+        isTitleOffscreen = isOffscreen
+      }
+    )
   }
 
   var topBar: some View {

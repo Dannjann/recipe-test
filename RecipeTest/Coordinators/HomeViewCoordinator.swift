@@ -37,7 +37,7 @@ private extension HomeViewCoordinator {
   }
 
   var handleRecipeTap: SingleResult<RecipeSummary> {
-    { pathRouter.push(Route.Recipe.detail($0)) }
+    { summary in pathRouter.push(Route.Recipe.detail(summary)) }
   }
 
   var handleCategoryTap: SingleResult<RecipeCategory> {

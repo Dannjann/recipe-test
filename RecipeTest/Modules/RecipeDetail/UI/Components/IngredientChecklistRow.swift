@@ -16,36 +16,37 @@ struct IngredientChecklistRow: View {
   let onTap: SingleResult<String>
 
   var body: some View {
-    Button {
-      onTap(ingredient.id)
-    } label: {
-      HStack(
-        alignment: .top,
-        spacing: spacing
-      ) {
-        checkbox
+    Button(
+      action: { onTap(ingredient.id) },
+      label: {
+        HStack(
+          alignment: .top,
+          spacing: spacing
+        ) {
+          checkbox
 
-        label
+          label
 
-        Spacer(minLength: 0)
+          Spacer(minLength: 0)
+        }
+        .padding(
+          .horizontal,
+          horizontalPadding
+        )
+        .padding(
+          .vertical,
+          verticalPadding
+        )
+        .frame(
+          maxWidth: .infinity,
+          alignment: .leading
+        )
+        .background(
+          Color.themeColor(.surfacesBackground3),
+          in: .rect(cornerRadius: cornerRadius)
+        )
       }
-      .padding(
-        .horizontal,
-        horizontalPadding
-      )
-      .padding(
-        .vertical,
-        verticalPadding
-      )
-      .frame(
-        maxWidth: .infinity,
-        alignment: .leading
-      )
-      .background(
-        Color.themeColor(.surfacesBackground3),
-        in: .rect(cornerRadius: cornerRadius)
-      )
-    }
+    )
     .buttonStyle(.plain)
     .accessibilityAddTraits(.isToggle)
     .accessibilityValue(Text(
@@ -116,24 +117,29 @@ private extension IngredientChecklistRow {
   }
 
   var label: some View {
-    quantity
+    labelText
       .themeColor(isChecked ? .textSecondary : .textPrimary)
       .strikethrough(isChecked)
       .multilineTextAlignment(.leading)
   }
 
-  /// One concatenated `Text` rather than two views: the quantity and the name have to
-  /// wrap as a single paragraph, which an `HStack` of two `Text`s will not do.
-  var quantity: Text {
+  /// The quantity and the name as one concatenated `Text` rather than two views: they have
+  /// to wrap as a single paragraph, which an `HStack` of two `Text`s will not do.
+  var labelText: Text {
     guard !ingredient.quantityText.isEmpty else {
-      return Text(ingredient.name)
-        .font(.themeTextStyle(.bodyRegular))
+      return nameText
     }
 
-    return Text(ingredient.quantityText)
+    return quantityText + Text(verbatim: " ") + nameText
+  }
+
+  var quantityText: Text {
+    Text(verbatim: ingredient.quantityText)
       .font(.themeTextStyle(.bodyBold))
-      + Text(" ")
-      + Text(ingredient.name)
+  }
+
+  var nameText: Text {
+    Text(verbatim: ingredient.name)
       .font(.themeTextStyle(.bodyRegular))
   }
 }

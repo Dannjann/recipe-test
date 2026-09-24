@@ -15,12 +15,7 @@ struct AppCoordinator: ViewCoordinator {
   var body: some View {
     NavigationStack(path: $pathRouter.path) {
       HomeViewCoordinator()
-        .navigationDestination(for: Route.Recipe.self) { route in
-          switch route {
-          case let .detail(summary):
-            RecipeDetailViewCoordinator(summary: summary)
-          }
-        }
+        .recipeRoutes()
     }
     .environment(pathRouter)
   }
