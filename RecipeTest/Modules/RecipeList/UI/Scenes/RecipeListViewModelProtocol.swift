@@ -36,5 +36,6 @@ protocol RecipeListViewModelProtocol: AnyObject, Observable {
   func retryNextPage() async
   func remove(facet: RecipeQueryFacet) async
   func clearFacets() async
+  func apply(query: RecipeQuery) async
   func select(viewMode: RecipeListViewMode)
 }

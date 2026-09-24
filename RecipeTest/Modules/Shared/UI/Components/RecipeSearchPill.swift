@@ -39,7 +39,7 @@ struct RecipeSearchPill: View {
           horizontalGutter
         )
         .background(
-          Color.themeColor(.surfacesBackground2),
+          Color.themeColor(.surfacesFieldsAndTags),
           in: .capsule
         )
       }

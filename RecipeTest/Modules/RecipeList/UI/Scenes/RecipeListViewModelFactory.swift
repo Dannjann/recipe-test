@@ -22,9 +22,8 @@ enum RecipeListViewModelFactory {
         recipeService: recipeService
       )
 
-    case let .search(text):
+    case .search:
       SearchRecipeListViewModel(
-        searchText: text,
         query: request.query,
         recipeService: recipeService
       )

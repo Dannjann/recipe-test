@@ -82,6 +82,8 @@ import SwiftUI
 
     func clearFacets() async {}
 
+    func apply(query: RecipeQuery) async {}
+
     func select(viewMode: RecipeListViewMode) {
       self.viewMode = viewMode
     }

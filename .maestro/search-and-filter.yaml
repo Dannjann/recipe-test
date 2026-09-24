@@ -1,0 +1,56 @@
+# Home -> the search overlay -> a filtered results list -> the overlay again, in place.
+# The journey the overlay exists for: the draft nobody applied yet, the apply, and the refresh
+# that must not push a second list on top of the first.
+appId: com.danjan.recipe
+---
+- launchApp
+
+- assertVisible:
+    id: "recipe-search-pill-button"
+- tapOn:
+    id: "recipe-search-pill-button"
+
+# The overlay is up, showing an untouched draft.
+- assertVisible:
+    id: "recipe-search-field-button"
+- assertVisible:
+    id: "recipe-search-submit-button"
+
+# A filter and an ingredient, then run it.
+- tapOn:
+    id: "recipe-search-vegetarian-toggle"
+- tapOn:
+    id: "recipe-search-include-field"
+- inputText: "garlic"
+- tapOn:
+    id: "recipe-search-include-add-button"
+- assertVisible:
+    id: "recipe-search-include-chip-garlic-remove-button"
+- tapOn:
+    id: "recipe-search-submit-button"
+
+# The results list is showing, carrying what was set as removable chips.
+- assertVisible:
+    id: "recipe-list-result-count-label"
+- assertVisible:
+    id: "recipe-search-pill-button"
+
+# Reopening from the list refreshes it in place: one back tap still reaches Home.
+- tapOn:
+    id: "recipe-search-pill-button"
+- assertVisible:
+    id: "recipe-search-clear-all-button"
+- tapOn:
+    id: "recipe-search-clear-all-button"
+- tapOn:
+    id: "recipe-search-submit-button"
+- assertVisible:
+    id: "recipe-list-result-count-label"
+- swipe:
+    start: "1%, 50%"
+    end: "95%, 50%"
+
+- assertVisible:
+    id: "home-category-tile-cat-04"
+- assertNotVisible:
+    id: "recipe-list-result-count-label"

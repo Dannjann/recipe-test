@@ -40,3 +40,6 @@ playground.xcworkspace
 ## Unanchored on purpose: the path differs between this repo and a generated project.
 Secrets.xcconfig
 
+
+# Superpowers execution scratch
+.superpowers/

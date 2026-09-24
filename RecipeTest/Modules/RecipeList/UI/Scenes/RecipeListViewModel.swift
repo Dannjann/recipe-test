@@ -16,7 +16,8 @@ class RecipeListViewModel: RecipeListViewModelProtocol {
   private(set) var nextPageErrorText: String?
   private(set) var viewMode: RecipeListViewMode = .grid
 
-  private var query: RecipeQuery
+  /// Readable by a subclass, which titles itself from it.
+  private(set) var query: RecipeQuery
 
   /// `nil` once the last page has landed — the pager reads this as "stop asking".
   private var nextPage: Page?
@@ -40,7 +41,7 @@ class RecipeListViewModel: RecipeListViewModelProtocol {
     String(localized: .RecipeList.recipeListTitleAll)
   }
 
-  var searchPlaceholder: String {
+  var scopedSearchPlaceholder: String {
     String(localized: .RecipeList.recipeListSearchPlaceholderAll)
   }
 }
@@ -48,6 +49,17 @@ class RecipeListViewModel: RecipeListViewModelProtocol {
 // MARK: - Getters
 
 extension RecipeListViewModel {
+  /// The applied text, quoted, falling back to what the list is scoped to. The prototype's
+  /// second pill line is not reproduced: the chip row below already shows those values.
+  var searchPlaceholder: String {
+    guard
+      let searchText = query.searchText,
+      !searchText.isEmpty
+    else { return scopedSearchPlaceholder }
+
+    return String(localized: .RecipeList.recipeListSearchPlaceholderQuery(searchText))
+  }
+
   var resultCountText: String? {
     guard
       recipes.isLoaded,
@@ -187,6 +199,18 @@ extension RecipeListViewModel {
 
   func clearFacets() async {
     query = query.clearingFacets()
+
+    await loadFirstPage()
+  }
+
+  /// `loadFirstPage` bumps the generation, so a next page in flight is discarded rather than
+  /// appended onto this result set.
+  func apply(query: RecipeQuery) async {
+    self.query = query
+
+    // Cleared so a failed first page is retried when the screen is next visited, rather than
+    // `loadFirstPageIfNeeded` returning early and leaving the failure on screen.
+    hasLoadedOnce = false
 
     await loadFirstPage()
   }

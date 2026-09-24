@@ -12,6 +12,7 @@ struct HomeViewCoordinator: ViewCoordinator {
   @Environment(PathRouter.self) private var pathRouter
 
   @State private var viewModel: HomeViewModel
+  @State private var searchRequest: RecipeSearchRequest?
 
   init(recipeService: RecipeServiceProtocol = AppContainer.shared.recipeService) {
     _viewModel = State(initialValue: HomeViewModel(recipeService: recipeService))
@@ -24,6 +25,12 @@ struct HomeViewCoordinator: ViewCoordinator {
       onRecipeTap: handleRecipeTap,
       onCategoryTap: handleCategoryTap
     )
+    .fullScreenCover(item: $searchRequest) { request in
+      RecipeSearchViewCoordinator(
+        request: request,
+        onFinish: handleSearchFinish
+      )
+    }
   }
 }
 
@@ -31,9 +38,38 @@ struct HomeViewCoordinator: ViewCoordinator {
 
 private extension HomeViewCoordinator {
   var handleSearchTap: VoidResult {
-    {
-      // TODO: Push the search scene once it exists
+    { searchRequest = RecipeSearchRequest(query: .empty) }
+  }
+
+  /// Home holds no filter of its own, so applying one pushes the list that does.
+  var handleSearchFinish: SingleResult<RecipeSearchResult?> {
+    { result in
+      searchRequest = nil
+
+      switch result {
+      case let .apply(query):
+        push(query: query)
+
+      case let .openRecipe(summary):
+        pathRouter.push(Route.Recipe.detail(summary))
+
+      case nil:
+        break
+      }
     }
+  }
+
+  func push(query: RecipeQuery) {
+    let searchText = query.searchText ?? ""
+
+    pathRouter.push(Route.Recipe.list(
+      searchText.isEmpty
+        ? .all(query: query)
+        : .search(
+          searchText,
+          query: query
+        )
+    ))
   }
 
   var handleRecipeTap: SingleResult<RecipeSummary> {

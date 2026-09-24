@@ -547,6 +547,113 @@ actor Reentry {
   }
 }
 
+// MARK: - Applying a new query
+
+@MainActor
+struct RecipeListViewModelApplyTests {
+  @Test
+  func apply_aNewQuery_requestsPageOneWithIt() async {
+    let service = MockRecipeService()
+    let sut = RecipeListViewModelTestFactory.make(service: service)
+    await sut.loadFirstPage()
+
+    var applied = RecipeQuery.empty
+    applied.searchText = "adobo"
+    applied.isVegetarian = true
+    await sut.apply(query: applied)
+
+    #expect(service.recipes.lastRequest?.query == applied)
+    #expect(service.recipes.lastRequest?.page.index == 1)
+  }
+
+  @Test
+  func apply_aNewQuery_replacesTheRowsRatherThanAppending() async {
+    let service = MockRecipeService(recipes: RecipeListPageFactory.page(ids: ["rcp-001"]))
+    let sut = RecipeListViewModelTestFactory.make(service: service)
+    await sut.loadFirstPage()
+
+    service.recipes.returns(RecipeListPageFactory.page(
+      ids: ["rcp-002"],
+      total: 1
+    ))
+    await sut.apply(query: RecipeQuery(searchText: "adobo"))
+
+    #expect(sut.recipes.value?.map(\.id) == ["rcp-002"])
+  }
+
+  @Test
+  func apply_whileANextPageIsInFlight_discardsThatPage() async {
+    let service = MockRecipeService(recipes: RecipeListPageFactory.page(
+      ids: ["rcp-001"],
+      total: 40,
+      currentPage: 1,
+      lastPage: 2
+    ))
+    let sut = RecipeListViewModelTestFactory.make(service: service)
+    await sut.loadFirstPage()
+
+    // The next page is held open, a new query is applied, and only then does the stale page
+    // land. It must not be appended onto the result set the apply produced.
+    let held = AsyncStream<RecipeListPage>.makeStream()
+    service.recipes.responds { request in
+      guard request.page.index == 2 else {
+        return RecipeListPageFactory.page(
+          ids: ["rcp-100"],
+          total: 1
+        )
+      }
+
+      var iterator = held.stream.makeAsyncIterator()
+
+      return await iterator.next() ?? RecipeListPageFactory.page(ids: [])
+    }
+
+    let nextPage = Task { await sut.loadNextPageIfNeeded(after: "rcp-001") }
+    await sut.apply(query: RecipeQuery(searchText: "adobo"))
+    held.continuation.yield(RecipeListPageFactory.page(ids: ["rcp-002"]))
+    held.continuation.finish()
+    await nextPage.value
+
+    #expect(sut.recipes.value?.map(\.id) == ["rcp-100"])
+  }
+
+  @Test
+  func searchPlaceholder_afterApplyingNewText_followsIt() async {
+    let sut = RecipeListViewModelTestFactory.make(request: .search("pho"))
+
+    #expect(sut.searchPlaceholder.contains("pho"))
+
+    await sut.apply(query: RecipeQuery(searchText: "adobo"))
+
+    #expect(sut.searchPlaceholder.contains("adobo"))
+    #expect(!sut.searchPlaceholder.contains("pho"))
+  }
+
+  @Test
+  func searchPlaceholder_aCategoryListWithNoText_staysScopedToTheCategory() {
+    let sut = RecipeListViewModelTestFactory.make(request: .category(.dummy(name: "Desserts")))
+
+    #expect(sut.searchPlaceholder.contains("Desserts"))
+  }
+
+  @Test
+  func apply_textOntoACategoryList_keepsTheTitleAndTheCategory() async {
+    let service = MockRecipeService()
+    let sut = RecipeListViewModelTestFactory.make(
+      request: .category(.dummy(name: "Desserts")),
+      service: service
+    )
+
+    var applied = RecipeQuery(category: "Desserts")
+    applied.searchText = "mango"
+    await sut.apply(query: applied)
+
+    #expect(sut.title == "Desserts")
+    #expect(service.recipes.lastRequest?.query.category == "Desserts")
+    #expect(sut.searchPlaceholder.contains("mango"))
+  }
+}
+
 @MainActor
 enum RecipeListViewModelTestFactory {
   static func make(

@@ -82,6 +82,9 @@ final class AppContainer {
     )
   }()
 
+  private(set) lazy var recentSearchStore: RecentSearchStoreProtocol =
+    RecentSearchStore(store: UserDefaultsClient())
+
   private init() {
     debugLog("env: \(AppContainer.environment.rawValue)")
   }
