@@ -7,13 +7,15 @@
 //
 
 import Foundation
-import UIKit
 
 /// Turns a `URLRequest` into the bytes a server would have sent.
 ///
-/// Slices the fixture at request time rather than shipping one file per page, so a
-/// service's next-page call and the real pagination maths are genuinely exercised
-/// instead of being replaced by file loading.
+/// Filters and slices the fixture at request time rather than shipping one file per page
+/// and per facet, so a service's next-page call, the real pagination maths and every
+/// filter the app can send are genuinely exercised instead of replaced by file loading.
+///
+/// The filtering runs before the slice, which is what makes `meta.total` report matches
+/// rather than the size of the collection.
 nonisolated struct MockAPIRouter: Sendable {
   /// What the mock should pretend is happening, so the error and empty states can be
   /// demonstrated without editing any feature code.
@@ -70,10 +72,6 @@ nonisolated extension MockAPIRouter {
       return (404, body, "application/json")
     }
 
-    if case let .image(seed) = endpoint {
-      return (200, imageData(seed: seed), endpoint.contentType)
-    }
-
     switch configuration.failureMode {
     case .serverError:
       let body = try envelope(status: 500, message: "Mocked server error", data: nil, meta: nil)
@@ -105,7 +103,8 @@ nonisolated extension MockAPIRouter {
       throw RouterError.missingFixture(String(describing: endpoint))
     }
 
-    let rows = try fixtureRows(named: fixtureName)
+    let all = try fixtureRows(named: fixtureName)
+    let rows = endpoint.isFilterable ? filtered(all, for: url) : all
 
     // A detail endpoint: one row out of the collection fixture, enveloped as an object
     // rather than an array. An id nothing matches is a 404, exactly as a real backend
@@ -138,36 +137,6 @@ nonisolated extension MockAPIRouter {
   }
 }
 
-// MARK: - Images
-
-private nonisolated extension MockAPIRouter {
-  /// A flat tile whose hue is derived from the filename, so a given recipe always gets
-  /// the same colour. Generated rather than bundled — 24 photographs would add megabytes
-  /// to the repository for a demo that only needs something in the image slot.
-  func imageData(seed: String) -> Data {
-    let size = CGSize(width: 600, height: 400)
-    let hue = CGFloat(Self.stableHash(seed) % 360) / 360
-
-    let renderer = UIGraphicsImageRenderer(size: size)
-
-    return renderer.pngData { context in
-      UIColor(hue: hue, saturation: 0.45, brightness: 0.75, alpha: 1).setFill()
-      context.fill(CGRect(origin: .zero, size: size))
-
-      UIColor(hue: hue, saturation: 0.55, brightness: 0.60, alpha: 1).setFill()
-      context.fill(CGRect(x: 0, y: size.height * 0.62, width: size.width, height: size.height * 0.38))
-    }
-  }
-
-  /// `hashValue` is seeded per process, so it would give a recipe a different colour on
-  /// every launch. This one does not.
-  static func stableHash(_ value: String) -> Int {
-    value.unicodeScalars.reduce(into: 7) { partial, scalar in
-      partial = (partial &* 31 &+ Int(scalar.value)) & 0x00FF_FFFF
-    }
-  }
-}
-
 // MARK: - Fixtures
 
 private nonisolated extension MockAPIRouter {
@@ -183,6 +152,171 @@ private nonisolated extension MockAPIRouter {
     }
 
     return rows
+  }
+}
+
+// MARK: - Filtering
+
+/// The query parameters the recipe collection can be narrowed by.
+///
+/// Parsed once per request so the filters below read as predicates rather than as
+/// repeated query-string digging.
+private nonisolated struct RecipeFilters {
+  let category: String?
+  let cuisine: String?
+  let isVegetarian: Bool?
+  let servings: String?
+  let includedIngredients: [String]
+  let excludedIngredients: [String]
+  let searchText: String?
+  let searchesSteps: Bool
+
+  init(url: URL) {
+    let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+
+    func values(_ name: String) -> [String] {
+      items.filter { $0.name == name }.compactMap(\.value).filter { !$0.isEmpty }
+    }
+
+    category = values("category").first
+    cuisine = values("cuisine").first
+    isVegetarian = values("is_vegetarian").first.flatMap(Self.flag)
+    servings = values("servings").first
+    includedIngredients = values("include_ingredients")
+    excludedIngredients = values("exclude_ingredients")
+    searchText = values("search_text").first
+    searchesSteps = values("searches_steps").first.flatMap(Self.flag) ?? false
+  }
+
+  /// Accepts both spellings a URL encoder might produce, and returns nil for anything
+  /// else — an unrecognised *value* must be ignored like an unrecognised parameter, not
+  /// silently become a filter for the opposite rows.
+  private static func flag(_ value: String) -> Bool? {
+    switch value.lowercased() {
+    case "true", "1":
+      true
+
+    case "false", "0":
+      false
+
+    default:
+      nil
+    }
+  }
+}
+
+private nonisolated extension MockAPIRouter {
+  /// The prototype's serving filter offers 1, 2, 4 and "6+"; the last is a lower bound.
+  static var servingsLowerBoundMarker: String {
+    "6+"
+  }
+
+  static var servingsLowerBound: Int {
+    6
+  }
+
+  /// Stands in for the backend's query engine. A parameter this does not recognise is
+  /// ignored rather than treated as "match nothing" — an unknown parameter must never
+  /// silently empty a screen.
+  ///
+  /// `sort=latest` needs no branch: the fixture is already stored newest-first, so
+  /// accepting and ignoring it is the correct behaviour.
+  func filtered(_ rows: [[String: Any]], for url: URL) -> [[String: Any]] {
+    let filters = RecipeFilters(url: url)
+
+    return rows
+      .filter { matchesFacets($0, against: filters) }
+      .filter { matchesIngredients($0, against: filters) }
+      .filter { matchesSearch($0, against: filters) }
+  }
+
+  func matchesFacets(_ row: [String: Any], against filters: RecipeFilters) -> Bool {
+    if let category = filters.category, !equals(row["category"], expected: category) {
+      return false
+    }
+
+    if let cuisine = filters.cuisine, !equals(row["cuisine"], expected: cuisine) {
+      return false
+    }
+
+    if let vegetarian = filters.isVegetarian, row["is_vegetarian"] as? Bool != vegetarian {
+      return false
+    }
+
+    if let servings = filters.servings, !matchesServings(row, expected: servings) {
+      return false
+    }
+
+    return true
+  }
+
+  /// The prototype's fourth serving option is a bound rather than a value, so it is
+  /// matched separately. A value that is neither the bound nor a number is ignored — the
+  /// same promise this type makes about an unrecognised parameter name.
+  func matchesServings(_ row: [String: Any], expected servings: String) -> Bool {
+    let count = row["servings"] as? Int ?? 0
+
+    if servings == Self.servingsLowerBoundMarker {
+      return count >= Self.servingsLowerBound
+    }
+
+    guard let wanted = Int(servings) else {
+      return true
+    }
+
+    return count == wanted
+  }
+
+  /// Every included term must appear, and no excluded term may.
+  func matchesIngredients(_ row: [String: Any], against filters: RecipeFilters) -> Bool {
+    guard !filters.includedIngredients.isEmpty || !filters.excludedIngredients.isEmpty else {
+      return true
+    }
+
+    let names = ingredientNames(in: row)
+
+    func mentions(_ term: String) -> Bool {
+      names.contains { $0.contains(fold(term)) }
+    }
+
+    return filters.includedIngredients.allSatisfy(mentions)
+      && !filters.excludedIngredients.contains(where: mentions)
+  }
+
+  func matchesSearch(_ row: [String: Any], against filters: RecipeFilters) -> Bool {
+    guard let search = filters.searchText.map(fold) else {
+      return true
+    }
+
+    var haystack = ["title", "description", "category", "cuisine"]
+      .compactMap { row[$0] as? String }
+      .map(fold)
+
+    haystack += ingredientNames(in: row)
+
+    if filters.searchesSteps {
+      haystack += (row["steps"] as? [String] ?? []).map(fold)
+    }
+
+    return haystack.contains { $0.contains(search) }
+  }
+
+  func ingredientNames(in row: [String: Any]) -> [String] {
+    (row["ingredients"] as? [[String: Any]] ?? [])
+      .compactMap { $0["name"] as? String }
+      .map(fold)
+  }
+
+  func equals(_ stored: Any?, expected wanted: String) -> Bool {
+    (stored as? String).map { fold($0) == fold(wanted) } ?? false
+  }
+
+  /// Case- and diacritic-insensitive, so `jamon` finds `jamón`.
+  ///
+  /// Deliberately locale-independent: under a Turkish locale `.current` would fold `I` to
+  /// a dotless `ı`, and a search for `Italian` would stop matching `italian`.
+  func fold(_ value: String) -> String {
+    value.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
   }
 }
 

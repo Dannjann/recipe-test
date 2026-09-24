@@ -17,22 +17,21 @@ struct GetRecipesTests {
 
     let data: [RemoteRecipeSummary]? = try sut.decodedValue()
 
-    #expect(data?.count == 3)
+    #expect(data?.count == 2)
 
     let first = try #require(data?.first)
     #expect(first.id == "rcp-001")
-    #expect(first.slug == "spaghetti-alla-carbonara")
     #expect(first.title == "Spaghetti alla Carbonara")
-    #expect(first.shortDescription?.hasPrefix("Roman pasta") == true)
+    #expect(first.category == "Pasta")
+    #expect(first.cuisine == "italian")
+    #expect(first.servings == 4)
     #expect(first.totalTimeMinutes == 25)
     #expect(first.difficulty == "medium")
-    #expect(first.rating == 4.8)
-    #expect(first.ratingCount == 2147)
-    #expect(first.tags == ["quick", "classic", "five-ingredient"])
   }
 
-  /// `hero_image_url` reaching `heroImageUrl` is the whole snake_case contract. If the
-  /// property were named `heroImageURL`, the converting decoder would leave it nil.
+  /// `hero_image_url` reaching `heroImageUrl`, and `is_vegetarian` reaching
+  /// `isVegetarian`, is the whole snake_case contract. If either property were named with
+  /// a nicer acronym casing, the converting decoder would leave it nil.
   @Test
   func response200_mapsSnakeCaseKeys() throws {
     let sut = try makeSUT()
@@ -40,7 +39,9 @@ struct GetRecipesTests {
     let data: [RemoteRecipeSummary]? = try sut.decodedValue()
     let first = try #require(data?.first)
 
-    #expect(first.heroImageUrl?.hasSuffix("spaghetti-alla-carbonara.png") == true)
+    #expect(first.heroImageUrl?.hasPrefix("https://") == true)
+    #expect(first.isVegetarian == false)
+    #expect(first.mealType == "dinner")
   }
 
   @Test
@@ -50,9 +51,9 @@ struct GetRecipesTests {
     let meta: RemotePaginationMetaInfo? = try sut.decodeMeta()
 
     #expect(meta?.total == 36)
-    #expect(meta?.perPage == 3)
+    #expect(meta?.perPage == 2)
     #expect(meta?.currentPage == 1)
-    #expect(meta?.lastPage == 12)
+    #expect(meta?.lastPage == 18)
   }
 }
 

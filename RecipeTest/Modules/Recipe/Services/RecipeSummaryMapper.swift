@@ -27,13 +27,14 @@ nonisolated enum RecipeSummaryMapper {
     return RecipeSummary(
       id: id,
       title: title,
-      shortDescription: remote.shortDescription ?? "",
       heroImageURL: remote.heroImageUrl.flatMap { URL(string: $0) },
+      category: remote.category,
+      cuisine: remote.cuisine,
+      mealType: remote.mealType,
       totalTimeMinutes: remote.totalTimeMinutes,
+      servings: remote.servings,
       difficulty: remote.difficulty.flatMap { RecipeDifficulty(rawValue: $0) },
-      rating: remote.rating ?? 0,
-      ratingCount: remote.ratingCount ?? 0,
-      tags: remote.tags ?? []
+      isVegetarian: remote.isVegetarian ?? false
     )
   }
 }

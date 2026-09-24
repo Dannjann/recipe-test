@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import Kingfisher
 import UIKit
 
 /// Holds the app-wide service instances: config, info, API client, session, network monitor.
@@ -104,7 +103,9 @@ extension AppContainer {
       debugLogger.enable(.debugging)
     #endif
 
-    // Demo builds answer every request from `Resources/MockData` instead of the network.
+    // Demo builds answer every *data* request from `Resources/MockData` instead of the
+    // network. Photographs are deliberately left alone: the fixture points at real hosts,
+    // and Kingfisher keeps its own URLSession, so they load for real.
     // Switch `failureMode` to `.serverError` or `.empty` to demonstrate the error and
     // empty states without touching any feature code.
     if config.usesMockAPI {
@@ -114,13 +115,6 @@ extension AppContainer {
           failureMode: .none
         )
       )
-
-      // Kingfisher owns its own URLSession, so it needs the mock transport installed
-      // separately — otherwise remote images would be the one thing still hitting the
-      // network. Its own cache still runs, so the real download path is exercised.
-      let imageConfiguration = URLSessionConfiguration.ephemeral
-      imageConfiguration.protocolClasses = [MockURLProtocol.self]
-      KingfisherManager.shared.downloader.sessionConfiguration = imageConfiguration
     }
 
     _ = api

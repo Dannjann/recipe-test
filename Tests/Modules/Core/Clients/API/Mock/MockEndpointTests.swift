@@ -21,9 +21,11 @@ struct MockEndpointTests {
     #expect(MockEndpoint.match(path: "/api/v1/recipes/rcp-001", method: "GET") == .recipe(id: "rcp-001"))
   }
 
+  /// Photographs are real URLs on real hosts now, so the mock must not claim an image
+  /// path — anything it matched here it would answer with a generated tile instead.
   @Test
-  func match_anImage() {
-    #expect(MockEndpoint.match(path: "/api/v1/images/carbonara.png", method: "GET") == .image(seed: "carbonara"))
+  func match_anImagePath_isNotMocked() {
+    #expect(MockEndpoint.match(path: "/api/v1/images/carbonara.png", method: "GET") == nil)
   }
 
   /// An unregistered path is a 404 rather than a silent success, so a typo in a resource

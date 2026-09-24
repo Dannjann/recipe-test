@@ -16,10 +16,10 @@ struct RecipeServiceTests {
     let api = MockRecipeAPI()
     let sut = makeSUT(api: api)
 
-    _ = try await sut.getRecipes(page: Page(index: 3, size: 20))
+    _ = try await sut.getRecipes(query: .empty, page: Page(index: 3, size: 20))
 
     #expect(api.recipes.callCount == 1)
-    #expect(api.recipes.lastRequest == MockRecipeAPI.RecipesRequest(page: 3, perPage: 20))
+    #expect(api.recipes.lastRequest == MockRecipeAPI.RecipesRequest(query: .empty, page: 3, perPage: 20))
   }
 
   @Test
@@ -27,7 +27,7 @@ struct RecipeServiceTests {
     let api = MockRecipeAPI(recipes: [.dummy(id: "rcp-001"), .dummy(id: "rcp-002")])
     let sut = makeSUT(api: api)
 
-    let page = try await sut.getRecipes(page: Page(size: 10))
+    let page = try await sut.getRecipes(query: .empty, page: Page(size: 10))
 
     #expect(page.recipes.map(\.id) == ["rcp-001", "rcp-002"])
     #expect(page.recipes.first?.title == "Spaghetti alla Carbonara")
@@ -39,7 +39,7 @@ struct RecipeServiceTests {
     let api = MockRecipeAPI(recipes: [.dummy(id: "rcp-001"), .dummy(id: nil), .dummy(id: "rcp-003")])
     let sut = makeSUT(api: api)
 
-    let page = try await sut.getRecipes(page: Page(size: 10))
+    let page = try await sut.getRecipes(query: .empty, page: Page(size: 10))
 
     #expect(page.recipes.map(\.id) == ["rcp-001", "rcp-003"])
   }
@@ -49,7 +49,7 @@ struct RecipeServiceTests {
     let api = MockRecipeAPI(meta: .dummy(total: 36, perPage: 5, currentPage: 2, lastPage: 8))
     let sut = makeSUT(api: api)
 
-    let page = try await sut.getRecipes(page: Page(index: 2, size: 5))
+    let page = try await sut.getRecipes(query: .empty, page: Page(index: 2, size: 5))
 
     #expect(page.meta.currentPage == 2)
     #expect(page.meta.lastPage == 8)
@@ -66,7 +66,7 @@ struct RecipeServiceTests {
     )
     let sut = makeSUT(api: api)
 
-    let page = try await sut.getRecipes(page: Page(index: 99, size: 5))
+    let page = try await sut.getRecipes(query: .empty, page: Page(index: 99, size: 5))
 
     #expect(page.recipes.isEmpty)
     #expect(page.hasLoadedAllData)
@@ -79,7 +79,7 @@ struct RecipeServiceTests {
     let sut = makeSUT(api: api)
 
     await #expect(throws: AppError.self) {
-      _ = try await sut.getRecipes(page: Page(size: 10))
+      _ = try await sut.getRecipes(query: .empty, page: Page(size: 10))
     }
   }
 
@@ -93,12 +93,65 @@ struct RecipeServiceTests {
     }
     let sut = makeSUT(api: api)
 
-    let first = try await sut.getRecipes(page: Page(index: 1, size: 10))
-    let second = try await sut.getRecipes(page: Page(index: 2, size: 10))
+    let first = try await sut.getRecipes(query: .empty, page: Page(index: 1, size: 10))
+    let second = try await sut.getRecipes(query: .empty, page: Page(index: 2, size: 10))
 
     #expect(first.recipes.first?.id == "rcp-1")
     #expect(second.recipes.first?.id == "rcp-2")
     #expect(api.recipes.requests.map(\.page) == [1, 2])
+  }
+
+  /// The filters are the whole point of the widened endpoint: a query that does not
+  /// reach the API layer is a screen whose chips do nothing.
+  @Test
+  func getRecipes_forwardsTheQueryUntouched() async throws {
+    let api = MockRecipeAPI()
+    let sut = makeSUT(api: api)
+    let query = RecipeQuery(
+      searchText: "garlic",
+      category: "Vegan",
+      isVegetarian: true,
+      servings: .sixOrMore,
+      includeIngredients: ["garlic"],
+      searchesSteps: true
+    )
+
+    _ = try await sut.getRecipes(query: query, page: Page(index: 1, size: 10))
+
+    #expect(api.recipes.lastRequest?.query == query)
+  }
+
+  @Test
+  func getCategories_mapsTheTiles() async throws {
+    let api = MockRecipeAPI(categories: [.dummy(id: "cat-01", name: "Meal", recipeCount: 18)])
+    let sut = makeSUT(api: api)
+
+    let categories = try await sut.getCategories()
+
+    #expect(categories.map(\.name) == ["Meal"])
+    #expect(categories.first?.recipeCount == 18)
+  }
+
+  /// A malformed tile is one missing tile on the grid, not a failed home screen.
+  @Test
+  func getCategories_dropsUnmappableTilesAndKeepsTheRest() async throws {
+    let api = MockRecipeAPI(categories: [.dummy(name: "Meal"), .dummy(id: nil), .dummy(name: "Rice")])
+    let sut = makeSUT(api: api)
+
+    let categories = try await sut.getCategories()
+
+    #expect(categories.map(\.name) == ["Meal", "Rice"])
+  }
+
+  @Test
+  func getCategories_propagatesAnAPIError() async throws {
+    let api = MockRecipeAPI()
+    api.categories.fails(with: AppError.noInternetConnection)
+    let sut = makeSUT(api: api)
+
+    await #expect(throws: AppError.self) {
+      _ = try await sut.getCategories()
+    }
   }
 
   @Test

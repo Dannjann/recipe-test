@@ -12,27 +12,27 @@ import Foundation
 extension RemoteRecipeSummary {
   static func dummy(
     id: String? = "rcp-001",
-    slug: String? = "spaghetti-alla-carbonara",
     title: String? = "Spaghetti alla Carbonara",
-    shortDescription: String? = "Roman pasta bound with egg yolk and pecorino.",
-    heroImageUrl: String? = "https://api.example.com/api/v1/images/carbonara.png",
+    category: String? = "Pasta",
+    cuisine: String? = "italian",
+    mealType: String? = "dinner",
     totalTimeMinutes: Int? = 25,
+    servings: Int? = 4,
     difficulty: String? = "medium",
-    rating: Double? = 4.8,
-    ratingCount: Int? = 2147,
-    tags: [String]? = ["quick", "classic"]
+    isVegetarian: Bool? = false,
+    heroImageUrl: String? = "https://www.themealdb.com/images/media/meals/llcbn01574260722.jpg"
   ) -> RemoteRecipeSummary {
     RemoteRecipeSummary(
       id: id,
-      slug: slug,
       title: title,
-      shortDescription: shortDescription,
-      heroImageUrl: heroImageUrl,
+      category: category,
+      cuisine: cuisine,
+      mealType: mealType,
       totalTimeMinutes: totalTimeMinutes,
+      servings: servings,
       difficulty: difficulty,
-      rating: rating,
-      ratingCount: ratingCount,
-      tags: tags
+      isVegetarian: isVegetarian,
+      heroImageUrl: heroImageUrl
     )
   }
 }
