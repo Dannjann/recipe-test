@@ -24,6 +24,13 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Unna-Regular.ttf</string>
+		<string>Unna-Bold.ttf</string>
+		<string>AtkinsonHyperlegible-Regular.ttf</string>
+		<string>AtkinsonHyperlegible-Bold.ttf</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
