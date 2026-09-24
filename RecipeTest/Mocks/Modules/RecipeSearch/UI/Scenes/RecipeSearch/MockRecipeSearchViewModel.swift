@@ -11,8 +11,8 @@ import SwiftUI
 #if DEBUG
   @Observable
   final class MockRecipeSearchViewModel: RecipeSearchViewModelProtocol {
-    var fieldText: String
-    var hasFieldText: Bool
+    var searchText: String
+    var clearToken = 0
     var isVegetarian: Bool
     var searchesSteps: Bool
     var servings: RecipeServings?
@@ -20,16 +20,14 @@ import SwiftUI
     var excludeIngredients: [String]
 
     init(
-      fieldText: String = "Search recipes or ingredients",
-      hasFieldText: Bool = false,
+      searchText: String = "",
       isVegetarian: Bool = false,
       searchesSteps: Bool = false,
       servings: RecipeServings? = nil,
       includeIngredients: [String] = [],
       excludeIngredients: [String] = []
     ) {
-      self.fieldText = fieldText
-      self.hasFieldText = hasFieldText
+      self.searchText = searchText
       self.isVegetarian = isVegetarian
       self.searchesSteps = searchesSteps
       self.servings = servings
@@ -41,6 +39,22 @@ import SwiftUI
   // MARK: - Getters
 
   extension MockRecipeSearchViewModel {
+    var fieldText: String {
+      fieldIsPlaceholder ? "Search recipes or ingredients" : searchText
+    }
+
+    var fieldIsPlaceholder: Bool {
+      searchText.isEmpty
+    }
+
+    var fieldAccessibilityValue: String {
+      fieldIsPlaceholder ? "Nothing entered" : searchText
+    }
+
+    var showsFieldClear: Bool {
+      !fieldIsPlaceholder
+    }
+
     var servingsOptions: [RecipeServingsOptionViewModel] {
       RecipeServings.allCases.map {
         RecipeServingsOptionViewModel(
@@ -69,7 +83,7 @@ import SwiftUI
     }
 
     var showsClearAll: Bool {
-      hasFieldText
+      !fieldIsPlaceholder
         || isVegetarian
         || searchesSteps
         || servings != nil
@@ -107,12 +121,12 @@ import SwiftUI
     }
 
     func set(searchText: String) {
-      fieldText = searchText
-      hasFieldText = !searchText.isEmpty
+      self.searchText = searchText
     }
 
     func clearAll() {
-      hasFieldText = false
+      searchText = ""
+      clearToken += 1
       isVegetarian = false
       searchesSteps = false
       servings = nil
@@ -134,8 +148,7 @@ import SwiftUI
 
     static func filled() -> MockRecipeSearchViewModel {
       MockRecipeSearchViewModel(
-        fieldText: "adobo",
-        hasFieldText: true,
+        searchText: "adobo",
         isVegetarian: true,
         searchesSteps: true,
         servings: .four,

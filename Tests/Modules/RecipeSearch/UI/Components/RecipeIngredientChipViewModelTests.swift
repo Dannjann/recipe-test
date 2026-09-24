@@ -18,8 +18,8 @@ struct RecipeIngredientChipViewModelTests {
 
   @Test
   func backgroundColorStyle_anExclusion_readsAsAnExclusion() {
-    #expect(chip(kind: .include).backgroundColorStyle == .surfacesFieldsAndTags)
-    #expect(chip(kind: .exclude).backgroundColorStyle == .complementaryShade3)
+    #expect(chip(kind: .include).backgroundColorStyle == .complementaryShade1)
+    #expect(chip(kind: .exclude).backgroundColorStyle == .complementaryShade2)
   }
 
   @Test

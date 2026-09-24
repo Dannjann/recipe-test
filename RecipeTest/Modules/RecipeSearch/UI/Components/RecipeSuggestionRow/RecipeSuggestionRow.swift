@@ -68,7 +68,7 @@ private extension RecipeSuggestionRow {
         )
         .clipShape(.rect(cornerRadius: tileCornerRadius))
     } else {
-      Image(systemName: viewModel.symbolName ?? fallbackSymbolName)
+      Image(systemName: viewModel.symbolName)
         .foregroundStyle(.themeColor(.iconsSecondary))
         .frame(
           width: tileSize,
@@ -111,10 +111,6 @@ private extension RecipeSuggestionRow {
 
   var titleLineLimit: Int {
     1
-  }
-
-  var fallbackSymbolName: String {
-    "fork.knife"
   }
 }
 

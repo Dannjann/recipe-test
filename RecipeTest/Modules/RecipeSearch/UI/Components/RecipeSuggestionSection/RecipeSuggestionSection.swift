@@ -21,6 +21,7 @@ struct RecipeSuggestionSection: View {
         Text(title)
           .themeTextStyle(.subheadlineSemibold)
           .themeColor(.textSecondary)
+          .accessibilityAddTraits(.isHeader)
           .padding(
             .horizontal,
             horizontalGutter

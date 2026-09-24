@@ -22,6 +22,7 @@ struct RecipeFacetChip: View {
             .themeColor(.textPrimary)
 
           Image(systemName: removeSymbolName)
+            .themeTextStyle(.captionBold)
             .foregroundStyle(.themeColor(.iconsSecondary))
         }
         .padding(

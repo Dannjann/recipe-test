@@ -97,6 +97,10 @@ private extension RecentSearchStoreTests {
       fatalError("Could not open a UserDefaults suite for the test")
     }
 
+    // Removed up front rather than in a teardown: the suite is new, and this is what keeps a
+    // run from leaving a plist behind for every test in this file.
+    defaults.removePersistentDomain(forName: suiteName)
+
     return defaults
   }
 

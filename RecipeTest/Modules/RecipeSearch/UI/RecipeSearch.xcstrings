@@ -36,6 +36,18 @@
         }
       }
     },
+    "recipeSearch.field.accessibilityLabel": {
+      "comment": "Spoken name of the overlay's search field button.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        }
+      }
+    },
     "recipeSearch.field.clear.accessibilityLabel": {
       "extractionState": "manual",
       "localizations": {
@@ -43,6 +55,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Clear search text"
+          }
+        }
+      }
+    },
+    "recipeSearch.field.empty.accessibilityValue": {
+      "comment": "Spoken instead of the placeholder, so VoiceOver does not read it as typed text.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing entered"
           }
         }
       }

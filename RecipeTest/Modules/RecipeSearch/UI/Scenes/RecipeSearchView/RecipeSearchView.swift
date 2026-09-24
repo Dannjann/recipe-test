@@ -45,7 +45,7 @@ struct RecipeSearchView: View {
         onSubmitTap: onSubmitTap
       )
     }
-    .background(Color.themeColor(.surfacesBackground))
+    .background(Color.themeColor(.surfacesBackground).opacity(backgroundOpacity))
   }
 }
 
@@ -82,8 +82,9 @@ private extension RecipeSearchView {
     RecipeSearchSection(title: .RecipeSearch.recipeSearchSectionWhatTitle) {
       RecipeSearchFieldButton(
         text: viewModel.fieldText,
-        isPlaceholder: !viewModel.hasFieldText,
-        showsClear: viewModel.hasFieldText,
+        isPlaceholder: viewModel.fieldIsPlaceholder,
+        accessibilityValue: viewModel.fieldAccessibilityValue,
+        showsClear: viewModel.showsFieldClear,
         onTap: onFieldTap,
         onClearTap: { viewModel.set(searchText: "") }
       )
@@ -123,6 +124,7 @@ private extension RecipeSearchView {
         addAccessibilityIdentifier: "recipe-search-include-add-button",
         onAdd: { viewModel.addInclude($0) }
       )
+      .id(viewModel.clearToken)
 
       RecipeIngredientChipRow(
         chips: viewModel.includeChips,
@@ -139,6 +141,7 @@ private extension RecipeSearchView {
         addAccessibilityIdentifier: "recipe-search-exclude-add-button",
         onAdd: { viewModel.addExclude($0) }
       )
+      .id(viewModel.clearToken)
 
       RecipeIngredientChipRow(
         chips: viewModel.excludeChips,
@@ -171,6 +174,12 @@ extension RecipeSearchView {
 // MARK: - Getters > Constants
 
 private extension RecipeSearchView {
+  /// Low enough that the screen the overlay came from reads through it, high enough that the
+  /// section cards on top of it stay legible.
+  var backgroundOpacity: Double {
+    0.85
+  }
+
   var sectionSpacing: CGFloat {
     16
   }
@@ -221,10 +230,7 @@ private extension RecipeSearchView {
     @Previewable @Namespace var namespace
 
     RecipeSearchView(
-      viewModel: MockRecipeSearchViewModel(
-        fieldText: "adobo",
-        hasFieldText: true
-      ),
+      viewModel: MockRecipeSearchViewModel(searchText: "adobo"),
       queryFieldNamespace: namespace,
       onCloseTap: {},
       onFieldTap: {},

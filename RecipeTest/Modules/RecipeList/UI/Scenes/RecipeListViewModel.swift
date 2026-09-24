@@ -208,6 +208,10 @@ extension RecipeListViewModel {
   func apply(query: RecipeQuery) async {
     self.query = query
 
+    // Cleared so a failed first page is retried when the screen is next visited, rather than
+    // `loadFirstPageIfNeeded` returning early and leaving the failure on screen.
+    hasLoadedOnce = false
+
     await loadFirstPage()
   }
 

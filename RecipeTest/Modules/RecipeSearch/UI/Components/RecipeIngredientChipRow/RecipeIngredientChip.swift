@@ -22,6 +22,7 @@ struct RecipeIngredientChip: View {
             .themeColor(.textPrimary)
 
           Image(systemName: removeSymbolName)
+            .themeTextStyle(.captionBold)
             .foregroundStyle(.themeColor(.iconsSecondary))
         }
         .padding(

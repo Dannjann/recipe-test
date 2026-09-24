@@ -16,15 +16,23 @@ final class RecipeSearchInputViewModel: RecipeSearchInputViewModelProtocol {
   private var categories: [RecipeCategory] = []
   private var hasLoadedCategories = false
 
+  /// `.task(id:)` cancels the previous call but does not wait for it: the successor runs its
+  /// synchronous prefix first, and the cancelled one then resumes and would land its result
+  /// over the newer state. Same mechanism `RecipeListViewModel` uses for the same reason.
+  private var generation = 0
+
+  private let debounce: Duration
   private let recipeService: RecipeServiceProtocol
   private let recentSearchStore: RecentSearchStoreProtocol
 
   init(
     text: String = "",
+    debounce: Duration = .milliseconds(300),
     recipeService: RecipeServiceProtocol = AppContainer.shared.recipeService,
     recentSearchStore: RecentSearchStoreProtocol = AppContainer.shared.recentSearchStore
   ) {
     self.text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    self.debounce = debounce
     self.recipeService = recipeService
     self.recentSearchStore = recentSearchStore
   }
@@ -54,6 +62,8 @@ extension RecipeSearchInputViewModel {
   /// Driven from `.task(id: text)`, so SwiftUI cancels the previous call as the next keystroke
   /// lands: the sleep is the debounce, and that cancellation is what enforces it.
   func update(text: String) async {
+    generation += 1
+    let generation = self.generation
     self.text = text.trimmingCharacters(in: .whitespacesAndNewlines)
 
     guard !self.text.isEmpty else {
@@ -67,17 +77,19 @@ extension RecipeSearchInputViewModel {
     do {
       try await Task.sleep(for: debounce)
 
-      await loadCategoriesIfNeeded()
+      try await loadCategoriesIfNeeded()
 
       let page = try await recipeService.getRecipes(
         query: RecipeQuery(searchText: self.text),
         page: suggestionPage
       )
 
-      try Task.checkCancellation()
+      guard generation == self.generation else { return }
 
       sections = .rows(matchSections(for: page.recipes))
     } catch {
+      guard generation == self.generation else { return }
+
       sections = previous.recovering(from: error)
     }
   }
@@ -115,11 +127,22 @@ private extension RecipeSearchInputViewModel {
 
   /// Fetched once and matched in memory: the list is small and does not change between
   /// keystrokes, so a request per keystroke would be traffic for nothing.
-  func loadCategoriesIfNeeded() async {
+  ///
+  /// The latch is set only on success. A `try?` here would turn the cancellation that every
+  /// keystroke causes into a permanently empty list, and no later keystroke would ever match
+  /// a category again.
+  ///
+  /// A real failure is absorbed so the recipe matches still carry the list; only cancellation
+  /// reaches the caller, where the generation guard decides what to paint.
+  func loadCategoriesIfNeeded() async throws {
     guard !hasLoadedCategories else { return }
 
-    categories = await (try? recipeService.getCategories()) ?? []
-    hasLoadedCategories = true
+    do {
+      categories = try await recipeService.getCategories()
+      hasLoadedCategories = true
+    } catch {
+      guard !error.isCancellation else { throw error }
+    }
   }
 
   func matchSections(for recipes: [RecipeSummary]) -> [RecipeSuggestionSectionViewModel] {
@@ -154,10 +177,6 @@ private extension RecipeSearchInputViewModel {
 // MARK: - Getters > Constants
 
 private extension RecipeSearchInputViewModel {
-  var debounce: Duration {
-    .milliseconds(300)
-  }
-
   var recentLimit: Int {
     4
   }

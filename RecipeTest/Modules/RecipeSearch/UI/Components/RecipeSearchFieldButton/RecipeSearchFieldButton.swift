@@ -13,6 +13,7 @@ import SwiftUI
 struct RecipeSearchFieldButton: View {
   let text: String
   let isPlaceholder: Bool
+  let accessibilityValue: String
   let showsClear: Bool
   let onTap: VoidResult
   let onClearTap: VoidResult
@@ -44,6 +45,8 @@ struct RecipeSearchFieldButton: View {
       )
       .buttonStyle(.plain)
       .accessibilityIdentifier("recipe-search-field-button")
+      .accessibilityLabel(Text(.RecipeSearch.recipeSearchFieldAccessibilityLabel))
+      .accessibilityValue(Text(accessibilityValue))
 
       if showsClear {
         Button(
@@ -110,6 +113,7 @@ private extension RecipeSearchFieldButton {
     RecipeSearchFieldButton(
       text: "Search recipes or ingredients",
       isPlaceholder: true,
+      accessibilityValue: "Nothing entered",
       showsClear: false,
       onTap: {},
       onClearTap: {}
@@ -122,6 +126,7 @@ private extension RecipeSearchFieldButton {
     RecipeSearchFieldButton(
       text: "adobo",
       isPlaceholder: false,
+      accessibilityValue: "adobo",
       showsClear: true,
       onTap: {},
       onClearTap: {}

@@ -38,7 +38,7 @@ nonisolated extension RecipeIngredientChipViewModel {
   /// The same two colours the results list's facet chips use, so an ingredient looks the same
   /// in the overlay as it does on the list.
   var backgroundColorStyle: Color.ThemeColor {
-    kind == .exclude ? .complementaryShade3 : .surfacesFieldsAndTags
+    kind == .exclude ? .complementaryShade2 : .complementaryShade1
   }
 
   var accessibilityIdentifier: String {

@@ -127,6 +127,56 @@ struct RecipeSearchInputViewModelTests {
   }
 
   @Test
+  func update_cancelledBeforeTheDebounceElapses_neverReachesTheService() async {
+    let service = MockRecipeService()
+    let sut = makeSUT(
+      debounce: .seconds(10),
+      service: service
+    )
+
+    let task = Task { await sut.update(text: "ado") }
+    task.cancel()
+    await task.value
+
+    #expect(!service.recipes.wasCalled)
+  }
+
+  @Test
+  func update_aCancelledCallResuming_doesNotOverwriteTheNewerState() async {
+    let service = MockRecipeService()
+    let store = MockRecentSearchStore()
+    store.searches = ["adobo"]
+    let sut = makeSUT(
+      debounce: .milliseconds(50),
+      service: service,
+      store: store
+    )
+
+    // The slow call is cancelled, then a newer one paints the recents. When the cancelled one
+    // resumes it must leave that alone rather than restoring its own stale snapshot.
+    let stale = Task { await sut.update(text: "ado") }
+    stale.cancel()
+    await sut.update(text: "")
+    await stale.value
+
+    #expect(sut.sections.value?.first?.rows.map(\.title) == ["adobo"])
+  }
+
+  @Test
+  func update_categoriesCancelledOnce_stillMatchesCategoriesLater() async {
+    let service = MockRecipeService(categories: [.dummy(name: "Desserts")])
+    service.categories.fails(with: CancellationError())
+    let sut = makeSUT(service: service)
+
+    await sut.update(text: "dess")
+
+    service.categories.returns([.dummy(name: "Desserts")])
+    await sut.update(text: "dess")
+
+    #expect(titles(of: sut).contains("Desserts"))
+  }
+
+  @Test
   func select_aRecipeRow_returnsTheRecipe() {
     let summary = RecipeSummary.dummy(id: "rcp-007")
     let sut = makeSUT()
@@ -160,13 +210,17 @@ struct RecipeSearchInputViewModelTests {
 // MARK: - Helpers
 
 private extension RecipeSearchInputViewModelTests {
+  /// Zero debounce by default: the delay is the thing under test in exactly one case below,
+  /// and paying 300 ms in every other one buys nothing.
   func makeSUT(
     text: String = "",
+    debounce: Duration = .zero,
     service: MockRecipeService = MockRecipeService(),
     store: RecentSearchStoreProtocol = MockRecentSearchStore()
   ) -> RecipeSearchInputViewModel {
     RecipeSearchInputViewModel(
       text: text,
+      debounce: debounce,
       recipeService: service,
       recentSearchStore: store
     )

@@ -24,6 +24,7 @@ struct RecipeSearchSection<Content: View>: View {
         Text(title)
           .themeTextStyle(.title3)
           .themeColor(.textPrimary)
+          .accessibilityAddTraits(.isHeader)
       }
 
       content()

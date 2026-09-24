@@ -6,7 +6,7 @@
 //  Copyright © 2026 Danjan. All rights reserved.
 //
 
-import Foundation
+import SwiftUI
 
 nonisolated struct RecipeServingsOptionViewModel: RecipeServingsOptionViewModelProtocol {
   let servings: RecipeServings
@@ -27,6 +27,14 @@ nonisolated extension RecipeServingsOptionViewModel {
 
   var accessibilityLabel: String {
     String(localized: .RecipeSearch.recipeSearchServingsAccessibilityLabel(servings.rawValue))
+  }
+
+  var backgroundColorStyle: Color.ThemeColor {
+    isSelected ? .surfacesBrandDefault : .surfacesFieldsAndTags
+  }
+
+  var labelColorStyle: Color.ThemeColor {
+    isSelected ? .textInverted : .textPrimary
   }
 
   var accessibilityIdentifier: String {

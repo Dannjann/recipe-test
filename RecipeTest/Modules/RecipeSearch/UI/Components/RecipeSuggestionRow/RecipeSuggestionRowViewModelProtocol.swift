@@ -14,8 +14,8 @@ nonisolated protocol RecipeSuggestionRowViewModelProtocol: Identifiable {
   var detail: String { get }
   var imageURL: URL? { get }
 
-  /// Stands in where there is no photograph — a recent search has none, and neither does the
-  /// row offering back what is being typed.
-  var symbolName: String? { get }
+  /// Stands in where there is no photograph — a recent search has none, neither does the row
+  /// offering back what is being typed, and a category or recipe may simply be missing one.
+  var symbolName: String { get }
   var accessibilityIdentifier: String { get }
 }

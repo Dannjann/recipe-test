@@ -76,7 +76,9 @@ nonisolated extension RecipeSuggestionRowViewModel {
     }
   }
 
-  var symbolName: String? {
+  /// Never nil: a category or recipe whose photograph is missing still needs something in
+  /// the tile, and choosing it is not the row view's decision.
+  var symbolName: String {
     switch suggestion {
     case .query:
       "magnifyingglass"
@@ -85,7 +87,7 @@ nonisolated extension RecipeSuggestionRowViewModel {
       "clock"
 
     case .category, .recipe:
-      nil
+      "fork.knife"
     }
   }
 

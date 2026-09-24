@@ -19,8 +19,8 @@ struct RecipeSearchViewModelTests {
       category: "Desserts"
     ))
 
-    #expect(sut.fieldText == "mango")
-    #expect(sut.hasFieldText)
+    #expect(sut.searchText == "mango")
+    #expect(!sut.fieldIsPlaceholder)
     #expect(sut.draft.category == "Desserts")
   }
 
@@ -28,8 +28,10 @@ struct RecipeSearchViewModelTests {
   func fieldText_noSearchText_isThePlaceholder() {
     let sut = RecipeSearchViewModelTestFactory.make()
 
-    #expect(!sut.hasFieldText)
+    #expect(sut.searchText.isEmpty)
+    #expect(sut.fieldIsPlaceholder)
     #expect(sut.fieldText == String(localized: .RecipeSearch.recipeSearchFieldPlaceholder))
+    #expect(sut.fieldAccessibilityValue != sut.fieldText)
   }
 
   @Test
@@ -190,9 +192,32 @@ struct RecipeSearchViewModelTests {
       return
     }
 
-    #expect(query == sut.draft)
+    #expect(query.searchText == "adobo")
     #expect(query.isVegetarian == true)
     #expect(store.recorded == ["adobo"])
+  }
+
+  @Test
+  func addInclude_seededWithTheSameIngredientOnBothSides_leavesItOnOneSideOnly() {
+    let sut = RecipeSearchViewModelTestFactory.make(query: RecipeQuery(
+      includeIngredients: ["pork"],
+      excludeIngredients: ["pork"]
+    ))
+
+    sut.addInclude("pork")
+
+    #expect(sut.draft.includeIngredients == ["pork"])
+    #expect(sut.draft.excludeIngredients.isEmpty)
+  }
+
+  @Test
+  func clearAll_changesTheTokenTheIngredientFieldsKeyOff() {
+    let sut = RecipeSearchViewModelTestFactory.make()
+    let before = sut.clearToken
+
+    sut.clearAll()
+
+    #expect(sut.clearToken != before)
   }
 
   @Test

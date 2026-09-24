@@ -15,6 +15,8 @@ struct RecipeSearchInputView: View {
   let onSubmit: SingleResult<String>
 
   @State private var text: String
+  @State private var retryToken = 0
+
   @FocusState private var isFocused: Bool
 
   init(
@@ -54,7 +56,7 @@ struct RecipeSearchInputView: View {
             state: viewModel.sections,
             minHeight: sectionMinimumHeight,
             emptyMessage: viewModel.emptyText,
-            onRetryTap: { Task { await viewModel.update(text: text) } },
+            onRetryTap: { retryToken += 1 },
             content: { sections in
               ForEach(sections) { section in
                 RecipeSuggestionSection(
@@ -73,8 +75,18 @@ struct RecipeSearchInputView: View {
       .scrollIndicators(.hidden)
     }
     .background(Color.themeColor(.surfacesBackground))
-    .task(id: text) { await viewModel.update(text: text) }
+    // One owner for every fetch: a retry bumps the token instead of starting an unstructured
+    // task that would outlive the screen and race the next keystroke.
+    .task(id: taskToken) { await viewModel.update(text: text) }
     .onAppear { isFocused = true }
+  }
+}
+
+// MARK: - Getters
+
+private extension RecipeSearchInputView {
+  var taskToken: String {
+    "\(retryToken)-\(text)"
   }
 }
 

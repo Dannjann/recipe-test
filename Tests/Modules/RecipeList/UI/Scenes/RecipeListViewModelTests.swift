@@ -582,6 +582,42 @@ struct RecipeListViewModelApplyTests {
   }
 
   @Test
+  func apply_whileANextPageIsInFlight_discardsThatPage() async {
+    let service = MockRecipeService(recipes: RecipeListPageFactory.page(
+      ids: ["rcp-001"],
+      total: 40,
+      currentPage: 1,
+      lastPage: 2
+    ))
+    let sut = RecipeListViewModelTestFactory.make(service: service)
+    await sut.loadFirstPage()
+
+    // The next page is held open, a new query is applied, and only then does the stale page
+    // land. It must not be appended onto the result set the apply produced.
+    let held = AsyncStream<RecipeListPage>.makeStream()
+    service.recipes.responds { request in
+      guard request.page.index == 2 else {
+        return RecipeListPageFactory.page(
+          ids: ["rcp-100"],
+          total: 1
+        )
+      }
+
+      var iterator = held.stream.makeAsyncIterator()
+
+      return await iterator.next() ?? RecipeListPageFactory.page(ids: [])
+    }
+
+    let nextPage = Task { await sut.loadNextPageIfNeeded(after: "rcp-001") }
+    await sut.apply(query: RecipeQuery(searchText: "adobo"))
+    held.continuation.yield(RecipeListPageFactory.page(ids: ["rcp-002"]))
+    held.continuation.finish()
+    await nextPage.value
+
+    #expect(sut.recipes.value?.map(\.id) == ["rcp-100"])
+  }
+
+  @Test
   func searchPlaceholder_afterApplyingNewText_followsIt() async {
     let sut = RecipeListViewModelTestFactory.make(request: .search("pho"))
 

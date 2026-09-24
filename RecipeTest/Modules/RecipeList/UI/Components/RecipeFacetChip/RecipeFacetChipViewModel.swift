@@ -46,7 +46,7 @@ nonisolated extension RecipeFacetChipViewModel {
   }
 
   var backgroundColorStyle: Color.ThemeColor {
-    isExclusion ? .complementaryShade3 : .surfacesFieldsAndTags
+    isExclusion ? .complementaryShade2 : .complementaryShade1
   }
 
   var accessibilityIdentifier: String {

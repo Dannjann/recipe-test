@@ -14,8 +14,11 @@ import Testing
 /// wire together, tested without either of them.
 @MainActor
 struct RecipeSearchApplyTests {
+  /// The draft lives in the overlay's own view model and reaches the host only through
+  /// `onFinish`, so editing it cannot touch the list. This pins that separation; the X itself
+  /// is covered end to end by `.maestro/search-and-filter.yaml`.
   @Test
-  func editingTheDraft_withoutApplying_neverReachesTheList() async {
+  func editingTheDraft_withoutApplying_leavesTheListsOwnStateAlone() async {
     let service = MockRecipeService()
     let list = RecipeListViewModelTestFactory.make(
       request: .category(.dummy(name: "Desserts")),
@@ -63,7 +66,7 @@ struct RecipeSearchApplyTests {
 
     await apply(overlay, to: list)
 
-    #expect(list.facetChips.map(\.label).count == 2)
+    #expect(list.facetChips.map(\.id) == [.vegetarian(true), .exclude("pork")])
     #expect(list.showsClearAllChips)
   }
 

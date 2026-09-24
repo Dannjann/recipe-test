@@ -53,9 +53,9 @@ struct RecipeFacetChipViewModelTests {
 
   @Test
   func backgroundColorStyle_tintsOnlyAnExcludedIngredientDifferently() {
-    #expect(RecipeFacetChipViewModel(facet: .exclude("peanuts")).backgroundColorStyle == .complementaryShade3)
-    #expect(RecipeFacetChipViewModel(facet: .include("garlic")).backgroundColorStyle == .surfacesFieldsAndTags)
-    #expect(RecipeFacetChipViewModel(facet: .vegetarian(true)).backgroundColorStyle == .surfacesFieldsAndTags)
+    #expect(RecipeFacetChipViewModel(facet: .exclude("peanuts")).backgroundColorStyle == .complementaryShade2)
+    #expect(RecipeFacetChipViewModel(facet: .include("garlic")).backgroundColorStyle == .complementaryShade1)
+    #expect(RecipeFacetChipViewModel(facet: .vegetarian(true)).backgroundColorStyle == .complementaryShade1)
   }
 
   @Test

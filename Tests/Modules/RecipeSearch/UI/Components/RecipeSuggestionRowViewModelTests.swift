@@ -30,7 +30,7 @@ struct RecipeSuggestionRowViewModelTests {
     let row = RecipeSuggestionRowViewModel(suggestion: .recipe(summary))
 
     #expect(row.imageURL == summary.heroImageURL)
-    #expect(row.symbolName == nil)
+    #expect(row.symbolName == "fork.knife")
   }
 
   @Test
