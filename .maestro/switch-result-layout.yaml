@@ -1,0 +1,19 @@
+# The results list renders the same recipes as a grid or as rows, and the choice survives
+# nothing but the screen — leaving and returning starts on the grid again.
+appId: com.danjan.recipe
+---
+- launchApp
+- tapOn:
+    id: "home-category-tile-cat-04"
+- assertVisible:
+    id: "recipe-list-card-rcp-034"
+
+- tapOn:
+    id: "recipe-list-view-mode-list-button"
+- assertVisible:
+    id: "recipe-list-card-rcp-034"
+
+- tapOn:
+    id: "recipe-list-view-mode-grid-button"
+- assertVisible:
+    id: "recipe-list-card-rcp-034"

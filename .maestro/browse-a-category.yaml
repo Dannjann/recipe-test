@@ -1,0 +1,33 @@
+# Home -> a category's results -> one recipe -> back.
+# The journey the results list exists for: every hand-off between Home, the list and the
+# detail screen has to be wired correctly for this to reach the end.
+appId: com.danjan.recipe
+---
+- launchApp
+
+- assertVisible:
+    id: "home-category-tile-cat-04"
+- tapOn:
+    id: "home-category-tile-cat-04"
+
+# The list is showing, scoped to the category that was tapped.
+- assertVisible: "Desserts"
+- assertVisible:
+    id: "recipe-list-result-count-label"
+- assertVisible:
+    id: "recipe-search-pill-button"
+
+# A result opens its own recipe.
+- assertVisible:
+    id: "recipe-list-card-rcp-034"
+- tapOn:
+    id: "recipe-list-card-rcp-034"
+- assertVisible: "Ingredients"
+
+# And the detail screen goes back to the list it was opened from.
+- tapOn:
+    id: "recipe-detail-back-button"
+- assertVisible:
+    id: "recipe-list-result-count-label"
+- assertVisible:
+    id: "recipe-list-card-rcp-034"

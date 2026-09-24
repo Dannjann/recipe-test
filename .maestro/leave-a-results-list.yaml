@@ -1,0 +1,19 @@
+# Swiping from the left edge pops the results list back to Home. This is the gesture the
+# recipe detail screen had to give up, and the reason the list keeps the system navigation
+# bar rather than drawing its own.
+appId: com.danjan.recipe
+---
+- launchApp
+- tapOn:
+    id: "home-category-tile-cat-04"
+- assertVisible:
+    id: "recipe-list-result-count-label"
+
+- swipe:
+    start: "1%, 50%"
+    end: "95%, 50%"
+
+- assertVisible:
+    id: "home-category-tile-cat-04"
+- assertNotVisible:
+    id: "recipe-list-result-count-label"
