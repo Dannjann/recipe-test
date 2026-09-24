@@ -15,25 +15,31 @@ import Foundation
 nonisolated struct Recipe: Equatable, Identifiable {
   let id: String
   let title: String
-  let shortDescription: String
-  let fullDescription: String
+  let description: String
   let heroImageURL: URL?
-  let totalTimeMinutes: Int?
-  let prepTimeMinutes: Int?
-  let cookTimeMinutes: Int?
-  let servings: Int?
-  let difficulty: RecipeDifficulty?
+  let category: String?
   let cuisine: String?
   let mealType: String?
-  let tags: [String]
-  let dietaryAttributes: [String]
-  let allergens: [String]
-  let rating: Double
-  let ratingCount: Int
-  let updatedAt: Date?
-  let author: RecipeAuthor?
-  let nutrition: RecipeNutrition?
-  let gallery: [RecipeMedia]
-  let ingredientGroups: [RecipeIngredientGroup]
-  let steps: [RecipeStep]
+  let totalTimeMinutes: Int?
+  let servings: Int?
+  let difficulty: RecipeDifficulty?
+  let isVegetarian: Bool
+  let gallery: [URL]
+  let ingredients: [RecipeIngredient]
+  let steps: [String]
+}
+
+/// One line of the ingredients checklist.
+///
+/// `quantityText` is a display string rather than a number and a unit: the source data
+/// cannot support arithmetic — a third of its ingredients carry no unit at all — and
+/// nothing in the product does arithmetic on it.
+///
+/// Lives in this file because an ingredient exists only inside a recipe.
+nonisolated struct RecipeIngredient: Equatable, Identifiable {
+  let id: String
+  let quantityText: String
+  let name: String
+  let imageURL: URL?
+  let isMain: Bool
 }
