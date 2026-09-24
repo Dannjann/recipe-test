@@ -15,6 +15,7 @@ final class LaunchUITests: XCTestCase {
     continueAfterFailure = false
   }
 
+  @MainActor
   func test_app_launches() {
     let app = XCUIApplication()
     app.launch()

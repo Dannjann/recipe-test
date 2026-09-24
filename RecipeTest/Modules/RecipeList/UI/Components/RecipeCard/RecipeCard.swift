@@ -113,7 +113,7 @@ private extension RecipeCard {
       url: viewModel.imageURL,
       placeholder: { Color.themeColor(.surfacesBackground3) }
     )
-    .aspectRatio(contentMode: .fill)
+    .scaledToFill()
     .frame(maxWidth: .infinity)
     .aspectRatio(
       1,

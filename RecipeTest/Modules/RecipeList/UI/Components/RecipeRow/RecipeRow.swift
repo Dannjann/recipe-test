@@ -136,7 +136,7 @@ private extension RecipeRow {
       url: viewModel.imageURL,
       placeholder: { Color.themeColor(.surfacesBackground3) }
     )
-    .aspectRatio(contentMode: .fill)
+    .scaledToFill()
     .frame(
       width: thumbnailSize,
       height: thumbnailSize

@@ -21,13 +21,14 @@ struct LatestRecipesSection: View {
       state: viewModel.latestRecipes,
       minHeight: minHeight,
       emptyMessage: .Home.homeLatestRecipesEmpty,
-      onRetryTap: { Task { await viewModel.loadLatestRecipes() } }
-    ) { recipes in
-      LatestRecipeCarousel(
-        recipes: recipes,
-        onRecipeTap: onRecipeTap
-      )
-    }
+      onRetryTap: { Task { await viewModel.loadLatestRecipes() } },
+      content: { recipes in
+        LatestRecipeCarousel(
+          recipes: recipes,
+          onRecipeTap: onRecipeTap
+        )
+      }
+    )
   }
 }
 
