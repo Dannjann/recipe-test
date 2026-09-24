@@ -82,6 +82,17 @@
         }
       }
     },
+    "recipeSearch.input.back.accessibilityLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
     "recipeSearch.section.exclude.placeholder": {
       "comment": "An example ingredient, shown in the empty Exclude field.",
       "extractionState": "manual",
@@ -203,6 +214,120 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ servings"
+          }
+        }
+      }
+    },
+    "recipeSearch.suggestion.category.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Category"
+          }
+        }
+      }
+    },
+    "recipeSearch.suggestion.empty.idle": {
+      "comment": "Shown when the field is empty and nothing has been searched for yet.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your recent searches will show up here."
+          }
+        }
+      }
+    },
+    "recipeSearch.suggestion.empty.matches": {
+      "comment": "Shown when a typed search matches nothing.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No recipe names match. You can still search for it."
+          }
+        }
+      }
+    },
+    "recipeSearch.suggestion.query.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use this as your search"
+          }
+        }
+      }
+    },
+    "recipeSearch.suggestion.query.title": {
+      "comment": "Offers the typed text back as the search to run. %@ is what was typed.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search for “%@”"
+          }
+        }
+      }
+    },
+    "recipeSearch.suggestion.recent.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent search"
+          }
+        }
+      }
+    },
+    "recipeSearch.suggestion.recipe.detail": {
+      "comment": "Shown under a recipe suggestion that has no cuisine of its own.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recipe"
+          }
+        }
+      }
+    },
+    "recipeSearch.suggestion.section.categories": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Categories"
+          }
+        }
+      }
+    },
+    "recipeSearch.suggestion.section.recent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent searches"
+          }
+        }
+      }
+    },
+    "recipeSearch.suggestion.section.recipes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recipes"
           }
         }
       }
