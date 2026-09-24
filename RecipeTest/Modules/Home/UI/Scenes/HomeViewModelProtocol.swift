@@ -9,7 +9,7 @@
 import Foundation
 
 @MainActor
-protocol HomeViewModelProtocol {
+protocol HomeViewModelProtocol: AnyObject {
   var latestRecipes: SectionState<[RecipeSummary]> { get }
   var categories: SectionState<[RecipeCategory]> { get }
 
