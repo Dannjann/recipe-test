@@ -71,6 +71,18 @@ private extension RecipeListViewModeToggle {
     }
   }
 
+  /// Deliberately not the localized label: an identifier a flow selects on must not move
+  /// when the copy does.
+  func identifierSuffix(for mode: RecipeListViewMode) -> String {
+    switch mode {
+    case .grid:
+      "grid"
+
+    case .list:
+      "list"
+    }
+  }
+
   func symbolName(for mode: RecipeListViewMode) -> String {
     switch mode {
     case .grid:
@@ -119,6 +131,7 @@ private extension RecipeListViewModeToggle {
       }
     )
     .buttonStyle(.plain)
+    .accessibilityIdentifier("recipe-list-view-mode-\(identifierSuffix(for: mode))-button")
     .accessibilityLabel(Text(label(for: mode)))
     .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
   }

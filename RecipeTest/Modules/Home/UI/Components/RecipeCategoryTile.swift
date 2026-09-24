@@ -28,6 +28,7 @@ struct RecipeCategoryTile: View {
     )
     .buttonStyle(.plain)
     .accessibilityElement(children: .combine)
+    .accessibilityIdentifier("home-category-tile-\(category.id)")
     .accessibilityLabel(Text(category.name))
     .accessibilityAddTraits(.isButton)
   }

@@ -18,6 +18,7 @@ struct RecipeListToolbar: View {
         Text(resultCountText)
           .themeTextStyle(.footnoteRegular)
           .themeColor(.textSecondary)
+          .accessibilityIdentifier("recipe-list-result-count-label")
       }
 
       Spacer(minLength: 0)

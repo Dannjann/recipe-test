@@ -42,6 +42,7 @@ struct RecipeFacetChip: View {
     )
     .buttonStyle(.plain)
     .accessibilityElement(children: .ignore)
+    .accessibilityIdentifier("recipe-list-facet-chip-remove-button")
     .accessibilityLabel(Text(viewModel.removeAccessibilityLabel))
     .accessibilityAddTraits(.isButton)
   }

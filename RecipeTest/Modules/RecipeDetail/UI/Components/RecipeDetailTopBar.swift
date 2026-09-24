@@ -98,6 +98,7 @@ private extension RecipeDetailTopBar {
     )
     .buttonStyle(.plain)
     .cardShadow()
+    .accessibilityIdentifier("recipe-detail-back-button")
     .accessibilityLabel(Text(.RecipeDetail.recipeDetailBackAccessibilityLabel))
   }
 

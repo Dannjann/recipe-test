@@ -48,6 +48,7 @@ struct RecipeSearchPill: View {
       }
     )
     .buttonStyle(.plain)
+    .accessibilityIdentifier("recipe-search-pill-button")
     .cardShadow()
     .padding(
       .horizontal,

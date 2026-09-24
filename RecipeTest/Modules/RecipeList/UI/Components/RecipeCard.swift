@@ -56,6 +56,7 @@ struct RecipeCard: View {
     .buttonStyle(.plain)
     .cardShadow()
     .accessibilityElement(children: .combine)
+    .accessibilityIdentifier("recipe-list-card-\(viewModel.id)")
     .accessibilityLabel(Text(viewModel.accessibilityLabel))
     .accessibilityAddTraits(.isButton)
   }
