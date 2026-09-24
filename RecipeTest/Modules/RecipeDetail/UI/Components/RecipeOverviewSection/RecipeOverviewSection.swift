@@ -18,7 +18,7 @@ struct RecipeOverviewSection: View {
       spacing: spacing
     ) {
       Text(title)
-        .themeTextStyle(.largeTitle)
+        .themeTextStyle(.title1)
         .themeColor(.textPrimary)
         .accessibilityAddTraits(.isHeader)
 
