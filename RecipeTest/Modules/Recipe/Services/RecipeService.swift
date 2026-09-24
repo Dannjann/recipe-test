@@ -37,8 +37,8 @@ final nonisolated class RecipeService: RecipeServiceProtocol {
 nonisolated extension RecipeService {
   /// A row that cannot be mapped is dropped from the page rather than failing it — one
   /// bad row must not cost the user the other nine.
-  func getRecipes(page: Page) async throws -> RecipeListPage {
-    let (remote, meta) = try await api.getRecipes(page: page.index, perPage: page.size)
+  func getRecipes(query: RecipeQuery, page: Page) async throws -> RecipeListPage {
+    let (remote, meta) = try await api.getRecipes(query: query, page: page.index, perPage: page.size)
 
     return RecipeListPage(
       recipes: remote.compactMap { RecipeSummaryMapper.toDomain(from: $0) },
@@ -63,5 +63,13 @@ nonisolated extension RecipeService {
     }
 
     return recipe
+  }
+
+  /// `compactMap`, like the list: a malformed tile is one missing tile on the grid, not a
+  /// failed home screen.
+  func getCategories() async throws -> [RecipeCategory] {
+    let remote = try await api.getCategories()
+
+    return remote.compactMap { RecipeCategoryMapper.toDomain(from: $0) }
   }
 }

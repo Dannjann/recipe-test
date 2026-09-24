@@ -17,31 +17,43 @@ import Foundation
 final class MockRecipeAPI: RecipeAPIProtocol {
   /// Named rather than a tuple so `lastRequest` can be compared in one `#expect`.
   struct RecipesRequest: Equatable {
+    let query: RecipeQuery
     let page: Int
     let perPage: Int
   }
 
   let recipes: MockAPICall<RecipesRequest, ([RemoteRecipeSummary], RemotePaginationMetaInfo)>
   let recipe: MockAPICall<String, RemoteRecipe>
+  let categories: MockAPICall<Void, [RemoteRecipeCategory]>
 
   init(
     recipes: [RemoteRecipeSummary] = [.dummy()],
     meta: RemotePaginationMetaInfo = .dummy(),
-    recipe: RemoteRecipe = .dummy()
+    recipe: RemoteRecipe = .dummy(),
+    categories: [RemoteRecipeCategory] = [.dummy()]
   ) {
     self.recipes = MockAPICall(returning: (recipes, meta))
     self.recipe = MockAPICall(returning: recipe)
+    self.categories = MockAPICall(returning: categories)
   }
 }
 
 // MARK: - RecipeAPIProtocol
 
 extension MockRecipeAPI {
-  func getRecipes(page: Int, perPage: Int) async throws -> ([RemoteRecipeSummary], RemotePaginationMetaInfo) {
-    try await recipes.invoke(RecipesRequest(page: page, perPage: perPage))
+  func getRecipes(
+    query: RecipeQuery,
+    page: Int,
+    perPage: Int
+  ) async throws -> ([RemoteRecipeSummary], RemotePaginationMetaInfo) {
+    try await recipes.invoke(RecipesRequest(query: query, page: page, perPage: perPage))
   }
 
   func getRecipe(id: String) async throws -> RemoteRecipe {
     try await recipe.invoke(id)
+  }
+
+  func getCategories() async throws -> [RemoteRecipeCategory] {
+    try await categories.invoke(())
   }
 }

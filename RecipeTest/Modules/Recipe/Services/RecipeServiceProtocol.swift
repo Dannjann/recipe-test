@@ -11,7 +11,9 @@ import Foundation
 /// What a view model will depend on. Domain types only — nothing above this line has any
 /// reason to know the API's JSON shape.
 nonisolated protocol RecipeServiceProtocol: AppServiceProtocol, Sendable {
-  func getRecipes(page: Page) async throws -> RecipeListPage
+  func getRecipes(query: RecipeQuery, page: Page) async throws -> RecipeListPage
 
   func getRecipe(id: String) async throws -> Recipe
+
+  func getCategories() async throws -> [RecipeCategory]
 }
