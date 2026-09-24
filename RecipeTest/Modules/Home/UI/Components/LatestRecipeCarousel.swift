@@ -10,7 +10,7 @@ import SwiftUI
 
 struct LatestRecipeCarousel: View {
   let recipes: [RecipeSummary]
-  let onRecipeTap: SingleResult<String>
+  let onRecipeTap: SingleResult<RecipeSummary>
 
   var body: some View {
     ScrollView(.horizontal) {

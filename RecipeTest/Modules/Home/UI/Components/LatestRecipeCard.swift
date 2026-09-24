@@ -11,7 +11,7 @@ import SwiftUI
 /// Both dimensions scale: the title sits inside the card, so a fixed box would clip it.
 struct LatestRecipeCard: View {
   let recipe: RecipeSummary
-  let onTap: SingleResult<String>
+  let onTap: SingleResult<RecipeSummary>
 
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -20,7 +20,7 @@ struct LatestRecipeCard: View {
 
   var body: some View {
     Button(
-      action: { onTap(recipe.id) },
+      action: { onTap(recipe) },
       label: {
         photograph
           .frame(

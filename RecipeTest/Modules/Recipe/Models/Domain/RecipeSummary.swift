@@ -18,7 +18,7 @@ import Foundation
 /// facets, while the prose and the three collections belong to `Recipe`. `category` and
 /// `cuisine` are here because the list row prints `cuisine · category`; `description` is
 /// not, because no list surface renders it.
-nonisolated struct RecipeSummary: Equatable, Identifiable {
+nonisolated struct RecipeSummary: Hashable, Identifiable {
   let id: String
   let title: String
   let heroImageURL: URL?

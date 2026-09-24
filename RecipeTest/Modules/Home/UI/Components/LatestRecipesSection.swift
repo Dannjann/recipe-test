@@ -12,7 +12,7 @@ import SwiftUI
 /// invalidate the whole screen whenever either section resolved.
 struct LatestRecipesSection: View {
   let viewModel: any HomeViewModelProtocol
-  let onRecipeTap: SingleResult<String>
+  let onRecipeTap: SingleResult<RecipeSummary>
 
   @ScaledMetric(relativeTo: .body) private var minHeight: CGFloat = LatestRecipeCard.baseHeight
 
