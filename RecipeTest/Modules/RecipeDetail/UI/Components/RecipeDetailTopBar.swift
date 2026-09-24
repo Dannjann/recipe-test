@@ -16,8 +16,6 @@ struct RecipeDetailTopBar: View {
   let isTitleOffscreen: Bool
   let onBackTap: VoidResult
 
-  @ScaledMetric(relativeTo: .body) private var buttonSize: CGFloat = RecipeDetailTopBar.baseButtonSize
-
   var body: some View {
     HStack(spacing: spacing) {
       backButton
@@ -83,8 +81,8 @@ private extension RecipeDetailTopBar {
         .themeTextStyle(.bodyBold)
         .foregroundStyle(.themeColor(.iconsDefault))
         .frame(
-          width: buttonSize,
-          height: buttonSize
+          width: Self.baseButtonSize,
+          height: Self.baseButtonSize
         )
         .background(
           Color.themeColor(.surfacesBackground2),

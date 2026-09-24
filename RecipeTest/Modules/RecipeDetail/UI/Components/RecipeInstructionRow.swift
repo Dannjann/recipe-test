@@ -13,8 +13,6 @@ struct RecipeInstructionRow: View {
   let total: Int
   let text: String
 
-  @ScaledMetric(relativeTo: .body) private var badgeSize: CGFloat = RecipeInstructionRow.baseBadgeSize
-
   var body: some View {
     HStack(
       alignment: .top,
@@ -61,8 +59,8 @@ private extension RecipeInstructionRow {
       .themeTextStyle(.subheadlineSemibold)
       .themeColor(.textPrimary)
       .frame(
-        width: badgeSize,
-        height: badgeSize
+        width: Self.baseBadgeSize,
+        height: Self.baseBadgeSize
       )
       .background(
         Color.themeColor(.surfacesAccentSky),

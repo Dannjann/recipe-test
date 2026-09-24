@@ -9,7 +9,7 @@
 import Foundation
 
 @MainActor
-protocol RecipeDetailViewModelProtocol: AnyObject {
+protocol RecipeDetailViewModelProtocol: AnyObject, Observable {
   var summary: RecipeSummary { get }
   var detail: SectionState<Recipe> { get }
   var checkedIngredientIDs: Set<String> { get }

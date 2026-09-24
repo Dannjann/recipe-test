@@ -11,9 +11,6 @@ import SwiftUI
 struct MainIngredientTile: View {
   let ingredient: RecipeIngredient
 
-  @ScaledMetric(relativeTo: .footnote) private var imageSize: CGFloat = MainIngredientTile.baseImageSize
-  @ScaledMetric(relativeTo: .footnote) private var width: CGFloat = MainIngredientTile.baseWidth
-
   var body: some View {
     VStack(spacing: spacing) {
       CachedAsyncImage(url: ingredient.imageURL) {
@@ -21,8 +18,8 @@ struct MainIngredientTile: View {
       }
       .aspectRatio(contentMode: .fill)
       .frame(
-        width: imageSize,
-        height: imageSize
+        width: Self.baseImageSize,
+        height: Self.baseImageSize
       )
       .clipShape(.rect(cornerRadius: cornerRadius))
 
@@ -31,7 +28,7 @@ struct MainIngredientTile: View {
         .themeColor(.textPrimary)
         .multilineTextAlignment(.center)
     }
-    .frame(width: width)
+    .frame(width: Self.baseWidth)
     .accessibilityElement(children: .combine)
   }
 }

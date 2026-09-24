@@ -12,8 +12,6 @@ struct RecipeDetailView: View {
   let viewModel: any RecipeDetailViewModelProtocol
   let onBackTap: VoidResult
 
-  @ScaledMetric(relativeTo: .body) private var galleryHeight: CGFloat = RecipeGallery.baseHeight
-
   @State private var isTitleOffscreen = false
 
   /// A `ZStack`, not an `.overlay` on the scroll view. The scroll view ignores the top
@@ -42,10 +40,11 @@ private extension RecipeDetailView {
     40
   }
 
-  /// The prototype turns the bar on once the recipe's name is within 104pt of the top.
-  /// The name sits 78pt below the gallery, so the trigger is the gallery's height less 78.
+  /// Tuned on device: the bar arms just as the recipe's name leaves the top of the screen.
+  /// Derived from the gallery's height rather than measured, so a change to the sheet's
+  /// overlap or its top paddings has to be re-tuned here.
   var stickyBarThreshold: CGFloat {
-    galleryHeight - 78
+    RecipeGallery.baseHeight - 78
   }
 }
 
@@ -120,6 +119,15 @@ private extension RecipeDetailView {
     NavigationStack {
       RecipeDetailView(
         viewModel: MockRecipeDetailViewModel.noPhotographs(),
+        onBackTap: {}
+      )
+    }
+  }
+
+  #Preview("Nothing to cook with") {
+    NavigationStack {
+      RecipeDetailView(
+        viewModel: MockRecipeDetailViewModel.withoutABody(),
         onBackTap: {}
       )
     }

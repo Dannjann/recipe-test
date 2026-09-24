@@ -38,6 +38,10 @@ struct RecipeDetailBody: View {
         RecipeDetailSectionHeader(title: .RecipeDetail.recipeDetailInstructionsTitle)
         RecipeInstructions(steps: recipe.steps)
       }
+
+      if isEmpty {
+        empty
+      }
     }
     .frame(
       maxWidth: .infinity,
@@ -52,14 +56,61 @@ private extension RecipeDetailBody {
   var mainIngredients: [RecipeIngredient] {
     recipe.ingredients.filter(\.isMain)
   }
+
+  /// The request succeeded and carried nothing to cook with. Without this the sheet is a
+  /// title, three metric cards and a panel of white space.
+  var isEmpty: Bool {
+    recipe.ingredients.isEmpty && recipe.steps.isEmpty
+  }
+
+  var emptyMinHeight: CGFloat {
+    240
+  }
+
+  var horizontalPadding: CGFloat {
+    20
+  }
+}
+
+// MARK: - Subviews
+
+private extension RecipeDetailBody {
+  var empty: some View {
+    Text(.RecipeDetail.recipeDetailDetailEmpty)
+      .themeTextStyle(.bodyRegular)
+      .themeColor(.textSecondary)
+      .multilineTextAlignment(.center)
+      .frame(
+        maxWidth: .infinity,
+        minHeight: emptyMinHeight
+      )
+      .padding(
+        .horizontal,
+        horizontalPadding
+      )
+  }
 }
 
 #if DEBUG
-  #Preview {
+  #Preview("Full recipe") {
     ScrollView {
       RecipeDetailBody(
         recipe: .dummy(),
         checkedIngredientIDs: ["rcp-001-0"],
+        onIngredientTap: { _ in }
+      )
+    }
+    .background(Color.themeColor(.surfacesBackground2))
+  }
+
+  #Preview("Nothing to cook with") {
+    ScrollView {
+      RecipeDetailBody(
+        recipe: .dummy(
+          ingredients: [],
+          steps: []
+        ),
+        checkedIngredientIDs: [],
         onIngredientTap: { _ in }
       )
     }

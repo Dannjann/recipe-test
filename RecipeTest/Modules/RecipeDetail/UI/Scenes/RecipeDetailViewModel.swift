@@ -10,10 +10,10 @@ import Foundation
 
 @Observable
 final class RecipeDetailViewModel: RecipeDetailViewModelProtocol {
-  let summary: RecipeSummary
-
   private(set) var detail: SectionState<Recipe> = .loading
   private(set) var checkedIngredientIDs: Set<String> = []
+
+  let summary: RecipeSummary
 
   private var detailGeneration = 0
 
@@ -57,7 +57,7 @@ extension RecipeDetailViewModel {
       return gallery
     }
 
-    return [summary.heroImageURL].compactMap { $0 }
+    return [detail.value?.heroImageURL ?? summary.heroImageURL].compactMap(\.self)
   }
 }
 

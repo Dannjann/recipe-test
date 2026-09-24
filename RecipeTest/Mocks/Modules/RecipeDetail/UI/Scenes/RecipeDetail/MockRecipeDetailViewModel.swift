@@ -11,10 +11,10 @@ import SwiftUI
 #if DEBUG
   @Observable
   final class MockRecipeDetailViewModel: RecipeDetailViewModelProtocol {
-    let summary: RecipeSummary
-
     var detail: SectionState<Recipe>
     var checkedIngredientIDs: Set<String>
+
+    let summary: RecipeSummary
 
     init(
       summary: RecipeSummary = .dummy(),
@@ -61,7 +61,7 @@ import SwiftUI
         return gallery
       }
 
-      return [summary.heroImageURL].compactMap { $0 }
+      return [detail.value?.heroImageURL ?? summary.heroImageURL].compactMap(\.self)
     }
   }
 
@@ -97,6 +97,14 @@ import SwiftUI
         detail: .loaded(.dummy()),
         checkedIngredientIDs: ["rcp-001-0", "rcp-001-3"]
       )
+    }
+
+    /// A recipe that loaded with nothing to cook with — no ingredients, no steps.
+    static func withoutABody() -> MockRecipeDetailViewModel {
+      MockRecipeDetailViewModel(detail: .loaded(.dummy(
+        ingredients: [],
+        steps: []
+      )))
     }
 
     /// Every optional metric absent, so the em dash and its VoiceOver copy are visible.

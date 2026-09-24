@@ -15,8 +15,6 @@ struct IngredientChecklistRow: View {
   let isChecked: Bool
   let onTap: SingleResult<String>
 
-  @ScaledMetric(relativeTo: .body) private var boxSize: CGFloat = IngredientChecklistRow.baseBoxSize
-
   var body: some View {
     Button {
       onTap(ingredient.id)
@@ -112,8 +110,8 @@ private extension IngredientChecklistRow {
           .opacity(isChecked ? 1 : 0)
       }
       .frame(
-        width: boxSize,
-        height: boxSize
+        width: Self.baseBoxSize,
+        height: Self.baseBoxSize
       )
   }
 

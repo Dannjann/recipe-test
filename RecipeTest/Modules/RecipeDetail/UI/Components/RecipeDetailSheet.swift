@@ -44,7 +44,10 @@ struct RecipeDetailSheet: View {
       topLeadingRadius: cornerRadius,
       topTrailingRadius: cornerRadius
     ))
-    .offset(y: -overlap)
+    .padding(
+      .top,
+      -overlap
+    )
   }
 }
 
@@ -59,7 +62,9 @@ private extension RecipeDetailSheet {
     32
   }
 
-  /// How far the sheet rides up over the gallery.
+  /// How far the sheet rides up over the gallery. Applied as negative padding rather than
+  /// `.offset`, which would draw the panel up but still reserve its full height, leaving a
+  /// band of the screen's background below the last step.
   var overlap: CGFloat {
     32
   }

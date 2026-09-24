@@ -29,7 +29,6 @@ struct MainIngredientsStrip: View {
       horizontalGutter,
       for: .scrollContent
     )
-    .accessibilityLabel(Text(.RecipeDetail.recipeDetailMainIngredientsTitle))
   }
 }
 

@@ -26,7 +26,7 @@ import Foundation
         URL(string: "https://example.com/carbonara.jpg"),
         URL(string: "https://example.com/carbonara-2.jpg"),
         URL(string: "https://example.com/carbonara-3.jpg"),
-      ].compactMap { $0 },
+      ].compactMap(\.self),
       ingredients: [RecipeIngredient] = RecipeIngredient.dummyList(),
       steps: [String] = [
         "Bring a large pan of well-salted water to the boil and drop in the spaghetti.",

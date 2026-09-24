@@ -16,8 +16,6 @@ struct RecipeMetricCard: View {
   let value: String?
   let background: Color.ThemeColor
 
-  @ScaledMetric(relativeTo: .body) private var minHeight: CGFloat = RecipeMetricCard.baseMinHeight
-
   var body: some View {
     VStack(
       alignment: .leading,
@@ -41,7 +39,7 @@ struct RecipeMetricCard: View {
     )
     .frame(
       maxWidth: .infinity,
-      minHeight: minHeight,
+      minHeight: Self.baseMinHeight,
       alignment: .leading
     )
     .background(

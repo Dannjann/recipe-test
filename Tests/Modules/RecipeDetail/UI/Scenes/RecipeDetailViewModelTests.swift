@@ -102,6 +102,24 @@ struct RecipeDetailViewModelTests {
   }
 
   @Test
+  func loadDetail_cancelledFromAFailedSection_staysFailed() async {
+    let service = MockRecipeService()
+    service.recipe.fails(with: AppError.unknown)
+    let sut = RecipeDetailViewModel(
+      summary: .dummy(),
+      recipeService: service
+    )
+    await sut.loadDetail()
+    let failed = sut.detail
+    service.recipe.fails(with: CancellationError())
+
+    await sut.loadDetail()
+
+    #expect(sut.detail == failed)
+    #expect(sut.detail.isLoaded == false)
+  }
+
+  @Test
   func loadDetail_retryingAfterAFailure_clearsTheErrorBeforeTheResponse() async {
     let service = MockRecipeService()
     service.recipe.fails(with: AppError.unknown)
@@ -110,15 +128,17 @@ struct RecipeDetailViewModelTests {
       recipeService: service
     )
     await sut.loadDetail()
+    let gate = Gate()
     service.recipe.responds { _ in
-      try await Task.sleep(for: .milliseconds(80))
+      await gate.wait()
 
       return .dummy()
     }
 
     async let retry: Void = sut.loadDetail()
-    try? await Task.sleep(for: .milliseconds(20))
+    await Task.yield()
     let midFlight = sut.detail
+    gate.open()
     await retry
 
     #expect(midFlight == .loading)
@@ -128,10 +148,11 @@ struct RecipeDetailViewModelTests {
   @Test
   func loadDetail_supersededByASecondLoad_keepsOnlyTheSecondResult() async {
     let counter = CallCounter()
+    let gate = Gate()
     let service = MockRecipeService()
     service.recipe.responds { _ in
       guard counter.next() > 1 else {
-        try await Task.sleep(for: .milliseconds(120))
+        await gate.wait()
 
         return .dummy(id: "stale")
       }
@@ -144,8 +165,10 @@ struct RecipeDetailViewModelTests {
     )
 
     async let first: Void = sut.loadDetail()
-    try? await Task.sleep(for: .milliseconds(20))
+    await Task.yield()
     async let second: Void = sut.loadDetail()
+    await Task.yield()
+    gate.open()
     _ = await (first, second)
 
     #expect(sut.detail.value?.id == "fresh")
@@ -159,7 +182,7 @@ struct RecipeDetailViewModelTests {
       recipeService: MockRecipeService()
     )
 
-    #expect(sut.galleryURLs == [hero].compactMap { $0 })
+    #expect(sut.galleryURLs == [hero].compactMap(\.self))
   }
 
   @Test
@@ -167,7 +190,7 @@ struct RecipeDetailViewModelTests {
     let gallery = [
       URL(string: "https://example.com/1.jpg"),
       URL(string: "https://example.com/2.jpg"),
-    ].compactMap { $0 }
+    ].compactMap(\.self)
     let service = MockRecipeService(recipe: .dummy(gallery: gallery))
     let sut = RecipeDetailViewModel(
       summary: .dummy(),
@@ -254,5 +277,38 @@ private final class CallCounter: @unchecked Sendable {
 
       return value
     }
+  }
+}
+
+/// Holds a stubbed response open until the test lets it go, so ordering is decided by the
+/// test rather than by how long a sleep happens to take on the machine running it.
+private final class Gate: @unchecked Sendable {
+  private let lock = NSLock()
+  private var continuation: CheckedContinuation<Void, Never>?
+  private var isOpen = false
+
+  func wait() async {
+    await withCheckedContinuation { continuation in
+      lock.lock()
+
+      guard !isOpen else {
+        lock.unlock()
+
+        return continuation.resume()
+      }
+
+      self.continuation = continuation
+      lock.unlock()
+    }
+  }
+
+  func open() {
+    lock.lock()
+    isOpen = true
+    let waiting = continuation
+    continuation = nil
+    lock.unlock()
+
+    waiting?.resume()
   }
 }
