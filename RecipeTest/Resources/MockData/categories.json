@@ -1,0 +1,38 @@
+[
+  {
+    "id": "cat-01",
+    "name": "Meal",
+    "image_url": "https://images.unsplash.com/photo-1668971259423-c9f71fb6b7b4?auto=format&fit=crop&w=480&h=480&q=70",
+    "recipe_count": 18
+  },
+  {
+    "id": "cat-02",
+    "name": "Rice",
+    "image_url": "https://images.unsplash.com/photo-1602881916963-5daf2d97c06e?auto=format&fit=crop&w=480&h=480&q=70",
+    "recipe_count": 4
+  },
+  {
+    "id": "cat-03",
+    "name": "Snacks",
+    "image_url": "https://images.unsplash.com/photo-1647705195905-671a25be159d?auto=format&fit=crop&w=480&h=480&q=70",
+    "recipe_count": 5
+  },
+  {
+    "id": "cat-04",
+    "name": "Desserts",
+    "image_url": "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?auto=format&fit=crop&w=480&h=480&q=70",
+    "recipe_count": 4
+  },
+  {
+    "id": "cat-05",
+    "name": "Vegan",
+    "image_url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=480&h=480&q=70",
+    "recipe_count": 3
+  },
+  {
+    "id": "cat-06",
+    "name": "Pasta",
+    "image_url": "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=480&h=480&q=70",
+    "recipe_count": 2
+  }
+]
