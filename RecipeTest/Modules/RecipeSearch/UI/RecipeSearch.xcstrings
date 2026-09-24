@@ -1,0 +1,212 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "recipeSearch.add.title": {
+      "comment": "Button that commits the ingredient typed beside it.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        }
+      }
+    },
+    "recipeSearch.chip.remove.accessibilityLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove %@"
+          }
+        }
+      }
+    },
+    "recipeSearch.close.accessibilityLabel": {
+      "comment": "Spoken label for the button that dismisses the search overlay.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close search"
+          }
+        }
+      }
+    },
+    "recipeSearch.field.clear.accessibilityLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear search text"
+          }
+        }
+      }
+    },
+    "recipeSearch.field.placeholder": {
+      "comment": "Shown in the search field before anything is typed.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search recipes or ingredients"
+          }
+        }
+      }
+    },
+    "recipeSearch.footer.clearAll": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear all"
+          }
+        }
+      }
+    },
+    "recipeSearch.footer.submit": {
+      "comment": "Runs the search and closes the overlay.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        }
+      }
+    },
+    "recipeSearch.section.exclude.placeholder": {
+      "comment": "An example ingredient, shown in the empty Exclude field.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. pork"
+          }
+        }
+      }
+    },
+    "recipeSearch.section.exclude.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exclude ingredients"
+          }
+        }
+      }
+    },
+    "recipeSearch.section.include.placeholder": {
+      "comment": "An example ingredient, shown in the empty Include field.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. garlic"
+          }
+        }
+      }
+    },
+    "recipeSearch.section.include.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Include ingredients"
+          }
+        }
+      }
+    },
+    "recipeSearch.section.servings.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servings"
+          }
+        }
+      }
+    },
+    "recipeSearch.section.steps.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your search also checks the recipe steps"
+          }
+        }
+      }
+    },
+    "recipeSearch.section.steps.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search inside instructions"
+          }
+        }
+      }
+    },
+    "recipeSearch.section.vegetarian.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only show meat-free recipes"
+          }
+        }
+      }
+    },
+    "recipeSearch.section.vegetarian.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vegetarian"
+          }
+        }
+      }
+    },
+    "recipeSearch.section.what.title": {
+      "comment": "Heading over the search field in the overlay.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What's cooking?"
+          }
+        }
+      }
+    },
+    "recipeSearch.servings.accessibilityLabel": {
+      "comment": "Spoken label for one servings option — the value is \"1\", \"2\", \"4\" or \"6+\".",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ servings"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
