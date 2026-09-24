@@ -11,7 +11,7 @@ import Foundation
 /// A struct rather than an `@Observable` class: `SectionState` constrains its value to
 /// `Equatable`, which a struct over a `Hashable` summary gets for free, and there is no
 /// mutable state here to observe.
-nonisolated struct RecipeCardViewModel: RecipeCardViewModelProtocol {
+nonisolated struct RecipeCardViewModel: RecipeCardViewModelProtocol, Equatable {
   let summary: RecipeSummary
 }
 
