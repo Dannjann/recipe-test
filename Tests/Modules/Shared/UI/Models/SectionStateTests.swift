@@ -80,4 +80,25 @@ struct SectionStateTests {
 
     #expect(recovered == .failed(nil))
   }
+
+  /// `.abnormalState` also falls through to the generic heading, so it is dropped for the
+  /// same reason `.unknown` is — the decision is on the case, not on the rendered copy.
+  @Test
+  func recovering_fromAnAbnormalState_carriesNoDetail() {
+    let previous = SectionState<[String]>.loading
+
+    let recovered = previous.recovering(from: AppError.abnormalState("the reason"))
+
+    #expect(recovered == .failed(nil))
+  }
+
+  @Test
+  func recovering_fromAnAppErrorWithItsOwnCopy_carriesTheDetail() {
+    let previous = SectionState<[String]>.loading
+    let error = AppError.noInternetConnection
+
+    let recovered = previous.recovering(from: error)
+
+    #expect(recovered == .failed(error.localizedDescription))
+  }
 }

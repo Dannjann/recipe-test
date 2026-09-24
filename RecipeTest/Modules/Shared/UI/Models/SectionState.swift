@@ -54,16 +54,18 @@ nonisolated extension SectionState {
 // MARK: - Helpers
 
 private nonisolated extension SectionState {
-  /// `AppError.unknown` describes itself with the generic heading, so passing it on as a
-  /// detail would print the same sentence twice.
+  /// An error that describes itself with the generic heading would print the same sentence
+  /// twice, since `SectionStateView` already shows that heading as the failure's title.
   static func failureDetail(for error: any Error) -> String? {
-    let description = error.localizedDescription
+    guard let appError = error as? AppError else {
+      return error.localizedDescription
+    }
 
-    guard description != String(localized: .Shared.sharedErrorSomethingWentWrong) else {
+    guard !appError.isDescribedByGenericHeading else {
       return nil
     }
 
-    return description
+    return appError.localizedDescription
   }
 }
 
