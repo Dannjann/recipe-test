@@ -56,14 +56,14 @@ private extension UINavigationBarAppearance {
   static var largeTitleThemeAttributes: [NSAttributedString.Key: Any] {
     [
       .font: T.textStyle.largeTitle,
-      .foregroundColor: T.color.textPrimary.uiColor
+      .foregroundColor: T.color.textPrimary.uiColor,
     ]
   }
 
   static var titleThemeAttributes: [NSAttributedString.Key: Any] {
     [
       .font: T.textStyle.title2,
-      .foregroundColor: T.color.textPrimary.uiColor
+      .foregroundColor: T.color.textPrimary.uiColor,
     ]
   }
 }
