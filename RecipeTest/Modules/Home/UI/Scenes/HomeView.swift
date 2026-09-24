@@ -46,7 +46,7 @@ struct HomeView: View {
       )
     }
     .scrollIndicators(.hidden)
-    .background(Color.themeColor(.surfacesBackground))
+    .background(Color.themeColor(.surfacesBackground2))
     .toolbarVisibility(
       .hidden,
       for: .navigationBar
