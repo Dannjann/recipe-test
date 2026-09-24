@@ -85,7 +85,7 @@ private extension RecipeGallery {
           CachedAsyncImage(url: url) {
             Color.themeColor(.surfacesBackground3)
           }
-          .aspectRatio(contentMode: .fill)
+          .scaledToFill()
           .containerRelativeFrame(.horizontal)
           .frame(height: Self.baseHeight)
           .clipped()
