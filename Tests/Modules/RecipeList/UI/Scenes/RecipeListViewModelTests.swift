@@ -594,7 +594,7 @@ struct RecipeListViewModelApplyTests {
   }
 
   @Test
-  func searchPlaceholder_aCategoryListWithNoText_staysScopedToTheCategory() async {
+  func searchPlaceholder_aCategoryListWithNoText_staysScopedToTheCategory() {
     let sut = RecipeListViewModelTestFactory.make(request: .category(.dummy(name: "Desserts")))
 
     #expect(sut.searchPlaceholder.contains("Desserts"))
