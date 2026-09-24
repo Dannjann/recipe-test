@@ -77,20 +77,14 @@ private extension RecipeIngredientChip {
 #if DEBUG
   #Preview("Included") {
     RecipeIngredientChip(
-      viewModel: RecipeIngredientChipViewModel(
-        ingredient: "garlic",
-        kind: .include
-      ),
+      viewModel: RecipeIncludedIngredientChipViewModel(ingredient: "garlic"),
       onRemoveTap: {}
     )
   }
 
   #Preview("Excluded") {
     RecipeIngredientChip(
-      viewModel: RecipeIngredientChipViewModel(
-        ingredient: "pork",
-        kind: .exclude
-      ),
+      viewModel: RecipeExcludedIngredientChipViewModel(ingredient: "pork"),
       onRemoveTap: {}
     )
   }

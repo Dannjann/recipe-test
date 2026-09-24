@@ -49,7 +49,11 @@ private extension RecipeSearchToggleRow {
       set: { _ in onToggle() }
     )
   }
+}
 
+// MARK: - Getters > Constants
+
+private extension RecipeSearchToggleRow {
   var contentSpacing: CGFloat {
     2
   }
@@ -61,7 +65,7 @@ private extension RecipeSearchToggleRow {
       title: .RecipeSearch.recipeSearchSectionVegetarianTitle,
       detail: .RecipeSearch.recipeSearchSectionVegetarianDetail,
       isOn: false,
-      accessibilityIdentifier: "recipe-search-vegetarian-toggle",
+      accessibilityIdentifier: RecipeSearchAccessibilityID.vegetarianToggle,
       onToggle: {}
     )
     .padding()
@@ -73,7 +77,7 @@ private extension RecipeSearchToggleRow {
       title: .RecipeSearch.recipeSearchSectionStepsTitle,
       detail: .RecipeSearch.recipeSearchSectionStepsDetail,
       isOn: true,
-      accessibilityIdentifier: "recipe-search-steps-toggle",
+      accessibilityIdentifier: RecipeSearchAccessibilityID.stepsToggle,
       onToggle: {}
     )
     .padding()

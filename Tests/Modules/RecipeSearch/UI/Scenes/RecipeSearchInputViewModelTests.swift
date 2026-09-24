@@ -175,36 +175,6 @@ struct RecipeSearchInputViewModelTests {
 
     #expect(titles(of: sut).contains("Desserts"))
   }
-
-  @Test
-  func select_aRecipeRow_returnsTheRecipe() {
-    let summary = RecipeSummary.dummy(id: "rcp-007")
-    let sut = makeSUT()
-
-    let selection = sut.select(RecipeSuggestionRowViewModel(suggestion: .recipe(summary)))
-
-    #expect(selection == .recipe(summary))
-  }
-
-  @Test
-  func select_aCategoryRow_fillsTheFieldWithItsName() {
-    let sut = makeSUT()
-
-    let selection = sut.select(RecipeSuggestionRowViewModel(
-      suggestion: .category(.dummy(name: "Desserts"))
-    ))
-
-    #expect(selection == .text("Desserts"))
-  }
-
-  @Test
-  func select_aRecentRow_fillsTheFieldWithIt() {
-    let sut = makeSUT()
-
-    let selection = sut.select(RecipeSuggestionRowViewModel(suggestion: .recent("pho")))
-
-    #expect(selection == .text("pho"))
-  }
 }
 
 // MARK: - Helpers

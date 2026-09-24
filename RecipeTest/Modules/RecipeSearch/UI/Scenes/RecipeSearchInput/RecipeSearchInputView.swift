@@ -11,7 +11,7 @@ import SwiftUI
 struct RecipeSearchInputView: View {
   let viewModel: any RecipeSearchInputViewModelProtocol
   let onBackTap: VoidResult
-  let onSelect: SingleResult<RecipeSuggestionRowViewModel>
+  let onSelect: SingleResult<any RecipeSuggestionRowViewModelProtocol>
   let onSubmit: SingleResult<String>
 
   @State private var text: String
@@ -23,7 +23,7 @@ struct RecipeSearchInputView: View {
     text: String,
     viewModel: any RecipeSearchInputViewModelProtocol,
     onBackTap: @escaping VoidResult,
-    onSelect: @escaping SingleResult<RecipeSuggestionRowViewModel>,
+    onSelect: @escaping SingleResult<any RecipeSuggestionRowViewModelProtocol>,
     onSubmit: @escaping SingleResult<String>
   ) {
     _text = State(initialValue: text)
@@ -108,7 +108,7 @@ private extension RecipeSearchInputView {
         }
       )
       .buttonStyle(.plain)
-      .accessibilityIdentifier("recipe-search-input-back-button")
+      .accessibilityIdentifier(RecipeSearchAccessibilityID.inputBackButton)
       .accessibilityLabel(Text(.RecipeSearch.recipeSearchInputBackAccessibilityLabel))
 
       HStack(spacing: contentSpacing) {
@@ -128,7 +128,7 @@ private extension RecipeSearchInputView {
         .submitLabel(.search)
         .focused($isFocused)
         .onSubmit { onSubmit(text) }
-        .accessibilityIdentifier("recipe-search-input-field")
+        .accessibilityIdentifier(RecipeSearchAccessibilityID.inputField)
       }
       .padding(
         .horizontal,
@@ -226,7 +226,7 @@ private extension RecipeSearchInputView {
     RecipeSearchInputView(
       text: "ado",
       viewModel: MockRecipeSearchInputViewModel(
-        queryRow: RecipeSuggestionRowViewModel(suggestion: .query("ado")),
+        queryRow: RecipeQuerySuggestionRowViewModel(text: "ado"),
         sections: .loading
       ),
       onBackTap: {},
@@ -239,7 +239,7 @@ private extension RecipeSearchInputView {
     RecipeSearchInputView(
       text: "ado",
       viewModel: MockRecipeSearchInputViewModel(
-        queryRow: RecipeSuggestionRowViewModel(suggestion: .query("ado")),
+        queryRow: RecipeQuerySuggestionRowViewModel(text: "ado"),
         sections: .failed("The request timed out.")
       ),
       onBackTap: {},

@@ -10,7 +10,7 @@ import SwiftUI
 
 struct RecipeSuggestionSection: View {
   let viewModel: RecipeSuggestionSectionViewModel
-  let onRowTap: SingleResult<RecipeSuggestionRowViewModel>
+  let onRowTap: SingleResult<any RecipeSuggestionRowViewModelProtocol>
 
   var body: some View {
     VStack(
@@ -28,7 +28,7 @@ struct RecipeSuggestionSection: View {
           )
       }
 
-      ForEach(viewModel.rows) { row in
+      ForEach(viewModel.rows, id: \.id) { row in
         RecipeSuggestionRow(
           viewModel: row,
           onTap: { onRowTap(row) }
@@ -38,7 +38,7 @@ struct RecipeSuggestionSection: View {
   }
 }
 
-// MARK: - Getters
+// MARK: - Getters > Constants
 
 private extension RecipeSuggestionSection {
   var contentSpacing: CGFloat {
@@ -54,9 +54,9 @@ private extension RecipeSuggestionSection {
   #Preview {
     RecipeSuggestionSection(
       viewModel: RecipeSuggestionSectionViewModel(
-        id: "recent",
+        id: .recent,
         title: .RecipeSearch.recipeSearchSuggestionSectionRecent,
-        rows: ["pho", "adobo"].map { RecipeSuggestionRowViewModel(suggestion: .recent($0)) }
+        rows: ["pho", "adobo"].map { RecipeRecentSuggestionRowViewModel(text: $0) }
       ),
       onRowTap: { _ in }
     )

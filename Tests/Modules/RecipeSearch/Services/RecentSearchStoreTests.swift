@@ -79,9 +79,9 @@ struct RecentSearchStoreTests {
   @Test
   func searches_aSecondStoreOverTheSameDefaults_readsBackWhatTheFirstWrote() {
     let defaults = makeDefaults()
-    RecentSearchStore(defaults: defaults).record("adobo")
+    makeStore(defaults: defaults).record("adobo")
 
-    #expect(RecentSearchStore(defaults: defaults).searches == ["adobo"])
+    #expect(makeStore(defaults: defaults).searches == ["adobo"])
   }
 }
 
@@ -104,7 +104,9 @@ private extension RecentSearchStoreTests {
     return defaults
   }
 
-  func makeStore() -> RecentSearchStore {
-    RecentSearchStore(defaults: makeDefaults())
+  /// Over a real `UserDefaultsClient` rather than a stub: what is worth pinning here is that
+  /// the terms survive a round trip through the store, not that the client was called.
+  func makeStore(defaults: UserDefaults? = nil) -> RecentSearchStore {
+    RecentSearchStore(store: UserDefaultsClient(defaults: defaults ?? makeDefaults()))
   }
 }

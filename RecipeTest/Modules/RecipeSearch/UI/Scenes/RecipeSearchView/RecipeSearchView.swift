@@ -69,7 +69,7 @@ private extension RecipeSearchView {
         }
       )
       .buttonStyle(.plain)
-      .accessibilityIdentifier("recipe-search-close-button")
+      .accessibilityIdentifier(RecipeSearchAccessibilityID.closeButton)
       .accessibilityLabel(Text(.RecipeSearch.recipeSearchCloseAccessibilityLabel))
     }
     .padding(
@@ -82,14 +82,14 @@ private extension RecipeSearchView {
     RecipeSearchSection(title: .RecipeSearch.recipeSearchSectionWhatTitle) {
       RecipeSearchFieldButton(
         text: viewModel.fieldText,
-        isPlaceholder: viewModel.fieldIsPlaceholder,
+        textColorStyle: viewModel.fieldTextColorStyle,
         accessibilityValue: viewModel.fieldAccessibilityValue,
         showsClear: viewModel.showsFieldClear,
         onTap: onFieldTap,
         onClearTap: { viewModel.set(searchText: "") }
       )
       .matchedTransitionSource(
-        id: Self.queryFieldID,
+        id: RecipeSearchAccessibilityID.queryField,
         in: queryFieldNamespace
       )
     }
@@ -101,7 +101,7 @@ private extension RecipeSearchView {
         title: .RecipeSearch.recipeSearchSectionVegetarianTitle,
         detail: .RecipeSearch.recipeSearchSectionVegetarianDetail,
         isOn: viewModel.isVegetarian,
-        accessibilityIdentifier: "recipe-search-vegetarian-toggle",
+        accessibilityIdentifier: RecipeSearchAccessibilityID.vegetarianToggle,
         onToggle: { viewModel.toggleVegetarian() }
       )
     }
@@ -120,15 +120,15 @@ private extension RecipeSearchView {
     RecipeSearchSection(title: .RecipeSearch.recipeSearchSectionIncludeTitle) {
       RecipeIngredientEntry(
         placeholder: .RecipeSearch.recipeSearchSectionIncludePlaceholder,
-        fieldAccessibilityIdentifier: "recipe-search-include-field",
-        addAccessibilityIdentifier: "recipe-search-include-add-button",
+        fieldAccessibilityIdentifier: RecipeSearchAccessibilityID.includeField,
+        addAccessibilityIdentifier: RecipeSearchAccessibilityID.includeAddButton,
         onAdd: { viewModel.addInclude($0) }
       )
       .id(viewModel.clearToken)
 
       RecipeIngredientChipRow(
         chips: viewModel.includeChips,
-        onRemoveTap: { viewModel.remove(chip: $0) }
+        onRemoveTap: { viewModel.removeInclude($0) }
       )
     }
   }
@@ -137,15 +137,15 @@ private extension RecipeSearchView {
     RecipeSearchSection(title: .RecipeSearch.recipeSearchSectionExcludeTitle) {
       RecipeIngredientEntry(
         placeholder: .RecipeSearch.recipeSearchSectionExcludePlaceholder,
-        fieldAccessibilityIdentifier: "recipe-search-exclude-field",
-        addAccessibilityIdentifier: "recipe-search-exclude-add-button",
+        fieldAccessibilityIdentifier: RecipeSearchAccessibilityID.excludeField,
+        addAccessibilityIdentifier: RecipeSearchAccessibilityID.excludeAddButton,
         onAdd: { viewModel.addExclude($0) }
       )
       .id(viewModel.clearToken)
 
       RecipeIngredientChipRow(
         chips: viewModel.excludeChips,
-        onRemoveTap: { viewModel.remove(chip: $0) }
+        onRemoveTap: { viewModel.removeExclude($0) }
       )
     }
   }
@@ -156,18 +156,10 @@ private extension RecipeSearchView {
         title: .RecipeSearch.recipeSearchSectionStepsTitle,
         detail: .RecipeSearch.recipeSearchSectionStepsDetail,
         isOn: viewModel.searchesSteps,
-        accessibilityIdentifier: "recipe-search-steps-toggle",
+        accessibilityIdentifier: RecipeSearchAccessibilityID.stepsToggle,
         onToggle: { viewModel.toggleSearchesSteps() }
       )
     }
-  }
-}
-
-// MARK: - Getters
-
-extension RecipeSearchView {
-  static var queryFieldID: String {
-    "recipe-search-query-field"
   }
 }
 

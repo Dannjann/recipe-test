@@ -6,12 +6,12 @@
 //  Copyright © 2026 Danjan. All rights reserved.
 //
 
-import Foundation
+import SwiftUI
 
 @Observable
 final class RecipeSearchViewModel: RecipeSearchViewModelProtocol {
   /// Every control edits this and nothing else. The applied query stays with the screen
-  /// underneath until `apply()` hands a new one back, so closing changes nothing.
+  /// underneath until `result` hands a new one back, so closing changes nothing.
   private(set) var draft: RecipeQuery
 
   /// Bumped by `clearAll()`. The ingredient fields own their half-typed text, so "start
@@ -22,7 +22,7 @@ final class RecipeSearchViewModel: RecipeSearchViewModelProtocol {
 
   init(
     request: RecipeSearchRequest,
-    recentSearchStore: RecentSearchStoreProtocol = AppContainer.shared.recentSearchStore
+    recentSearchStore: RecentSearchStoreProtocol
   ) {
     draft = request.query
     self.recentSearchStore = recentSearchStore
@@ -46,6 +46,10 @@ extension RecipeSearchViewModel {
     searchText.isEmpty
   }
 
+  var fieldTextColorStyle: Color.ThemeColor {
+    fieldIsPlaceholder ? .textTertiary : .textPrimary
+  }
+
   /// Spoken instead of `fieldText`, which VoiceOver would otherwise read as though the user
   /// had typed the placeholder.
   var fieldAccessibilityValue: String {
@@ -66,35 +70,32 @@ extension RecipeSearchViewModel {
     draft.searchesSteps
   }
 
-  var servingsOptions: [RecipeServingsOptionViewModel] {
-    RecipeServings.allCases.map {
-      RecipeServingsOptionViewModel(
-        servings: $0,
-        isSelected: $0 == draft.servings
-      )
+  var servingsOptions: [any RecipeServingsOptionViewModelProtocol] {
+    RecipeServings.allCases.map { servings -> any RecipeServingsOptionViewModelProtocol in
+      guard servings == draft.servings else {
+        return RecipeServingsOptionViewModel(servings: servings)
+      }
+
+      return RecipeSelectedServingsOptionViewModel(servings: servings)
     }
   }
 
-  var includeChips: [RecipeIngredientChipViewModel] {
-    draft.includeIngredients.map {
-      RecipeIngredientChipViewModel(
-        ingredient: $0,
-        kind: .include
-      )
-    }
+  var includeChips: [any RecipeIngredientChipViewModelProtocol] {
+    draft.includeIngredients.map { RecipeIncludedIngredientChipViewModel(ingredient: $0) }
   }
 
-  var excludeChips: [RecipeIngredientChipViewModel] {
-    draft.excludeIngredients.map {
-      RecipeIngredientChipViewModel(
-        ingredient: $0,
-        kind: .exclude
-      )
-    }
+  var excludeChips: [any RecipeIngredientChipViewModelProtocol] {
+    draft.excludeIngredients.map { RecipeExcludedIngredientChipViewModel(ingredient: $0) }
   }
 
   var showsClearAll: Bool {
     !fieldIsPlaceholder || !draft.activeFacets.isEmpty
+  }
+
+  /// What the overlay hands back. A query, so reading it twice is the same as reading it once
+  /// — recording the search is `recordSearch()`'s job, not this one's.
+  var result: RecipeSearchResult {
+    .apply(draft)
   }
 }
 
@@ -131,14 +132,12 @@ extension RecipeSearchViewModel {
     )
   }
 
-  func remove(chip: RecipeIngredientChipViewModel) {
-    switch chip.kind {
-    case .include:
-      draft.includeIngredients.removeAll { $0 == chip.ingredient }
+  func removeInclude(_ ingredient: String) {
+    draft.includeIngredients.removeAll { $0 == ingredient }
+  }
 
-    case .exclude:
-      draft.excludeIngredients.removeAll { $0 == chip.ingredient }
-    }
+  func removeExclude(_ ingredient: String) {
+    draft.excludeIngredients.removeAll { $0 == ingredient }
   }
 
   func set(searchText: String) {
@@ -155,12 +154,12 @@ extension RecipeSearchViewModel {
     clearToken += 1
   }
 
-  func apply() -> RecipeSearchResult {
-    if let searchText = draft.searchText {
-      recentSearchStore.record(searchText)
-    }
+  /// Separate from `result` so the Search button's one side effect is its own step: a caller
+  /// that only wants to read the draft cannot leave a search in the recents by accident.
+  func recordSearch() {
+    guard let searchText = draft.searchText else { return }
 
-    return .apply(draft)
+    recentSearchStore.record(searchText)
   }
 }
 

@@ -28,8 +28,8 @@ final class RecipeSearchInputViewModel: RecipeSearchInputViewModelProtocol {
   init(
     text: String = "",
     debounce: Duration = .milliseconds(300),
-    recipeService: RecipeServiceProtocol = AppContainer.shared.recipeService,
-    recentSearchStore: RecentSearchStoreProtocol = AppContainer.shared.recentSearchStore
+    recipeService: RecipeServiceProtocol,
+    recentSearchStore: RecentSearchStoreProtocol
   ) {
     self.text = text.trimmingCharacters(in: .whitespacesAndNewlines)
     self.debounce = debounce
@@ -41,10 +41,10 @@ final class RecipeSearchInputViewModel: RecipeSearchInputViewModelProtocol {
 // MARK: - Getters
 
 extension RecipeSearchInputViewModel {
-  var queryRow: RecipeSuggestionRowViewModel? {
+  var queryRow: (any RecipeSuggestionRowViewModelProtocol)? {
     guard !text.isEmpty else { return nil }
 
-    return RecipeSuggestionRowViewModel(suggestion: .query(text))
+    return RecipeQuerySuggestionRowViewModel(text: text)
   }
 
   /// Two messages, because an empty list means two different things: nothing matched what was
@@ -61,12 +61,12 @@ extension RecipeSearchInputViewModel {
 extension RecipeSearchInputViewModel {
   /// Driven from `.task(id: text)`, so SwiftUI cancels the previous call as the next keystroke
   /// lands: the sleep is the debounce, and that cancellation is what enforces it.
-  func update(text: String) async {
+  func update(text newText: String) async {
     generation += 1
-    let generation = self.generation
-    self.text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    let started = generation
+    text = newText.trimmingCharacters(in: .whitespacesAndNewlines)
 
-    guard !self.text.isEmpty else {
+    guard !text.isEmpty else {
       sections = .rows(recentSections)
       return
     }
@@ -80,30 +80,17 @@ extension RecipeSearchInputViewModel {
       try await loadCategoriesIfNeeded()
 
       let page = try await recipeService.getRecipes(
-        query: RecipeQuery(searchText: self.text),
+        query: RecipeQuery(searchText: text),
         page: suggestionPage
       )
 
-      guard generation == self.generation else { return }
+      guard started == generation else { return }
 
       sections = .rows(matchSections(for: page.recipes))
     } catch {
-      guard generation == self.generation else { return }
+      guard started == generation else { return }
 
       sections = previous.recovering(from: error)
-    }
-  }
-
-  func select(_ row: RecipeSuggestionRowViewModel) -> RecipeSearchInputSelection {
-    switch row.suggestion {
-    case let .query(text), let .recent(text):
-      .text(text)
-
-    case let .category(category):
-      .text(category.name)
-
-    case let .recipe(summary):
-      .recipe(summary)
     }
   }
 }
@@ -114,12 +101,12 @@ private extension RecipeSearchInputViewModel {
   var recentSections: [RecipeSuggestionSectionViewModel] {
     let rows = recentSearchStore.searches
       .prefix(recentLimit)
-      .map { RecipeSuggestionRowViewModel(suggestion: .recent($0)) }
+      .map { RecipeRecentSuggestionRowViewModel(text: $0) }
 
     guard !rows.isEmpty else { return [] }
 
     return [RecipeSuggestionSectionViewModel(
-      id: "recent",
+      id: .recent,
       title: .RecipeSearch.recipeSearchSuggestionSectionRecent,
       rows: Array(rows)
     )]
@@ -154,19 +141,19 @@ private extension RecipeSearchInputViewModel {
 
     if !matchedCategories.isEmpty {
       matched.append(RecipeSuggestionSectionViewModel(
-        id: "categories",
+        id: .categories,
         title: .RecipeSearch.recipeSearchSuggestionSectionCategories,
-        rows: matchedCategories.map { RecipeSuggestionRowViewModel(suggestion: .category($0)) }
+        rows: matchedCategories.map { RecipeCategorySuggestionRowViewModel(category: $0) }
       ))
     }
 
     if !recipes.isEmpty {
       matched.append(RecipeSuggestionSectionViewModel(
-        id: "recipes",
+        id: .recipes,
         title: .RecipeSearch.recipeSearchSuggestionSectionRecipes,
         rows: recipes
           .prefix(recipeLimit)
-          .map { RecipeSuggestionRowViewModel(suggestion: .recipe($0)) }
+          .map { RecipeSummarySuggestionRowViewModel(summary: $0) }
       ))
     }
 

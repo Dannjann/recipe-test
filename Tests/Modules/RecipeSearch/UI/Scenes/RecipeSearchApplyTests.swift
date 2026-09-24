@@ -95,8 +95,10 @@ private extension RecipeSearchApplyTests {
     _ overlay: RecipeSearchViewModel,
     to list: RecipeListViewModel
   ) async {
-    guard case let .apply(query) = overlay.apply() else {
-      Issue.record("apply() did not return .apply")
+    overlay.recordSearch()
+
+    guard case let .apply(query) = overlay.result else {
+      Issue.record("result was not .apply")
       return
     }
 

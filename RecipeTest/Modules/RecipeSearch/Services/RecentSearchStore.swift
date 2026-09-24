@@ -10,12 +10,12 @@ import Foundation
 
 @MainActor
 final class RecentSearchStore: RecentSearchStoreProtocol {
-  /// Injected rather than reached for inside, which is the whole of this type's test seam: a
-  /// test hands it a throwaway suite instead of writing into whatever is installed.
-  private let defaults: UserDefaults
+  /// A client rather than `UserDefaults` itself: this type owns the ordering and de-duplication
+  /// rules, and knows nothing about where the array ends up.
+  private let store: KeyValueStoreClientProtocol
 
-  init(defaults: UserDefaults = .standard) {
-    self.defaults = defaults
+  init(store: KeyValueStoreClientProtocol) {
+    self.store = store
   }
 }
 
@@ -23,7 +23,7 @@ final class RecentSearchStore: RecentSearchStoreProtocol {
 
 extension RecentSearchStore {
   var searches: [String] {
-    defaults.stringArray(forKey: storageKey) ?? []
+    store.stringArray(forKey: storageKey) ?? []
   }
 }
 
@@ -43,14 +43,14 @@ extension RecentSearchStore {
       at: 0
     )
 
-    defaults.set(
+    store.set(
       Array(recorded.prefix(limit)),
       forKey: storageKey
     )
   }
 
   func clear() {
-    defaults.removeObject(forKey: storageKey)
+    store.removeObject(forKey: storageKey)
   }
 }
 

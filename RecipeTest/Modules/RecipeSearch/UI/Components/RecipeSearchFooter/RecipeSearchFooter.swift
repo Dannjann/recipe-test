@@ -28,7 +28,7 @@ struct RecipeSearchFooter: View {
           }
         )
         .buttonStyle(.plain)
-        .accessibilityIdentifier("recipe-search-clear-all-button")
+        .accessibilityIdentifier(RecipeSearchAccessibilityID.clearAllButton)
       }
 
       Spacer(minLength: 0)
@@ -56,7 +56,7 @@ struct RecipeSearchFooter: View {
         }
       )
       .buttonStyle(.plain)
-      .accessibilityIdentifier("recipe-search-submit-button")
+      .accessibilityIdentifier(RecipeSearchAccessibilityID.submitButton)
     }
     .padding(
       .horizontal,
@@ -70,7 +70,7 @@ struct RecipeSearchFooter: View {
   }
 }
 
-// MARK: - Getters
+// MARK: - Getters > Constants
 
 private extension RecipeSearchFooter {
   var contentSpacing: CGFloat {

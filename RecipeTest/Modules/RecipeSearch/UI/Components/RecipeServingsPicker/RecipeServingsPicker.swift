@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct RecipeServingsPicker: View {
-  let options: [RecipeServingsOptionViewModel]
+  let options: [any RecipeServingsOptionViewModelProtocol]
   let onSelect: SingleResult<RecipeServings>
 
   @ScaledMetric(relativeTo: .body) private var optionSize: CGFloat = RecipeServingsPicker.baseOptionSize
@@ -20,7 +20,7 @@ struct RecipeServingsPicker: View {
     // `HStack` would push "6+" off the screen with no way to reach it.
     ScrollView(.horizontal) {
       HStack(spacing: contentSpacing) {
-        ForEach(options) { option in
+        ForEach(options, id: \.id) { option in
           Button(
             action: { onSelect(option.id) },
             label: {
@@ -45,7 +45,7 @@ struct RecipeServingsPicker: View {
           .buttonStyle(.plain)
           .accessibilityIdentifier(option.accessibilityIdentifier)
           .accessibilityLabel(Text(option.accessibilityLabel))
-          .accessibilityAddTraits(option.isSelected ? [.isButton, .isSelected] : .isButton)
+          .accessibilityAddTraits(option.accessibilityTraits)
         }
       }
     }
@@ -77,10 +77,7 @@ private extension RecipeServingsPicker {
   #Preview("Nothing selected") {
     RecipeServingsPicker(
       options: RecipeServings.allCases.map {
-        RecipeServingsOptionViewModel(
-          servings: $0,
-          isSelected: false
-        )
+        RecipeServingsOptionViewModel(servings: $0)
       },
       onSelect: { _ in }
     )
@@ -90,11 +87,12 @@ private extension RecipeServingsPicker {
 
   #Preview("Four selected") {
     RecipeServingsPicker(
-      options: RecipeServings.allCases.map {
-        RecipeServingsOptionViewModel(
-          servings: $0,
-          isSelected: $0 == .four
-        )
+      options: RecipeServings.allCases.map { servings -> any RecipeServingsOptionViewModelProtocol in
+        guard servings == .four else {
+          return RecipeServingsOptionViewModel(servings: servings)
+        }
+
+        return RecipeSelectedServingsOptionViewModel(servings: servings)
       },
       onSelect: { _ in }
     )

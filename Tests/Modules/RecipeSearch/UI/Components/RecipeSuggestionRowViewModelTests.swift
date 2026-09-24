@@ -13,21 +13,19 @@ import Testing
 struct RecipeSuggestionRowViewModelTests {
   @Test
   func title_aQueryRow_splicesInWhatWasTyped() {
-    let row = RecipeSuggestionRowViewModel(suggestion: .query("ado"))
-
-    #expect(row.title.contains("ado"))
+    #expect(RecipeQuerySuggestionRowViewModel(text: "ado").title.contains("ado"))
   }
 
   @Test
   func symbolName_theTextRows_standInForAMissingPhotograph() {
-    #expect(RecipeSuggestionRowViewModel(suggestion: .query("ado")).symbolName == "magnifyingglass")
-    #expect(RecipeSuggestionRowViewModel(suggestion: .recent("pho")).symbolName == "clock")
+    #expect(RecipeQuerySuggestionRowViewModel(text: "ado").symbolName == "magnifyingglass")
+    #expect(RecipeRecentSuggestionRowViewModel(text: "pho").symbolName == "clock")
   }
 
   @Test
   func imageURL_aRecipeRow_carriesTheHeroImage() {
     let summary = RecipeSummary.dummy(id: "rcp-001")
-    let row = RecipeSuggestionRowViewModel(suggestion: .recipe(summary))
+    let row = RecipeSummarySuggestionRowViewModel(summary: summary)
 
     #expect(row.imageURL == summary.heroImageURL)
     #expect(row.symbolName == "fork.knife")
@@ -35,17 +33,73 @@ struct RecipeSuggestionRowViewModelTests {
 
   @Test
   func detail_aRecipeWithNoCuisine_fallsBackRatherThanReadingEmpty() {
-    let summary = RecipeSummary.dummy(cuisine: nil)
-    let row = RecipeSuggestionRowViewModel(suggestion: .recipe(summary))
+    let row = RecipeSummarySuggestionRowViewModel(summary: .dummy(cuisine: nil))
 
     #expect(!row.detail.isEmpty)
   }
 
   @Test
-  func id_everyCase_isPrefixedByItsKind() {
-    #expect(RecipeSuggestionRowViewModel(suggestion: .query("a")).id.hasPrefix("query-"))
-    #expect(RecipeSuggestionRowViewModel(suggestion: .recent("a")).id.hasPrefix("recent-"))
-    #expect(RecipeSuggestionRowViewModel(suggestion: .category(.dummy())).id.hasPrefix("category-"))
-    #expect(RecipeSuggestionRowViewModel(suggestion: .recipe(.dummy())).id.hasPrefix("recipe-"))
+  func id_everyKind_isPrefixedByIt() {
+    #expect(RecipeQuerySuggestionRowViewModel(text: "a").id.hasPrefix("query-"))
+    #expect(RecipeRecentSuggestionRowViewModel(text: "a").id.hasPrefix("recent-"))
+    #expect(RecipeCategorySuggestionRowViewModel(category: .dummy()).id.hasPrefix("category-"))
+    #expect(RecipeSummarySuggestionRowViewModel(summary: .dummy()).id.hasPrefix("recipe-"))
+  }
+}
+
+// MARK: - Selection
+
+/// What picking a row means now belongs to the row itself, so each kind answers for itself
+/// rather than a switch elsewhere deciding on its behalf.
+extension RecipeSuggestionRowViewModelTests {
+  @Test
+  func selection_aRecipeRow_carriesTheRecipe() {
+    let summary = RecipeSummary.dummy(id: "rcp-007")
+
+    #expect(RecipeSummarySuggestionRowViewModel(summary: summary).selection == .recipe(summary))
+  }
+
+  @Test
+  func selection_aCategoryRow_fillsTheFieldWithItsName() {
+    let row = RecipeCategorySuggestionRowViewModel(category: .dummy(name: "Desserts"))
+
+    #expect(row.selection == .text("Desserts"))
+  }
+
+  @Test
+  func selection_aRecentRow_fillsTheFieldWithIt() {
+    #expect(RecipeRecentSuggestionRowViewModel(text: "pho").selection == .text("pho"))
+  }
+
+  @Test
+  func selection_aQueryRow_fillsTheFieldWithWhatWasTyped() {
+    #expect(RecipeQuerySuggestionRowViewModel(text: "ado").selection == .text("ado"))
+  }
+}
+
+// MARK: - Rendered identity
+
+/// `SectionState` equality drives whether SwiftUI leaves a section alone, and an array of
+/// existentials has no synthesised `==` — so the substitute has to be tested.
+extension RecipeSuggestionRowViewModelTests {
+  @Test
+  func renderedIdentity_twoRowsOverTheSameValue_match() {
+    #expect(RecipeRecentSuggestionRowViewModel(text: "pho").renderedIdentity
+      == RecipeRecentSuggestionRowViewModel(text: "pho").renderedIdentity)
+  }
+
+  @Test
+  func renderedIdentity_sameIdButADifferentTitle_differs() {
+    let first = RecipeSummarySuggestionRowViewModel(summary: .dummy(
+      id: "rcp-001",
+      title: "Chicken Adobo"
+    ))
+    let renamed = RecipeSummarySuggestionRowViewModel(summary: .dummy(
+      id: "rcp-001",
+      title: "Pork Adobo"
+    ))
+
+    #expect(first.id == renamed.id)
+    #expect(first.renderedIdentity != renamed.renderedIdentity)
   }
 }

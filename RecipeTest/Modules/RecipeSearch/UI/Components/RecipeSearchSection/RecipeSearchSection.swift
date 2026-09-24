@@ -46,7 +46,7 @@ struct RecipeSearchSection<Content: View>: View {
   }
 }
 
-// MARK: - Getters
+// MARK: - Getters > Constants
 
 private extension RecipeSearchSection {
   var contentSpacing: CGFloat {

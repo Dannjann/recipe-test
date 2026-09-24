@@ -47,6 +47,10 @@ import SwiftUI
       searchText.isEmpty
     }
 
+    var fieldTextColorStyle: Color.ThemeColor {
+      fieldIsPlaceholder ? .textTertiary : .textPrimary
+    }
+
     var fieldAccessibilityValue: String {
       fieldIsPlaceholder ? "Nothing entered" : searchText
     }
@@ -55,31 +59,22 @@ import SwiftUI
       !fieldIsPlaceholder
     }
 
-    var servingsOptions: [RecipeServingsOptionViewModel] {
-      RecipeServings.allCases.map {
-        RecipeServingsOptionViewModel(
-          servings: $0,
-          isSelected: $0 == servings
-        )
+    var servingsOptions: [any RecipeServingsOptionViewModelProtocol] {
+      RecipeServings.allCases.map { option -> any RecipeServingsOptionViewModelProtocol in
+        guard option == servings else {
+          return RecipeServingsOptionViewModel(servings: option)
+        }
+
+        return RecipeSelectedServingsOptionViewModel(servings: option)
       }
     }
 
-    var includeChips: [RecipeIngredientChipViewModel] {
-      includeIngredients.map {
-        RecipeIngredientChipViewModel(
-          ingredient: $0,
-          kind: .include
-        )
-      }
+    var includeChips: [any RecipeIngredientChipViewModelProtocol] {
+      includeIngredients.map { RecipeIncludedIngredientChipViewModel(ingredient: $0) }
     }
 
-    var excludeChips: [RecipeIngredientChipViewModel] {
-      excludeIngredients.map {
-        RecipeIngredientChipViewModel(
-          ingredient: $0,
-          kind: .exclude
-        )
-      }
+    var excludeChips: [any RecipeIngredientChipViewModelProtocol] {
+      excludeIngredients.map { RecipeExcludedIngredientChipViewModel(ingredient: $0) }
     }
 
     var showsClearAll: Bool {
@@ -89,6 +84,10 @@ import SwiftUI
         || servings != nil
         || !includeIngredients.isEmpty
         || !excludeIngredients.isEmpty
+    }
+
+    var result: RecipeSearchResult {
+      .apply(.empty)
     }
   }
 
@@ -115,9 +114,12 @@ import SwiftUI
       excludeIngredients.append(text)
     }
 
-    func remove(chip: RecipeIngredientChipViewModel) {
-      includeIngredients.removeAll { $0 == chip.ingredient }
-      excludeIngredients.removeAll { $0 == chip.ingredient }
+    func removeInclude(_ ingredient: String) {
+      includeIngredients.removeAll { $0 == ingredient }
+    }
+
+    func removeExclude(_ ingredient: String) {
+      excludeIngredients.removeAll { $0 == ingredient }
     }
 
     func set(searchText: String) {
@@ -134,9 +136,7 @@ import SwiftUI
       excludeIngredients = []
     }
 
-    func apply() -> RecipeSearchResult {
-      .apply(.empty)
-    }
+    func recordSearch() {}
   }
 
   // MARK: - Fixtures

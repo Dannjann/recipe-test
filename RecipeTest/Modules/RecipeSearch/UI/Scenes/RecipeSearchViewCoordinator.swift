@@ -68,7 +68,7 @@ struct RecipeSearchViewCoordinator: ViewCoordinator {
           onSubmit: handleInputSubmit()
         )
         .navigationTransition(.zoom(
-          sourceID: RecipeSearchView.queryFieldID,
+          sourceID: RecipeSearchAccessibilityID.queryField,
           in: queryFieldNamespace
         ))
         .toolbarVisibility(
@@ -96,7 +96,10 @@ private extension RecipeSearchViewCoordinator {
   }
 
   func handleSubmitTap() -> VoidResult {
-    { onFinish(viewModel.apply()) }
+    {
+      viewModel.recordSearch()
+      onFinish(viewModel.result)
+    }
   }
 }
 
@@ -108,8 +111,8 @@ private extension RecipeSearchViewCoordinator {
     { isEditingQuery = false }
   }
 
-  func handleInputSelect() -> SingleResult<RecipeSuggestionRowViewModel> {
-    { finish(selection: inputViewModel.select($0)) }
+  func handleInputSelect() -> SingleResult<any RecipeSuggestionRowViewModelProtocol> {
+    { finish(selection: $0.selection) }
   }
 
   /// Typing a term and hitting return is the same act as picking the "Search for …" row.
@@ -134,8 +137,7 @@ private extension RecipeSearchViewCoordinator {
   #Preview {
     RecipeSearchViewCoordinator(
       request: RecipeSearchRequest(query: .empty),
-      onFinish: { _ in },
-      recentSearchStore: RecentSearchStore()
+      onFinish: { _ in }
     )
   }
 #endif

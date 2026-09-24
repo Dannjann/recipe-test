@@ -75,7 +75,10 @@ struct RecipeSearchViewModelTests {
     sut.select(servings: .sixOrMore)
 
     #expect(sut.draft.servings == .sixOrMore)
-    #expect(sut.servingsOptions.filter(\.isSelected).map(\.label) == ["6+"])
+
+    let selected = sut.servingsOptions.filter { $0.accessibilityTraits.contains(.isSelected) }
+
+    #expect(selected.map(\.label) == ["6+"])
   }
 
   @Test
@@ -126,10 +129,7 @@ struct RecipeSearchViewModelTests {
     sut.addInclude("garlic")
     sut.addExclude("pork")
 
-    sut.remove(chip: RecipeIngredientChipViewModel(
-      ingredient: "garlic",
-      kind: .include
-    ))
+    sut.removeInclude("garlic")
 
     #expect(sut.draft.includeIngredients.isEmpty)
     #expect(sut.draft.excludeIngredients == ["pork"])
@@ -179,7 +179,7 @@ struct RecipeSearchViewModelTests {
   }
 
   @Test
-  func apply_withText_returnsTheDraftAndRecordsTheSearch() {
+  func recordSearch_withText_recordsItAndLeavesTheDraftOnResult() {
     let store = MockRecentSearchStore()
     let sut = RecipeSearchViewModelTestFactory.make(
       query: RecipeQuery(searchText: "adobo"),
@@ -187,8 +187,10 @@ struct RecipeSearchViewModelTests {
     )
     sut.toggleVegetarian()
 
-    guard case let .apply(query) = sut.apply() else {
-      Issue.record("apply() did not return .apply")
+    sut.recordSearch()
+
+    guard case let .apply(query) = sut.result else {
+      Issue.record("result was not .apply")
       return
     }
 
@@ -221,12 +223,12 @@ struct RecipeSearchViewModelTests {
   }
 
   @Test
-  func apply_withoutText_recordsNothing() {
+  func recordSearch_withoutText_recordsNothing() {
     let store = MockRecentSearchStore()
     let sut = RecipeSearchViewModelTestFactory.make(store: store)
     sut.toggleVegetarian()
 
-    _ = sut.apply()
+    sut.recordSearch()
 
     #expect(store.recorded.isEmpty)
   }

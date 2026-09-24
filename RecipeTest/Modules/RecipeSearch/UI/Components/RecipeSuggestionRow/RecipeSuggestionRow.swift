@@ -26,12 +26,12 @@ struct RecipeSuggestionRow: View {
             Text(viewModel.title)
               .themeTextStyle(.bodyBold)
               .themeColor(.textPrimary)
-              .lineLimit(titleLineLimit)
+              .lineLimit(lineLimit)
 
             Text(viewModel.detail)
               .themeTextStyle(.footnoteRegular)
               .themeColor(.textSecondary)
-              .lineLimit(titleLineLimit)
+              .lineLimit(lineLimit)
           }
           .frame(
             maxWidth: .infinity,
@@ -109,7 +109,7 @@ private extension RecipeSuggestionRow {
     12
   }
 
-  var titleLineLimit: Int {
+  var lineLimit: Int {
     1
   }
 }
@@ -117,21 +117,21 @@ private extension RecipeSuggestionRow {
 #if DEBUG
   #Preview("Query") {
     RecipeSuggestionRow(
-      viewModel: RecipeSuggestionRowViewModel(suggestion: .query("ado")),
+      viewModel: RecipeQuerySuggestionRowViewModel(text: "ado"),
       onTap: {}
     )
   }
 
   #Preview("Recent") {
     RecipeSuggestionRow(
-      viewModel: RecipeSuggestionRowViewModel(suggestion: .recent("pho")),
+      viewModel: RecipeRecentSuggestionRowViewModel(text: "pho"),
       onTap: {}
     )
   }
 
   #Preview("Recipe") {
     RecipeSuggestionRow(
-      viewModel: RecipeSuggestionRowViewModel(suggestion: .recipe(.dummy())),
+      viewModel: RecipeSummarySuggestionRowViewModel(summary: .dummy()),
       onTap: {}
     )
   }

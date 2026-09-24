@@ -11,17 +11,20 @@ import SwiftUI
 /// Scrolls horizontally rather than wrapping, matching `RecipeFacetChipRow`: an ingredient
 /// looks and behaves the same in the overlay as it does on the results list.
 struct RecipeIngredientChipRow: View {
-  let chips: [RecipeIngredientChipViewModel]
-  let onRemoveTap: SingleResult<RecipeIngredientChipViewModel>
+  let chips: [any RecipeIngredientChipViewModelProtocol]
+
+  /// Carries the ingredient rather than the chip, so the caller decides which side it is
+  /// removing from without having to ask the chip what it is.
+  let onRemoveTap: SingleResult<String>
 
   var body: some View {
     if !chips.isEmpty {
       ScrollView(.horizontal) {
         HStack(spacing: contentSpacing) {
-          ForEach(chips) { chip in
+          ForEach(chips, id: \.id) { chip in
             RecipeIngredientChip(
               viewModel: chip,
-              onRemoveTap: { onRemoveTap(chip) }
+              onRemoveTap: { onRemoveTap(chip.ingredient) }
             )
           }
         }
@@ -31,7 +34,7 @@ struct RecipeIngredientChipRow: View {
   }
 }
 
-// MARK: - Getters
+// MARK: - Getters > Constants
 
 private extension RecipeIngredientChipRow {
   var contentSpacing: CGFloat {
@@ -43,10 +46,7 @@ private extension RecipeIngredientChipRow {
   #Preview("Included") {
     RecipeIngredientChipRow(
       chips: ["garlic", "soy sauce"].map {
-        RecipeIngredientChipViewModel(
-          ingredient: $0,
-          kind: .include
-        )
+        RecipeIncludedIngredientChipViewModel(ingredient: $0)
       },
       onRemoveTap: { _ in }
     )
@@ -57,10 +57,7 @@ private extension RecipeIngredientChipRow {
   #Preview("Excluded") {
     RecipeIngredientChipRow(
       chips: ["pork"].map {
-        RecipeIngredientChipViewModel(
-          ingredient: $0,
-          kind: .exclude
-        )
+        RecipeExcludedIngredientChipViewModel(ingredient: $0)
       },
       onRemoveTap: { _ in }
     )

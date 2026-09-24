@@ -12,34 +12,37 @@ import Testing
 
 struct RecipeIngredientChipViewModelTests {
   @Test
-  func id_theSameWordOnBothSides_differsByKind() {
-    #expect(chip(kind: .include).id != chip(kind: .exclude).id)
+  func id_theSameWordOnBothSides_differsBySide() {
+    let included = RecipeIncludedIngredientChipViewModel(ingredient: "pork")
+    let excluded = RecipeExcludedIngredientChipViewModel(ingredient: "pork")
+
+    #expect(included.id != excluded.id)
   }
 
   @Test
   func backgroundColorStyle_anExclusion_readsAsAnExclusion() {
-    #expect(chip(kind: .include).backgroundColorStyle == .complementaryShade1)
-    #expect(chip(kind: .exclude).backgroundColorStyle == .complementaryShade2)
+    #expect(RecipeIncludedIngredientChipViewModel(ingredient: "pork")
+      .backgroundColorStyle == .complementaryShade1)
+    #expect(RecipeExcludedIngredientChipViewModel(ingredient: "pork")
+      .backgroundColorStyle == .complementaryShade2)
   }
 
   @Test
-  func accessibilityIdentifier_anExclusion_namesItsSide() {
-    #expect(chip(kind: .exclude).accessibilityIdentifier == "recipe-search-exclude-chip-pork-remove-button")
+  func accessibilityIdentifier_eitherSide_namesItsSide() {
+    #expect(RecipeIncludedIngredientChipViewModel(ingredient: "pork")
+      .accessibilityIdentifier == "recipe-search-include-chip-pork-remove-button")
+    #expect(RecipeExcludedIngredientChipViewModel(ingredient: "pork")
+      .accessibilityIdentifier == "recipe-search-exclude-chip-pork-remove-button")
   }
 
   @Test
   func removeAccessibilityLabel_anyChip_namesTheIngredient() {
-    #expect(chip(kind: .include).removeAccessibilityLabel.contains("pork"))
+    #expect(RecipeIncludedIngredientChipViewModel(ingredient: "pork")
+      .removeAccessibilityLabel.contains("pork"))
   }
-}
 
-// MARK: - Helpers
-
-private extension RecipeIngredientChipViewModelTests {
-  func chip(kind: RecipeIngredientChipViewModel.Kind) -> RecipeIngredientChipViewModel {
-    RecipeIngredientChipViewModel(
-      ingredient: "pork",
-      kind: kind
-    )
+  @Test
+  func label_anyChip_isTheIngredient() {
+    #expect(RecipeExcludedIngredientChipViewModel(ingredient: "pork").label == "pork")
   }
 }

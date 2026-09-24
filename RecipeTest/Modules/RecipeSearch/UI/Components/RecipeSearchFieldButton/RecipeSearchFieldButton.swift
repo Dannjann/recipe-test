@@ -12,7 +12,7 @@ import SwiftUI
 /// where the suggestions are.
 struct RecipeSearchFieldButton: View {
   let text: String
-  let isPlaceholder: Bool
+  let textColorStyle: Color.ThemeColor
   let accessibilityValue: String
   let showsClear: Bool
   let onTap: VoidResult
@@ -33,7 +33,7 @@ struct RecipeSearchFieldButton: View {
 
             Text(text)
               .themeTextStyle(.bodyRegular)
-              .themeColor(isPlaceholder ? .textTertiary : .textPrimary)
+              .themeColor(textColorStyle)
               .lineLimit(textLineLimit)
               .frame(
                 maxWidth: .infinity,
@@ -44,7 +44,7 @@ struct RecipeSearchFieldButton: View {
         }
       )
       .buttonStyle(.plain)
-      .accessibilityIdentifier("recipe-search-field-button")
+      .accessibilityIdentifier(RecipeSearchAccessibilityID.fieldButton)
       .accessibilityLabel(Text(.RecipeSearch.recipeSearchFieldAccessibilityLabel))
       .accessibilityValue(Text(accessibilityValue))
 
@@ -57,7 +57,7 @@ struct RecipeSearchFieldButton: View {
           }
         )
         .buttonStyle(.plain)
-        .accessibilityIdentifier("recipe-search-field-clear-button")
+        .accessibilityIdentifier(RecipeSearchAccessibilityID.fieldClearButton)
         .accessibilityLabel(Text(.RecipeSearch.recipeSearchFieldClearAccessibilityLabel))
       }
     }
@@ -112,7 +112,7 @@ private extension RecipeSearchFieldButton {
   #Preview("Placeholder") {
     RecipeSearchFieldButton(
       text: "Search recipes or ingredients",
-      isPlaceholder: true,
+      textColorStyle: .textTertiary,
       accessibilityValue: "Nothing entered",
       showsClear: false,
       onTap: {},
@@ -125,7 +125,7 @@ private extension RecipeSearchFieldButton {
   #Preview("With text") {
     RecipeSearchFieldButton(
       text: "adobo",
-      isPlaceholder: false,
+      textColorStyle: .textPrimary,
       accessibilityValue: "adobo",
       showsClear: true,
       onTap: {},

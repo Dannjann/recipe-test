@@ -114,8 +114,8 @@ private extension RecipeIngredientEntry {
   #Preview {
     RecipeIngredientEntry(
       placeholder: .RecipeSearch.recipeSearchSectionIncludePlaceholder,
-      fieldAccessibilityIdentifier: "recipe-search-include-field",
-      addAccessibilityIdentifier: "recipe-search-include-add-button",
+      fieldAccessibilityIdentifier: RecipeSearchAccessibilityID.includeField,
+      addAccessibilityIdentifier: RecipeSearchAccessibilityID.includeAddButton,
       onAdd: { _ in }
     )
     .padding()
