@@ -22,7 +22,10 @@ struct HomeView: View {
       ) {
         logo
 
-        HomeSearchPill(onTap: onSearchTap)
+        RecipeSearchPill(
+          placeholder: String(localized: .Home.homeSearchPlaceholder),
+          onTap: onSearchTap
+        )
 
         HomeSectionHeader(title: .Home.homeLatestRecipesTitle)
 

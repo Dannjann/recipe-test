@@ -1,5 +1,5 @@
 //
-//  HomeSearchPill.swift
+//  RecipeSearchPill.swift
 //  RecipeTest
 //
 //  Created by Danjan ( https://github.com/Dannjann )
@@ -8,13 +8,14 @@
 
 import SwiftUI
 
-/// A `Button`, not a `TextField`: it opens the search overlay rather than accepting input.
-struct HomeSearchPill: View {
+/// Opens the search overlay rather than accepting input.
+struct RecipeSearchPill: View {
+  let placeholder: String
   let onTap: VoidResult
 
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-  @ScaledMetric(relativeTo: .body) private var height: CGFloat = HomeSearchPill.baseHeight
+  @ScaledMetric(relativeTo: .body) private var height: CGFloat = RecipeSearchPill.baseHeight
 
   var body: some View {
     Button(
@@ -24,7 +25,7 @@ struct HomeSearchPill: View {
           Image(systemName: searchSymbolName)
             .foregroundStyle(.themeColor(.iconsDefault))
 
-          Text(.Home.homeSearchPlaceholder)
+          Text(placeholder)
             .themeTextStyle(.bodyRegular)
             .themeColor(.textPrimary)
             .lineLimit(placeholderLineLimit)
@@ -44,6 +45,7 @@ struct HomeSearchPill: View {
       }
     )
     .buttonStyle(.plain)
+    .accessibilityIdentifier("recipe-search-pill-button")
     .cardShadow()
     .padding(
       .horizontal,
@@ -54,13 +56,15 @@ struct HomeSearchPill: View {
 
 // MARK: - Getters
 
-extension HomeSearchPill {
+extension RecipeSearchPill {
   static var baseHeight: CGFloat {
     56
   }
 }
 
-private extension HomeSearchPill {
+// MARK: - Getters > Constants
+
+private extension RecipeSearchPill {
   var contentSpacing: CGFloat {
     10
   }
@@ -79,12 +83,27 @@ private extension HomeSearchPill {
 }
 
 #if DEBUG
-  #Preview {
-    HomeSearchPill(onTap: {})
-      .frame(
-        maxWidth: .infinity,
-        maxHeight: .infinity
-      )
-      .background(Color.themeColor(.surfacesBackground))
+  #Preview("Home placeholder") {
+    RecipeSearchPill(
+      placeholder: String(localized: .Home.homeSearchPlaceholder),
+      onTap: {}
+    )
+    .frame(
+      maxWidth: .infinity,
+      maxHeight: .infinity
+    )
+    .background(Color.themeColor(.surfacesBackground))
+  }
+
+  #Preview("Scoped to a category") {
+    RecipeSearchPill(
+      placeholder: "Search Desserts",
+      onTap: {}
+    )
+    .frame(
+      maxWidth: .infinity,
+      maxHeight: .infinity
+    )
+    .background(Color.themeColor(.surfacesBackground))
   }
 #endif

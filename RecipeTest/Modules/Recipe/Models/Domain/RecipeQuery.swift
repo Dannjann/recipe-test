@@ -13,7 +13,7 @@ import Foundation
 /// A struct rather than nine parameters on `getRecipes`: `APIRequestParameters` exists for
 /// exactly that case, and it supplies the snake_case-converting encoder, so the wire names
 /// fall out of the property names with no hand-written mapping.
-nonisolated struct RecipeQuery: APIRequestParameters, Equatable {
+nonisolated struct RecipeQuery: APIRequestParameters, Hashable {
   var searchText: String?
   var category: String?
   var cuisine: String?

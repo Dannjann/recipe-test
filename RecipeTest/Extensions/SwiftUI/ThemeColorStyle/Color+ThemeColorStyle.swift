@@ -10,7 +10,7 @@ import Foundation
 import SwiftUI
 
 extension Color {
-  enum ThemeColor {
+  nonisolated enum ThemeColor {
     // Text
     case textPrimary
     case textSecondary
