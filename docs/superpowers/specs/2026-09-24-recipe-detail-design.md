@@ -37,7 +37,14 @@ Top to bottom, on one vertical scroll:
 - The layout matches the prototype at the default text size, and stays legible and
   unclipped at accessibility text sizes.
 - `RecipeDetailViewModel` is unit-tested without a simulator, a network, or `URLSession`.
-- The screen is reached, and left, without losing the interactive swipe-back gesture.
+- ~~The screen is reached, and left, without losing the interactive swipe-back gesture.~~
+  **UNMET — awaiting a decision from whoever owns this spec.** Proved by experiment on a
+  simulator: hiding the navigation bar's *back button* is what disables the interactive pop
+  gesture, and every arrangement that keeps the gesture also shows a system back button
+  beside the prototype's floating one. `.tint(.clear)` does not hide it (iOS 26 draws it on
+  a glass background). The only remaining fix is a `UIViewRepresentable` shim on
+  `interactivePopGestureRecognizer`, which the team's SwiftUI guidelines forbid. The screen
+  ships with the approved design and no edge-swipe-back; see *Swipe-back* below.
 
 ### Out of scope
 
@@ -309,9 +316,13 @@ All three values are optional on the domain model. A nil renders an em dash, wit
 accessibility label saying the value is unavailable rather than reading the dash.
 
 Cooking time uses `Duration.UnitsFormatStyle` with `allowed: [.hours, .minutes]` and
-`.abbreviated` width. That reproduces the prototype's `fmtTime` — `"1 hr 25 min"`,
-`"25 min"` — and is localized without a hand-assembled string. The longest value in the
-mock data is 305 minutes, which formats as `"5 hr 5 min"`.
+`.abbreviated` width, localized rather than hand-assembled.
+
+**Corrected after implementation:** this style emits a comma — `"25 min"`, `"1 hr"`,
+`"1 hr, 25 min"`, and `"5 hr, 5 min"` for the mock data's longest value of 305 minutes.
+The prototype's `fmtTime` has no comma. The system formatter was kept anyway: the intent
+here was a localized string that nobody assembles by hand, and the comma is what iOS
+shows everywhere else. Do not "fix" the comma out without replacing the whole approach.
 
 Difficulty maps through `RecipeDifficulty+DisplayName` to localized copy. The three cases
 are closed and exhaustive, so no default case is needed.
@@ -347,10 +358,24 @@ light-only today.
 
 ### Dynamic Type
 
-- Gallery height, tile sizes, the checkbox and the step badge are `@ScaledMetric`.
-- `RecipeMetricRow` is three columns at default sizes and stacks vertically at
-  accessibility sizes. Three 13pt labels and their icons do not fit a 110pt-wide card
-  once the text scales.
+**Corrected after implementation.** The original plan here was wrong. It called for
+`@ScaledMetric` on the gallery height, the tile sizes, the checkbox and the step badge —
+but this app's type does not scale at all: `DefaultThemeTextStyle` builds plain
+`UIFont(name:size:)` values with no `UIFontMetrics` anywhere in the project, and
+`Font(uiFont)` is fixed-size. Scaling the boxes while the text stays put made the layout
+worse, not better: at AX3 the hero gallery came out ~894pt tall — taller than the screen —
+in front of 28pt type that had not moved.
+
+So this screen uses fixed dimensions, consistent with its fixed type:
+
+- No `@ScaledMetric` anywhere in `Modules/RecipeDetail/`.
+- `RecipeMetricRow` still stacks vertically at accessibility sizes. With fixed type the
+  three columns would fit, so this buys larger targets and a simpler layout rather than
+  preventing a wrap — and it becomes correct the moment the theme starts scaling.
+
+Real Dynamic Type support is a separate piece of work on `Core/UI/Theme`: wrap the theme's
+fonts in `UIFontMetrics` so `.themeTextStyle(_:)` scales, then reinstate `@ScaledMetric` on
+the boxes around it. Both halves have to move together.
 - The sticky bar's title keeps `lineLimit(1)` and truncates — it mirrors a heading that
   is fully readable a scroll away, so truncating costs nothing.
 - Nothing else carries a line limit. The title, the description, ingredient names and
@@ -373,10 +398,19 @@ the interactive pop gesture, and whether `NavigationStack` on iOS 26.3 preserves
 to be confirmed on a simulator, not assumed — it is listed as an explicit verification
 step in the implementation plan, not left to code review.
 
-If the gesture is lost, the fallback is to keep the navigation bar in place with its
-background and its back button hidden, and draw `RecipeDetailTopBar` over it. The
-SwiftUI guidelines forbid `UIViewRepresentable` bridging, so a UIKit gesture-recogniser
-shim is not an option and is not the fallback.
+**Resolved after implementation: the gesture is lost, and the planned fallback does not
+recover it.** Four controlled runs on a simulator:
+
+| Configuration | Edge swipe pops? |
+|---|---|
+| `.toolbarVisibility(.hidden, for: .navigationBar)` — shipped | No |
+| `.navigationBarBackButtonHidden(true)` + hidden background — the planned fallback | No |
+| No toolbar modifiers at all | Yes |
+| `.toolbarBackgroundVisibility(.hidden)` alone | Yes, but a system back button appears |
+
+Hiding the back button is the cause, not hiding the bar. The screen ships with the approved
+design — one white circular back button, no edge swipe. Reverting to the fourth row is a
+one-line change that costs a second back affordance on the photograph.
 
 ## Localization
 
