@@ -28,6 +28,19 @@ differently in every localisation. Identifiers read *screen, element, kind*:
 | `recipe-list-card-<recipe id>` | One result, in either presentation |
 | `recipe-list-facet-chip-remove-button` | A filter chip |
 | `recipe-detail-back-button` | The detail screen's floating back button |
+| `recipe-search-field-button` | The overlay's search field, which opens the typing screen |
+| `recipe-search-field-clear-button` | Clears the text held in that field |
+| `recipe-search-close-button` | Dismisses the overlay, discarding the draft |
+| `recipe-search-vegetarian-toggle` / `-steps-toggle` | The overlay's two switches |
+| `recipe-search-servings-option-<1\|2\|4\|6-plus>` | One servings option |
+| `recipe-search-include-field` / `recipe-search-exclude-field` | An ingredient entry field |
+| `recipe-search-include-add-button` / `recipe-search-exclude-add-button` | Commits that ingredient |
+| `recipe-search-<include\|exclude>-chip-<ingredient>-remove-button` | One ingredient chip |
+| `recipe-search-clear-all-button` | Clears the overlay's text and filters |
+| `recipe-search-submit-button` | Runs the search and closes the overlay |
+| `recipe-search-input-field` | The typing screen's text field |
+| `recipe-search-input-back-button` | Returns from the typing screen to the filters |
+| `recipe-search-suggestion-<kind>-<value>` | One suggestion row |
 
 Adding a missing identifier is part of writing a flow, not a prerequisite someone else owes
 you. `maestro hierarchy` dumps what is actually on screen when one is uncertain.
