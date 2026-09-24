@@ -56,9 +56,12 @@ private extension LatestRecipeCarousel {
   }
 
   /// Added inside the scroll view and taken back off outside it, so `cardShadow` has room the
-  /// scroll view would otherwise clip. The two uses must stay equal and opposite.
+  /// scroll view would otherwise clip. It has to cover the shadow's whole reach — its offset
+  /// plus its blur radius — because a gradient clipped partway through ends in a hard line
+  /// across the page that reads as a change of background colour. The two uses must stay
+  /// equal and opposite.
   var shadowBleed: CGFloat {
-    16
+    30
   }
 }
 
