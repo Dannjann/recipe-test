@@ -195,6 +195,32 @@ struct HomeViewModelTests {
   }
 
   @Test
+  func loadLatestRecipes_whenARetryFromFailedIsCancelled_leavesTheSectionRetryable() async {
+    let service = MockRecipeService()
+    service.recipes.fails(with: AppError.unknown)
+    let sut = HomeViewModel(recipeService: service)
+    await sut.loadContent()
+
+    service.recipes.fails(with: URLError(.cancelled))
+    await sut.loadLatestRecipes()
+
+    #expect(sut.latestRecipes == .failed(AppError.unknown.localizedDescription))
+  }
+
+  @Test
+  func loadCategories_whenARetryFromFailedIsCancelled_leavesTheSectionRetryable() async {
+    let service = MockRecipeService()
+    service.categories.fails(with: AppError.unknown)
+    let sut = HomeViewModel(recipeService: service)
+    await sut.loadContent()
+
+    service.categories.fails(with: URLError(.cancelled))
+    await sut.loadCategories()
+
+    #expect(sut.categories == .failed(AppError.unknown.localizedDescription))
+  }
+
+  @Test
   func loadLatestRecipes_whenASlowFailureLandsAfterAFasterSuccess_keepsTheFreshContent() async {
     let service = MockRecipeService()
     let sut = HomeViewModel(recipeService: service)

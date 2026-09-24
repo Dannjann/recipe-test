@@ -45,6 +45,7 @@ extension HomeViewModel {
   func loadLatestRecipes() async {
     latestRecipesGeneration += 1
     let generation = latestRecipesGeneration
+    let previous = latestRecipes
     latestRecipes = refreshing(latestRecipes)
 
     do {
@@ -64,7 +65,7 @@ extension HomeViewModel {
 
       latestRecipes = state(
         for: error,
-        keeping: latestRecipes
+        keeping: previous
       )
     }
   }
@@ -72,6 +73,7 @@ extension HomeViewModel {
   func loadCategories() async {
     categoriesGeneration += 1
     let generation = categoriesGeneration
+    let previous = categories
     categories = refreshing(categories)
 
     do {
@@ -85,7 +87,7 @@ extension HomeViewModel {
 
       categories = state(
         for: error,
-        keeping: categories
+        keeping: previous
       )
     }
   }
@@ -103,12 +105,13 @@ private extension HomeViewModel {
     value.isEmpty ? .empty : .loaded(value)
   }
 
-  /// SwiftUI cancels `.task` on disappear; that must not paint an error.
+  /// SwiftUI cancels `.task` on disappear; that must not paint an error, nor strand
+  /// a retry on the spinner `refreshing(_:)` put there.
   func state<Value>(
     for error: any Error,
-    keeping current: SectionState<Value>
+    keeping previous: SectionState<Value>
   ) -> SectionState<Value> {
-    guard !error.isCancellation else { return current }
+    guard !error.isCancellation else { return previous }
 
     return .failed(error.localizedDescription)
   }
