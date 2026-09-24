@@ -11,7 +11,7 @@ import SwiftUI
 struct HomeView: View {
   let viewModel: any HomeViewModelProtocol
   let onSearchTap: VoidResult
-  let onRecipeTap: SingleResult<String>
+  let onRecipeTap: SingleResult<RecipeSummary>
   let onCategoryTap: SingleResult<RecipeCategory>
 
   var body: some View {

@@ -15,6 +15,7 @@ struct AppCoordinator: ViewCoordinator {
   var body: some View {
     NavigationStack(path: $pathRouter.path) {
       HomeViewCoordinator()
+        .recipeRoutes()
     }
     .environment(pathRouter)
   }

@@ -24,4 +24,8 @@ import Foundation
 /// then handle them with `navigationDestination(for: Route.Catalog.self)` in that
 /// module's coordinator. `PathRouter` is generic over `Hashable`, so nothing here has to
 /// change for a new module to start routing.
-enum Route {}
+enum Route {
+  enum Recipe: Hashable {
+    case detail(RecipeSummary)
+  }
+}

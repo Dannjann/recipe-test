@@ -63,6 +63,11 @@ extension Color {
     case semanticsWarningShade
     case semanticsErrorDefault
     case semanticsErrorShade
+
+    // Accents
+    case surfacesAccentPeach
+    case surfacesAccentMint
+    case surfacesAccentSky
   }
 
   // swiftlint:disable:next cyclomatic_complexity function_body_length
@@ -158,6 +163,13 @@ extension Color {
       return theme.semanticsErrorDefault.color
     case .semanticsErrorShade:
       return theme.semanticsErrorShade.color
+    // Accents
+    case .surfacesAccentPeach:
+      return theme.surfacesAccentPeach.color
+    case .surfacesAccentMint:
+      return theme.surfacesAccentMint.color
+    case .surfacesAccentSky:
+      return theme.surfacesAccentSky.color
     }
   }
 }

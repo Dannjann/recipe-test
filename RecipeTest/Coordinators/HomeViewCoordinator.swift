@@ -9,6 +9,8 @@
 import SwiftUI
 
 struct HomeViewCoordinator: ViewCoordinator {
+  @Environment(PathRouter.self) private var pathRouter
+
   @State private var viewModel: HomeViewModel
 
   init(recipeService: RecipeServiceProtocol = AppContainer.shared.recipeService) {
@@ -34,10 +36,8 @@ private extension HomeViewCoordinator {
     }
   }
 
-  var handleRecipeTap: SingleResult<String> {
-    { _ in
-      // TODO: Push the recipe detail scene once it exists
-    }
+  var handleRecipeTap: SingleResult<RecipeSummary> {
+    { summary in pathRouter.push(Route.Recipe.detail(summary)) }
   }
 
   var handleCategoryTap: SingleResult<RecipeCategory> {
@@ -52,5 +52,6 @@ private extension HomeViewCoordinator {
     NavigationStack {
       HomeViewCoordinator()
     }
+    .environment(PathRouter())
   }
 #endif
