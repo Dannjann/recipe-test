@@ -9,59 +9,44 @@
 import SwiftUI
 
 #if DEBUG
+  /// Holds its display values rather than deriving them, so a preview shows exactly what
+  /// its scenario asked for and cannot drift as `RecipeDetailViewModel`'s getters change.
   @Observable
   final class MockRecipeDetailViewModel: RecipeDetailViewModelProtocol {
     var detail: SectionState<Recipe>
     var checkedIngredientIDs: Set<String>
 
-    let summary: RecipeSummary
+    let title: String
+    let descriptionText: String
+    let cookingTimeText: String?
+    let servingsText: String?
+    let difficultyText: LocalizedStringResource?
+    let galleryURLs: [URL]
 
     init(
-      summary: RecipeSummary = .dummy(),
       detail: SectionState<Recipe> = .loading,
-      checkedIngredientIDs: Set<String> = []
+      checkedIngredientIDs: Set<String> = [],
+      title: String = "Spaghetti alla Carbonara",
+      descriptionText: String = "Roman pasta bound with egg yolk and pecorino — never cream.",
+      cookingTimeText: String? = "25 min",
+      servingsText: String? = "4",
+      difficultyText: LocalizedStringResource? = .RecipeDetail.recipeDetailDifficultyMedium,
+      galleryURLs: [URL] = Recipe.dummy().gallery
     ) {
-      self.summary = summary
       self.detail = detail
       self.checkedIngredientIDs = checkedIngredientIDs
+      self.title = title
+      self.descriptionText = descriptionText
+      self.cookingTimeText = cookingTimeText
+      self.servingsText = servingsText
+      self.difficultyText = difficultyText
+      self.galleryURLs = galleryURLs
     }
 
     func loadDetail() async {}
 
     func toggleIngredient(id: String) {
-      if checkedIngredientIDs.contains(id) {
-        checkedIngredientIDs.remove(id)
-      } else {
-        checkedIngredientIDs.insert(id)
-      }
-    }
-  }
-
-  // MARK: - Getters
-
-  extension MockRecipeDetailViewModel {
-    var title: String {
-      detail.value?.title ?? summary.title
-    }
-
-    var totalTimeMinutes: Int? {
-      detail.value?.totalTimeMinutes ?? summary.totalTimeMinutes
-    }
-
-    var servings: Int? {
-      detail.value?.servings ?? summary.servings
-    }
-
-    var difficulty: RecipeDifficulty? {
-      detail.value?.difficulty ?? summary.difficulty
-    }
-
-    var galleryURLs: [URL] {
-      if let gallery = detail.value?.gallery, !gallery.isEmpty {
-        return gallery
-      }
-
-      return [detail.value?.heroImageURL ?? summary.heroImageURL].compactMap(\.self)
+      checkedIngredientIDs.formSymmetricDifference([id])
     }
   }
 
@@ -77,18 +62,18 @@ import SwiftUI
     }
 
     static func failed() -> MockRecipeDetailViewModel {
-      MockRecipeDetailViewModel(detail: .failed("The Internet connection appears to be offline."))
+      MockRecipeDetailViewModel(detail: .failed(String(localized: .Shared.sharedErrorNoInternetConnection)))
     }
 
     /// No photograph on the summary and none on the recipe — the case a card with a nil
     /// `heroImageURL` leads to.
     static func noPhotographs() -> MockRecipeDetailViewModel {
       MockRecipeDetailViewModel(
-        summary: .dummy(heroImageURL: nil),
         detail: .loaded(.dummy(
           heroImageURL: nil,
           gallery: []
-        ))
+        )),
+        galleryURLs: []
       )
     }
 
@@ -110,16 +95,14 @@ import SwiftUI
     /// Every optional metric absent, so the em dash and its VoiceOver copy are visible.
     static func missingMetrics() -> MockRecipeDetailViewModel {
       MockRecipeDetailViewModel(
-        summary: .dummy(
-          totalTimeMinutes: nil,
-          servings: nil,
-          difficulty: nil
-        ),
         detail: .loaded(.dummy(
           totalTimeMinutes: nil,
           servings: nil,
           difficulty: nil
-        ))
+        )),
+        cookingTimeText: nil,
+        servingsText: nil,
+        difficultyText: nil
       )
     }
   }

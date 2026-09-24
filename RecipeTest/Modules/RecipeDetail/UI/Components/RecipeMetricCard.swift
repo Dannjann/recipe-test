@@ -10,10 +10,13 @@ import SwiftUI
 
 /// `value` is optional because all three metrics are optional on the domain model. A nil
 /// shows an em dash and announces the unavailable copy, rather than an empty card.
+///
+/// It arrives as `Text` rather than `String` so a localized value reaches the card as a
+/// resource and is resolved here, in the view's own environment.
 struct RecipeMetricCard: View {
   let title: LocalizedStringResource
   let systemImage: String
-  let value: String?
+  let value: Text?
   let background: Color.ThemeColor
 
   var body: some View {
@@ -25,7 +28,7 @@ struct RecipeMetricCard: View {
 
       Spacer(minLength: 0)
 
-      Text(value ?? unavailableSymbol)
+      valueText
         .themeTextStyle(.title3)
         .themeColor(.textPrimary)
     }
@@ -83,16 +86,20 @@ private extension RecipeMetricCard {
     24
   }
 
+  var titleMinimumScale: CGFloat {
+    0.8
+  }
+
   var unavailableSymbol: String {
     "—"
   }
 
-  var accessibilityValue: Text {
-    guard let value else {
-      return Text(.RecipeDetail.recipeDetailMetricUnavailable)
-    }
+  var valueText: Text {
+    value ?? Text(verbatim: unavailableSymbol)
+  }
 
-    return Text(value)
+  var accessibilityValue: Text {
+    value ?? Text(.RecipeDetail.recipeDetailMetricUnavailable)
   }
 }
 
@@ -109,7 +116,7 @@ private extension RecipeMetricCard {
         .themeColor(.textPrimary)
         .multilineTextAlignment(.leading)
         .lineLimit(2)
-        .minimumScaleFactor(0.8)
+        .minimumScaleFactor(titleMinimumScale)
 
       Spacer(minLength: 0)
 
@@ -124,7 +131,7 @@ private extension RecipeMetricCard {
     RecipeMetricCard(
       title: .RecipeDetail.recipeDetailCookingTimeTitle,
       systemImage: "clock",
-      value: "25 min",
+      value: Text(verbatim: "25 min"),
       background: .surfacesAccentPeach
     )
     .padding(20)

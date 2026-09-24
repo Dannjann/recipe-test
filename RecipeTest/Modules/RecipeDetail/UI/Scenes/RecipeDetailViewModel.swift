@@ -13,7 +13,7 @@ final class RecipeDetailViewModel: RecipeDetailViewModelProtocol {
   private(set) var detail: SectionState<Recipe> = .loading
   private(set) var checkedIngredientIDs: Set<String> = []
 
-  let summary: RecipeSummary
+  private let summary: RecipeSummary
 
   private var detailGeneration = 0
 
@@ -37,16 +37,44 @@ extension RecipeDetailViewModel {
     detail.value?.title ?? summary.title
   }
 
-  var totalTimeMinutes: Int? {
-    detail.value?.totalTimeMinutes ?? summary.totalTimeMinutes
+  /// Only the recipe carries prose, so there is nothing to fall back to.
+  var descriptionText: String {
+    detail.value?.description ?? ""
   }
 
-  var servings: Int? {
-    detail.value?.servings ?? summary.servings
+  /// Reproduces the prototype's `fmtTime` — "25 min", "1 hr 25 min" — and localizes the
+  /// units rather than assembling them by hand.
+  var cookingTimeText: String? {
+    guard let totalTimeMinutes else { return nil }
+
+    return Duration
+      .seconds(totalTimeMinutes * 60)
+      .formatted(.units(
+        allowed: [.hours, .minutes],
+        width: .abbreviated
+      ))
   }
 
-  var difficulty: RecipeDifficulty? {
-    detail.value?.difficulty ?? summary.difficulty
+  var servingsText: String? {
+    servings.map { String($0) }
+  }
+
+  /// Left as a resource rather than a `String` so the view resolves it in its own
+  /// environment, which is what lets it follow a locale override.
+  var difficultyText: LocalizedStringResource? {
+    switch difficulty {
+    case .easy:
+      .RecipeDetail.recipeDetailDifficultyEasy
+
+    case .medium:
+      .RecipeDetail.recipeDetailDifficultyMedium
+
+    case .hard:
+      .RecipeDetail.recipeDetailDifficultyHard
+
+    case nil:
+      nil
+    }
   }
 
   /// The summary carries one photograph, the recipe the whole set. `gallery[0]` is the
@@ -58,6 +86,22 @@ extension RecipeDetailViewModel {
     }
 
     return [detail.value?.heroImageURL ?? summary.heroImageURL].compactMap(\.self)
+  }
+}
+
+// MARK: - Getters > Raw
+
+private extension RecipeDetailViewModel {
+  var totalTimeMinutes: Int? {
+    detail.value?.totalTimeMinutes ?? summary.totalTimeMinutes
+  }
+
+  var servings: Int? {
+    detail.value?.servings ?? summary.servings
+  }
+
+  var difficulty: RecipeDifficulty? {
+    detail.value?.difficulty ?? summary.difficulty
   }
 }
 
@@ -84,10 +128,6 @@ extension RecipeDetailViewModel {
   }
 
   func toggleIngredient(id: String) {
-    if checkedIngredientIDs.contains(id) {
-      checkedIngredientIDs.remove(id)
-    } else {
-      checkedIngredientIDs.insert(id)
-    }
+    checkedIngredientIDs.formSymmetricDifference([id])
   }
 }

@@ -10,14 +10,14 @@ import Foundation
 
 @MainActor
 protocol RecipeDetailViewModelProtocol: AnyObject, Observable {
-  var summary: RecipeSummary { get }
   var detail: SectionState<Recipe> { get }
   var checkedIngredientIDs: Set<String> { get }
 
   var title: String { get }
-  var totalTimeMinutes: Int? { get }
-  var servings: Int? { get }
-  var difficulty: RecipeDifficulty? { get }
+  var descriptionText: String { get }
+  var cookingTimeText: String? { get }
+  var servingsText: String? { get }
+  var difficultyText: LocalizedStringResource? { get }
   var galleryURLs: [URL] { get }
 
   func loadDetail() async

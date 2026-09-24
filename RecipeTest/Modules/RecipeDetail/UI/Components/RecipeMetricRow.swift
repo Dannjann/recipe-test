@@ -11,9 +11,9 @@ import SwiftUI
 /// Three columns at default text sizes, one column at accessibility sizes: three scaled
 /// labels and their icons do not fit a card a third of the screen wide.
 struct RecipeMetricRow: View {
-  let totalTimeMinutes: Int?
-  let servings: Int?
-  let difficulty: RecipeDifficulty?
+  let cookingTimeText: String?
+  let servingsText: String?
+  let difficultyText: LocalizedStringResource?
 
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -22,21 +22,21 @@ struct RecipeMetricRow: View {
       RecipeMetricCard(
         title: .RecipeDetail.recipeDetailCookingTimeTitle,
         systemImage: "clock",
-        value: timeText,
+        value: cookingTimeValue,
         background: .surfacesAccentPeach
       )
 
       RecipeMetricCard(
         title: .RecipeDetail.recipeDetailServingsTitle,
         systemImage: "person.2",
-        value: servingsText,
+        value: servingsValue,
         background: .surfacesAccentMint
       )
 
       RecipeMetricCard(
         title: .RecipeDetail.recipeDetailDifficultyTitle,
         systemImage: "chart.bar",
-        value: difficultyText,
+        value: difficultyValue,
         background: .surfacesAccentSky
       )
     }
@@ -72,34 +72,26 @@ private extension RecipeMetricRow {
     20
   }
 
-  /// Reproduces the prototype's `fmtTime` — "25 min", "1 hr 25 min" — and localizes the
-  /// units rather than assembling them by hand.
-  var timeText: String? {
-    guard let totalTimeMinutes else { return nil }
-
-    return Duration
-      .seconds(totalTimeMinutes * 60)
-      .formatted(.units(
-        allowed: [.hours, .minutes],
-        width: .abbreviated
-      ))
+  /// Already formatted by the view model; `verbatim` keeps it from being read as a key.
+  var cookingTimeValue: Text? {
+    cookingTimeText.map { Text(verbatim: $0) }
   }
 
-  var servingsText: String? {
-    servings.map { String($0) }
+  var servingsValue: Text? {
+    servingsText.map { Text(verbatim: $0) }
   }
 
-  var difficultyText: String? {
-    difficulty.map { String(localized: $0.displayName) }
+  var difficultyValue: Text? {
+    difficultyText.map { Text($0) }
   }
 }
 
 #if DEBUG
   #Preview("All three present") {
     RecipeMetricRow(
-      totalTimeMinutes: 25,
-      servings: 4,
-      difficulty: .medium
+      cookingTimeText: "25 min",
+      servingsText: "4",
+      difficultyText: .RecipeDetail.recipeDetailDifficultyMedium
     )
     .frame(
       maxWidth: .infinity,
@@ -111,9 +103,9 @@ private extension RecipeMetricRow {
 
   #Preview("Over an hour") {
     RecipeMetricRow(
-      totalTimeMinutes: 305,
-      servings: 8,
-      difficulty: .hard
+      cookingTimeText: "5 hr 5 min",
+      servingsText: "8",
+      difficultyText: .RecipeDetail.recipeDetailDifficultyHard
     )
     .frame(
       maxWidth: .infinity,
@@ -125,9 +117,9 @@ private extension RecipeMetricRow {
 
   #Preview("All three missing") {
     RecipeMetricRow(
-      totalTimeMinutes: nil,
-      servings: nil,
-      difficulty: nil
+      cookingTimeText: nil,
+      servingsText: nil,
+      difficultyText: nil
     )
     .frame(
       maxWidth: .infinity,
@@ -139,9 +131,9 @@ private extension RecipeMetricRow {
 
   #Preview("AX3") {
     RecipeMetricRow(
-      totalTimeMinutes: 25,
-      servings: 4,
-      difficulty: .medium
+      cookingTimeText: "25 min",
+      servingsText: "4",
+      difficultyText: .RecipeDetail.recipeDetailDifficultyMedium
     )
     .frame(
       maxWidth: .infinity,

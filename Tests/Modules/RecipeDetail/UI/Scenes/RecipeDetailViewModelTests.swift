@@ -39,9 +39,9 @@ struct RecipeDetailViewModelTests {
     )
 
     #expect(sut.title == "Pad Thai")
-    #expect(sut.totalTimeMinutes == 20)
-    #expect(sut.servings == 2)
-    #expect(sut.difficulty == .easy)
+    #expect(sut.cookingTimeText?.contains("20") == true)
+    #expect(sut.servingsText == "2")
+    #expect(sut.difficultyText == .RecipeDetail.recipeDetailDifficultyEasy)
   }
 
   @Test
@@ -65,9 +65,61 @@ struct RecipeDetailViewModelTests {
     await sut.loadDetail()
 
     #expect(sut.title == "Pad Thai, revised")
-    #expect(sut.totalTimeMinutes == 35)
-    #expect(sut.servings == 6)
-    #expect(sut.difficulty == .hard)
+    #expect(sut.cookingTimeText?.contains("35") == true)
+    #expect(sut.servingsText == "6")
+    #expect(sut.difficultyText == .RecipeDetail.recipeDetailDifficultyHard)
+  }
+
+  /// Asserts the rollover rather than the rendered copy, which is locale-dependent: what
+  /// matters is that 305 minutes stops being printed as 305 of anything.
+  @Test
+  func cookingTimeText_pastAnHour_rollsOverIntoHours() {
+    let sut = RecipeDetailViewModel(
+      summary: .dummy(totalTimeMinutes: 305),
+      recipeService: MockRecipeService()
+    )
+
+    #expect(sut.cookingTimeText?.contains("305") == false)
+    #expect(sut.cookingTimeText?.contains("5") == true)
+  }
+
+  @Test
+  func metricGetters_withNothingToShow_areNil() {
+    let sut = RecipeDetailViewModel(
+      summary: .dummy(
+        totalTimeMinutes: nil,
+        servings: nil,
+        difficulty: nil
+      ),
+      recipeService: MockRecipeService()
+    )
+
+    #expect(sut.cookingTimeText == nil)
+    #expect(sut.servingsText == nil)
+    #expect(sut.difficultyText == nil)
+  }
+
+  @Test
+  func descriptionText_beforeTheDetailLands_isEmpty() {
+    let sut = RecipeDetailViewModel(
+      summary: .dummy(),
+      recipeService: MockRecipeService()
+    )
+
+    #expect(sut.descriptionText.isEmpty)
+  }
+
+  @Test
+  func descriptionText_afterTheDetailLands_readsTheRecipe() async {
+    let service = MockRecipeService(recipe: .dummy(description: "Never cream."))
+    let sut = RecipeDetailViewModel(
+      summary: .dummy(),
+      recipeService: service
+    )
+
+    await sut.loadDetail()
+
+    #expect(sut.descriptionText == "Never cream.")
   }
 
   @Test

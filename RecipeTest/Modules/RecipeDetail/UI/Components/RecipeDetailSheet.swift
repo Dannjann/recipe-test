@@ -20,13 +20,13 @@ struct RecipeDetailSheet: View {
     ) {
       RecipeOverviewSection(
         title: viewModel.title,
-        description: viewModel.detail.value?.description ?? ""
+        description: viewModel.descriptionText
       )
 
       RecipeMetricRow(
-        totalTimeMinutes: viewModel.totalTimeMinutes,
-        servings: viewModel.servings,
-        difficulty: viewModel.difficulty
+        cookingTimeText: viewModel.cookingTimeText,
+        servingsText: viewModel.servingsText,
+        difficultyText: viewModel.difficultyText
       )
 
       content(for: viewModel.detail)
@@ -82,14 +82,15 @@ private extension RecipeDetailSheet {
       state: state,
       minHeight: bodyMinHeight,
       emptyMessage: .RecipeDetail.recipeDetailDetailEmpty,
-      onRetryTap: { Task { await viewModel.loadDetail() } }
-    ) { recipe in
-      RecipeDetailBody(
-        recipe: recipe,
-        checkedIngredientIDs: viewModel.checkedIngredientIDs,
-        onIngredientTap: viewModel.toggleIngredient(id:)
-      )
-    }
+      onRetryTap: { Task { await viewModel.loadDetail() } },
+      content: { recipe in
+        RecipeDetailBody(
+          recipe: recipe,
+          checkedIngredientIDs: viewModel.checkedIngredientIDs,
+          onIngredientTap: { id in viewModel.toggleIngredient(id: id) }
+        )
+      }
+    )
   }
 }
 
