@@ -10,6 +10,11 @@ import SwiftUI
 
 struct RecipeSearchView: View {
   let viewModel: any RecipeSearchViewModelProtocol
+
+  /// The field is the zoom transition's source, so the typing screen grows out of it rather
+  /// than sliding in over it.
+  let queryFieldNamespace: Namespace.ID
+
   let onCloseTap: VoidResult
   let onFieldTap: VoidResult
   let onSubmitTap: VoidResult
@@ -82,6 +87,10 @@ private extension RecipeSearchView {
         onTap: onFieldTap,
         onClearTap: { viewModel.set(searchText: "") }
       )
+      .matchedTransitionSource(
+        id: Self.queryFieldID,
+        in: queryFieldNamespace
+      )
     }
   }
 
@@ -151,6 +160,14 @@ private extension RecipeSearchView {
   }
 }
 
+// MARK: - Getters
+
+extension RecipeSearchView {
+  static var queryFieldID: String {
+    "recipe-search-query-field"
+  }
+}
+
 // MARK: - Getters > Constants
 
 private extension RecipeSearchView {
@@ -177,8 +194,11 @@ private extension RecipeSearchView {
 
 #if DEBUG
   #Preview("Empty draft") {
+    @Previewable @Namespace var namespace
+
     RecipeSearchView(
       viewModel: MockRecipeSearchViewModel.empty(),
+      queryFieldNamespace: namespace,
       onCloseTap: {},
       onFieldTap: {},
       onSubmitTap: {}
@@ -186,8 +206,11 @@ private extension RecipeSearchView {
   }
 
   #Preview("Everything set") {
+    @Previewable @Namespace var namespace
+
     RecipeSearchView(
       viewModel: MockRecipeSearchViewModel.filled(),
+      queryFieldNamespace: namespace,
       onCloseTap: {},
       onFieldTap: {},
       onSubmitTap: {}
@@ -195,11 +218,14 @@ private extension RecipeSearchView {
   }
 
   #Preview("Text only") {
+    @Previewable @Namespace var namespace
+
     RecipeSearchView(
       viewModel: MockRecipeSearchViewModel(
         fieldText: "adobo",
         hasFieldText: true
       ),
+      queryFieldNamespace: namespace,
       onCloseTap: {},
       onFieldTap: {},
       onSubmitTap: {}
@@ -207,12 +233,15 @@ private extension RecipeSearchView {
   }
 
   #Preview("Filters only") {
+    @Previewable @Namespace var namespace
+
     RecipeSearchView(
       viewModel: MockRecipeSearchViewModel(
         isVegetarian: true,
         servings: .sixOrMore,
         excludeIngredients: ["pork"]
       ),
+      queryFieldNamespace: namespace,
       onCloseTap: {},
       onFieldTap: {},
       onSubmitTap: {}

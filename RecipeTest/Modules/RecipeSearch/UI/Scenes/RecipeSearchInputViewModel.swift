@@ -118,7 +118,7 @@ private extension RecipeSearchInputViewModel {
   func loadCategoriesIfNeeded() async {
     guard !hasLoadedCategories else { return }
 
-    categories = (try? await recipeService.getCategories()) ?? []
+    categories = await (try? recipeService.getCategories()) ?? []
     hasLoadedCategories = true
   }
 

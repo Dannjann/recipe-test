@@ -35,6 +35,7 @@ struct RecipeSearchViewCoordinator: ViewCoordinator {
     NavigationStack {
       RecipeSearchView(
         viewModel: viewModel,
+        queryFieldNamespace: queryFieldNamespace,
         onCloseTap: handleCloseTap(),
         onFieldTap: handleFieldTap(),
         onSubmitTap: handleSubmitTap()
@@ -44,7 +45,18 @@ struct RecipeSearchViewCoordinator: ViewCoordinator {
         for: .navigationBar
       )
       .navigationDestination(isPresented: $isEditingQuery) {
-        EmptyView()
+        RecipeSearchInputViewCoordinator(
+          text: viewModel.hasFieldText ? viewModel.fieldText : "",
+          onFinish: handleInputFinish()
+        )
+        .navigationTransition(.zoom(
+          sourceID: RecipeSearchView.queryFieldID,
+          in: queryFieldNamespace
+        ))
+        .toolbarVisibility(
+          .hidden,
+          for: .navigationBar
+        )
       }
     }
   }
@@ -64,13 +76,22 @@ private extension RecipeSearchViewCoordinator {
   func handleSubmitTap() -> VoidResult {
     { onFinish(viewModel.apply()) }
   }
-}
 
-// MARK: - Getters > Constants
+  func handleInputFinish() -> SingleResult<RecipeSearchInputSelection?> {
+    { selection in
+      isEditingQuery = false
 
-private extension RecipeSearchViewCoordinator {
-  var queryFieldID: String {
-    "recipe-search-query-field"
+      switch selection {
+      case let .text(text):
+        viewModel.set(searchText: text)
+
+      case let .recipe(summary):
+        onFinish(.openRecipe(summary))
+
+      case nil:
+        break
+      }
+    }
   }
 }
 
