@@ -123,24 +123,35 @@ private extension IngredientChecklistRow {
       .multilineTextAlignment(.leading)
   }
 
-  /// The quantity and the name as one concatenated `Text` rather than two views: they have
+  /// The quantity and the name as one run-styled `Text` rather than two views: they have
   /// to wrap as a single paragraph, which an `HStack` of two `Text`s will not do.
   var labelText: Text {
     guard !ingredient.quantityText.isEmpty else {
-      return nameText
+      return Text(nameText)
     }
 
-    return quantityText + Text(verbatim: " ") + nameText
+    return Text(quantityText + separatorText + nameText)
   }
 
-  var quantityText: Text {
-    Text(verbatim: ingredient.quantityText)
-      .font(.themeTextStyle(.bodyBold))
+  var quantityText: AttributedString {
+    var text = AttributedString(ingredient.quantityText)
+    text.font = .themeTextStyle(.bodyBold)
+
+    return text
   }
 
-  var nameText: Text {
-    Text(verbatim: ingredient.name)
-      .font(.themeTextStyle(.bodyRegular))
+  var separatorText: AttributedString {
+    var text = AttributedString(" ")
+    text.font = .themeTextStyle(.bodyRegular)
+
+    return text
+  }
+
+  var nameText: AttributedString {
+    var text = AttributedString(ingredient.name)
+    text.font = .themeTextStyle(.bodyRegular)
+
+    return text
   }
 }
 
