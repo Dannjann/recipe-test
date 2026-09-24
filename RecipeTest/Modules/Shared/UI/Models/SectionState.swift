@@ -9,11 +9,13 @@
 import Foundation
 
 /// `.empty` is distinct from `.loaded([])`: zero rows has its own copy.
+/// `.failed` carries only the detail worth adding to the generic heading, so the view renders
+/// what it is given rather than deciding what to suppress.
 nonisolated enum SectionState<Value: Equatable>: Equatable {
   case loading
   case loaded(Value)
   case empty
-  case failed(String)
+  case failed(String?)
 }
 
 // MARK: - Getters

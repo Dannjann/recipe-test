@@ -33,42 +33,47 @@ struct SectionStateView<Value: Equatable, Content: View>: View {
     case .empty:
       message(
         title: Text(emptyMessage),
-        description: nil,
+        detail: nil,
         showsRetry: false
       )
 
-    case let .failed(description):
-      failure(description: description)
+    case let .failed(detail):
+      message(
+        title: Text(.Shared.sharedErrorSomethingWentWrong),
+        detail: detail.map { Text($0) },
+        showsRetry: true
+      )
     }
+  }
+}
+
+// MARK: - Getters
+
+private extension SectionStateView {
+  var contentSpacing: CGFloat {
+    12
+  }
+
+  var horizontalGutter: CGFloat {
+    20
   }
 }
 
 // MARK: - Subviews
 
 private extension SectionStateView {
-  /// `AppError.unknown` describes itself with the heading, so printing both repeats a sentence.
-  func failure(description: String) -> some View {
-    let heading = String(localized: .Shared.sharedErrorSomethingWentWrong)
-
-    return message(
-      title: Text(heading),
-      description: description == heading ? nil : Text(description),
-      showsRetry: true
-    )
-  }
-
   func message(
     title: Text,
-    description: Text?,
+    detail: Text?,
     showsRetry: Bool
   ) -> some View {
-    VStack(spacing: 12) {
+    VStack(spacing: contentSpacing) {
       title
         .themeTextStyle(.bodyBold)
         .themeColor(.textPrimary)
 
-      if let description {
-        description
+      if let detail {
+        detail
           .themeTextStyle(.subheadlineRegular)
           .themeColor(.textSecondary)
           .multilineTextAlignment(.center)
@@ -76,8 +81,8 @@ private extension SectionStateView {
 
       if showsRetry {
         Button(
-          String(localized: .Shared.sharedRetry),
-          action: onRetryTap
+          action: onRetryTap,
+          label: { Text(.Shared.sharedRetry) }
         )
         .themeTextStyle(.bodyBold)
         .foregroundStyle(.themeColor(.textBrandDefault))
@@ -89,37 +94,49 @@ private extension SectionStateView {
     )
     .padding(
       .horizontal,
-      20
+      horizontalGutter
     )
   }
 }
 
-#Preview("Loading") {
-  SectionStateView(
-    state: SectionState<[String]>.loading,
-    minHeight: 240,
-    emptyMessage: "Nothing here yet",
-    onRetryTap: {},
-    content: { Text($0.joined()) }
-  )
-}
+#if DEBUG
+  #Preview("Loading") {
+    SectionStateView(
+      state: SectionState<[String]>.loading,
+      minHeight: 240,
+      emptyMessage: "Nothing here yet",
+      onRetryTap: {},
+      content: { Text($0.joined()) }
+    )
+  }
 
-#Preview("Empty") {
-  SectionStateView(
-    state: SectionState<[String]>.empty,
-    minHeight: 240,
-    emptyMessage: "Nothing here yet",
-    onRetryTap: {},
-    content: { Text($0.joined()) }
-  )
-}
+  #Preview("Empty") {
+    SectionStateView(
+      state: SectionState<[String]>.empty,
+      minHeight: 240,
+      emptyMessage: "Nothing here yet",
+      onRetryTap: {},
+      content: { Text($0.joined()) }
+    )
+  }
 
-#Preview("Failed") {
-  SectionStateView(
-    state: SectionState<[String]>.failed("The request timed out."),
-    minHeight: 240,
-    emptyMessage: "Nothing here yet",
-    onRetryTap: {},
-    content: { Text($0.joined()) }
-  )
-}
+  #Preview("Failed with detail") {
+    SectionStateView(
+      state: SectionState<[String]>.failed("The request timed out."),
+      minHeight: 240,
+      emptyMessage: "Nothing here yet",
+      onRetryTap: {},
+      content: { Text($0.joined()) }
+    )
+  }
+
+  #Preview("Failed without detail") {
+    SectionStateView(
+      state: SectionState<[String]>.failed(nil),
+      minHeight: 240,
+      emptyMessage: "Nothing here yet",
+      onRetryTap: {},
+      content: { Text($0.joined()) }
+    )
+  }
+#endif

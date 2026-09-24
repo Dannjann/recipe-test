@@ -204,7 +204,7 @@ struct HomeViewModelTests {
     service.recipes.fails(with: URLError(.cancelled))
     await sut.loadLatestRecipes()
 
-    #expect(sut.latestRecipes == .failed(AppError.unknown.localizedDescription))
+    #expect(sut.latestRecipes == .failed(nil))
   }
 
   @Test
@@ -217,7 +217,7 @@ struct HomeViewModelTests {
     service.categories.fails(with: URLError(.cancelled))
     await sut.loadCategories()
 
-    #expect(sut.categories == .failed(AppError.unknown.localizedDescription))
+    #expect(sut.categories == .failed(nil))
   }
 
   @Test
@@ -269,6 +269,30 @@ struct HomeViewModelTests {
     await slow.value
 
     #expect(sut.categories.value?.map(\.id) == ["newer"])
+  }
+
+  @Test
+  func loadCategories_whenARefreshOfAnEmptySectionIsCancelled_staysEmpty() async {
+    let service = MockRecipeService()
+    service.categories.returns([])
+    let sut = HomeViewModel(recipeService: service)
+    await sut.loadCategories()
+
+    service.categories.fails(with: CancellationError())
+    await sut.loadCategories()
+
+    #expect(sut.categories == .empty)
+  }
+
+  @Test
+  func loadCategories_whenTheErrorOnlyRepeatsTheGenericHeading_carriesNoDetail() async {
+    let service = MockRecipeService()
+    service.categories.fails(with: AppError.unknown)
+    let sut = HomeViewModel(recipeService: service)
+
+    await sut.loadCategories()
+
+    #expect(sut.categories == .failed(nil))
   }
 
   @Test

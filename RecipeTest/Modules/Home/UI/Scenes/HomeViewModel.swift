@@ -30,6 +30,10 @@ private extension HomeViewModel {
   var latestRecipesPageSize: Int {
     6
   }
+
+  var genericFailureText: String {
+    String(localized: .Shared.sharedErrorSomethingWentWrong)
+  }
 }
 
 // MARK: - Inputs
@@ -46,7 +50,7 @@ extension HomeViewModel {
     latestRecipesGeneration += 1
     let generation = latestRecipesGeneration
     let previous = latestRecipes
-    latestRecipes = refreshing(latestRecipes)
+    latestRecipes = refreshing(previous)
 
     do {
       let page = try await recipeService.getRecipes(
@@ -74,7 +78,7 @@ extension HomeViewModel {
     categoriesGeneration += 1
     let generation = categoriesGeneration
     let previous = categories
-    categories = refreshing(categories)
+    categories = refreshing(previous)
 
     do {
       let loaded = try await recipeService.getCategories()
@@ -105,14 +109,24 @@ private extension HomeViewModel {
     value.isEmpty ? .empty : .loaded(value)
   }
 
-  /// SwiftUI cancels `.task` on disappear; that must not paint an error, nor strand
-  /// a retry on the spinner `refreshing(_:)` put there.
+  /// SwiftUI cancels `.task` on disappear; that must not paint an error, and must not strand
+  /// the section on the spinner `refreshing` just put there either.
   func state<Value>(
     for error: any Error,
     keeping previous: SectionState<Value>
   ) -> SectionState<Value> {
     guard !error.isCancellation else { return previous }
 
-    return .failed(error.localizedDescription)
+    return .failed(failureDetail(for: error))
+  }
+
+  /// `AppError.unknown` describes itself with the generic heading, so passing it on as a detail
+  /// would print the same sentence twice.
+  func failureDetail(for error: any Error) -> String? {
+    let description = error.localizedDescription
+
+    guard description != genericFailureText else { return nil }
+
+    return description
   }
 }
