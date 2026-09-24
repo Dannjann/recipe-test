@@ -12,216 +12,103 @@ import Testing
 
 struct RecipeMapperTests {
   @Test
-  func toDomain_mapsACompleteRecipe() throws {
+  func toDomain_mapsTheDetailsOwnFields() throws {
     let sut = try #require(RecipeMapper.toDomain(from: .dummy()))
 
-    #expect(sut.id == "rcp-001")
-    #expect(sut.title == "Spaghetti alla Carbonara")
-    #expect(sut.fullDescription == "The whole dish turns on one trick.")
-    #expect(sut.servings == 4)
-    #expect(sut.prepTimeMinutes == 10)
-    #expect(sut.cookTimeMinutes == 15)
-    #expect(sut.totalTimeMinutes == 25)
-    #expect(sut.difficulty == .medium)
-    #expect(sut.cuisine == "italian")
-    #expect(sut.mealType == "dinner")
-    #expect(sut.allergens == ["gluten", "eggs"])
-    #expect(sut.dietaryAttributes == [])
+    #expect(sut.description == "Roman pasta bound with egg yolk and pecorino.")
+    #expect(sut.gallery.count == 2)
+    #expect(sut.steps == ["Boil the water.", "Toss off the heat."])
+    #expect(sut.ingredients.count == 1)
+    #expect(sut.ingredients.first?.quantityText == "320 g")
+    #expect(sut.ingredients.first?.isMain == true)
+  }
+
+  /// The contract carries no ingredient ids, but a `ForEach` still needs stable identity,
+  /// and position within a recipe is stable.
+  @Test
+  func toDomain_synthesisesIngredientIDsFromTheRecipeAndPosition() throws {
+    let sut = try #require(RecipeMapper.toDomain(from: .dummy(
+      id: "rcp-007",
+      ingredients: [.dummy(name: "Tofu"), .dummy(name: "Rice paper")]
+    )))
+
+    #expect(sut.ingredients.map(\.id) == ["rcp-007-0", "rcp-007-1"])
+  }
+
+  /// Most of the 370 ingredients have no photograph, so this is the common case, not the
+  /// edge case.
+  @Test
+  func toDomain_withAnIngredientWithoutAPhotograph_keepsIt() throws {
+    let sut = try #require(RecipeMapper.toDomain(from: .dummy(
+      ingredients: [.dummy(name: "Salt", imageUrl: nil)]
+    )))
+
+    #expect(sut.ingredients.count == 1)
+    #expect(sut.ingredients.first?.imageURL == nil)
+  }
+
+  /// A nameless line cannot be rendered, but the recipe around it still can.
+  @Test
+  func toDomain_withANamelessIngredient_dropsThatLineOnly() throws {
+    let sut = try #require(RecipeMapper.toDomain(from: .dummy(
+      ingredients: [.dummy(name: nil), .dummy(name: "Spaghetti")]
+    )))
+
+    #expect(sut.ingredients.map(\.name) == ["Spaghetti"])
+  }
+
+  /// Dropping a line must not renumber the ones after it, or identity moves between
+  /// renders of the same payload.
+  @Test
+  func toDomain_withADroppedIngredient_doesNotRenumberTheRest() throws {
+    let sut = try #require(RecipeMapper.toDomain(from: .dummy(
+      id: "rcp-001",
+      ingredients: [.dummy(name: "Spaghetti"), .dummy(name: nil), .dummy(name: "Bacon")]
+    )))
+
+    #expect(sut.ingredients.map(\.id) == ["rcp-001-0", "rcp-001-2"])
   }
 
   @Test
-  func toDomain_withoutAnID_returnsNil() {
+  func toDomain_withAbsentCollections_fallsBackToEmpty() throws {
+    let sut = try #require(RecipeMapper.toDomain(from: .dummy(
+      description: nil,
+      gallery: nil,
+      ingredients: nil,
+      steps: nil
+    )))
+
+    #expect(sut.description.isEmpty)
+    #expect(sut.gallery.isEmpty)
+    #expect(sut.ingredients.isEmpty)
+    #expect(sut.steps.isEmpty)
+  }
+
+  /// Payload order is display order now that steps are plain strings, so nothing may
+  /// reorder them.
+  @Test
+  func toDomain_keepsStepsInPayloadOrder() throws {
+    let sut = try #require(RecipeMapper.toDomain(from: .dummy(steps: ["Third", "First", "Second"])))
+
+    #expect(sut.steps == ["Third", "First", "Second"])
+  }
+
+  @Test
+  func toDomain_withAnUnusableGalleryURL_dropsThatPhotographOnly() throws {
+    let sut = try #require(RecipeMapper.toDomain(from: .dummy(
+      gallery: ["https://example.com/1.jpg", ""]
+    )))
+
+    #expect(sut.gallery.count == 1)
+  }
+
+  @Test
+  func toDomain_withoutAnID_dropsTheRecipe() {
     #expect(RecipeMapper.toDomain(from: .dummy(id: nil)) == nil)
   }
 
   @Test
-  func toDomain_withAnEmptyID_returnsNil() {
-    #expect(RecipeMapper.toDomain(from: .dummy(id: "")) == nil)
-  }
-
-  @Test
-  func toDomain_withoutATitle_returnsNil() {
+  func toDomain_withoutATitle_dropsTheRecipe() {
     #expect(RecipeMapper.toDomain(from: .dummy(title: nil)) == nil)
-  }
-
-  @Test
-  func toDomain_withAnEmptyTitle_returnsNil() {
-    #expect(RecipeMapper.toDomain(from: .dummy(title: "")) == nil)
-  }
-
-  /// A difficulty the app has no case for must not cost the recipe. Today the fixture
-  /// only sends easy/medium/hard; a backend adding "expert" must degrade, not break.
-  @Test
-  func toDomain_withAnUnknownDifficulty_keepsTheRecipeAndDropsTheValue() throws {
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy(difficulty: "expert")))
-
-    #expect(sut.difficulty == nil)
-    #expect(sut.id == "rcp-001")
-  }
-
-  @Test(arguments: [("easy", RecipeDifficulty.easy), ("medium", .medium), ("hard", .hard)])
-  func toDomain_mapsEveryKnownDifficulty(raw: String, expected: RecipeDifficulty) throws {
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy(difficulty: raw)))
-
-    #expect(sut.difficulty == expected)
-  }
-
-  @Test
-  func toDomain_mapsTheAuthor() throws {
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy()))
-    let author = try #require(sut.author)
-
-    #expect(author.id == "aut-02")
-    #expect(author.name == "Tobias Lindqvist")
-    #expect(author.avatarURL?.absoluteString.hasSuffix("author-aut-02.png") == true)
-  }
-
-  /// Author and nutrition are the only relations the API ever sends as null.
-  @Test
-  func toDomain_withoutAuthorOrNutrition_keepsTheRecipe() throws {
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy(author: nil, nutrition: nil)))
-
-    #expect(sut.author == nil)
-    #expect(sut.nutrition == nil)
-    #expect(sut.id == "rcp-001")
-  }
-
-  /// An author row with no name is not an author. The recipe survives without one.
-  @Test
-  func toDomain_withAnUnusableAuthor_keepsTheRecipe() throws {
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy(author: .dummy(name: nil))))
-
-    #expect(sut.author == nil)
-    #expect(sut.id == "rcp-001")
-  }
-
-  @Test
-  func toDomain_mapsNutrition() throws {
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy()))
-    let nutrition = try #require(sut.nutrition)
-
-    #expect(nutrition.caloriesPerServing == 712)
-    #expect(nutrition.proteinGrams == 29.4)
-    #expect(nutrition.sodiumMilligrams == 980.0)
-  }
-
-  @Test
-  func toDomain_dropsGalleryEntriesWithAnUnusableURL() throws {
-    let gallery: [RemoteRecipeMedia] = [.dummy(id: "med-1"), .dummy(id: "med-2", url: nil)]
-
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy(gallery: gallery)))
-
-    #expect(sut.gallery.map(\.id) == ["med-1"])
-  }
-
-  @Test
-  func toDomain_mapsIngredientGroupsAndTheirIngredients() throws {
-    let group = RemoteIngredientGroup.dummy(
-      title: "For the sauce",
-      ingredients: [.dummy(id: "ing-1", name: "Spaghetti"), .dummy(id: "ing-2", name: "Pecorino", unit: nil)]
-    )
-
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy(ingredientGroups: [group])))
-
-    #expect(sut.ingredientGroups.count == 1)
-    #expect(sut.ingredientGroups.first?.title == "For the sauce")
-    #expect(sut.ingredientGroups.first?.ingredients.map(\.name) == ["Spaghetti", "Pecorino"])
-    #expect(sut.ingredientGroups.first?.ingredients.last?.unit == nil)
-  }
-
-  @Test
-  func toDomain_dropsIngredientsWithNoName() throws {
-    let group = RemoteIngredientGroup.dummy(
-      ingredients: [.dummy(id: "ing-1", name: "Spaghetti"), .dummy(id: "ing-2", name: nil)]
-    )
-
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy(ingredientGroups: [group])))
-
-    #expect(sut.ingredientGroups.first?.ingredients.map(\.id) == ["ing-1"])
-  }
-
-  /// A group whose ingredients all failed would render as a bare heading with nothing
-  /// under it. Drop it instead.
-  @Test
-  func toDomain_dropsAGroupLeftWithNoIngredients() throws {
-    let empty = RemoteIngredientGroup.dummy(id: "grp-empty", ingredients: [.dummy(name: nil)])
-    let good = RemoteIngredientGroup.dummy(id: "grp-good")
-
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy(ingredientGroups: [empty, good])))
-
-    #expect(sut.ingredientGroups.map(\.id) == ["grp-good"])
-  }
-
-  /// Display order must come from `number`, not from the order the payload happens to
-  /// list them in.
-  @Test
-  func toDomain_ordersStepsByNumber() throws {
-    let steps: [RemoteRecipeStep] = [
-      .dummy(id: "stp-3", number: 3),
-      .dummy(id: "stp-1", number: 1),
-      .dummy(id: "stp-2", number: 2),
-    ]
-
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy(steps: steps)))
-
-    #expect(sut.steps.map(\.id) == ["stp-1", "stp-2", "stp-3"])
-  }
-
-  @Test
-  func toDomain_dropsStepsMissingTheirNumberOrText() throws {
-    let steps: [RemoteRecipeStep] = [
-      .dummy(id: "stp-1", number: 1),
-      .dummy(id: "stp-2", number: nil),
-      .dummy(id: "stp-3", number: 3, text: nil),
-    ]
-
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy(steps: steps)))
-
-    #expect(sut.steps.map(\.id) == ["stp-1"])
-  }
-
-  @Test
-  func toDomain_parsesTheUpdatedAtTimestamp() throws {
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy()))
-    let updatedAt = try #require(sut.updatedAt)
-
-    #expect(updatedAt == DateFormatter.iso8601.date(from: "2026-07-01T07:07:00.000Z"))
-  }
-
-  /// One unparseable timestamp costs that field, not the recipe. This is the reason the
-  /// DTO keeps it as a String instead of using a decoder date strategy.
-  @Test
-  func toDomain_withAnUnparseableTimestamp_keepsTheRecipe() throws {
-    let sut = try #require(RecipeMapper.toDomain(from: .dummy(updatedAt: "last Tuesday")))
-
-    #expect(sut.updatedAt == nil)
-    #expect(sut.id == "rcp-001")
-  }
-
-  @Test
-  func toDomain_withEveryOptionalRelationAbsent_fillsWithEmptyCollections() throws {
-    let remote = RemoteRecipe.dummy(
-      shortDescription: nil,
-      fullDescription: nil,
-      tags: nil,
-      dietaryAttributes: nil,
-      allergens: nil,
-      author: nil,
-      nutrition: nil,
-      gallery: nil,
-      ingredientGroups: nil,
-      steps: nil
-    )
-
-    let sut = try #require(RecipeMapper.toDomain(from: remote))
-
-    #expect(sut.shortDescription == "")
-    #expect(sut.fullDescription == "")
-    #expect(sut.tags == [])
-    #expect(sut.dietaryAttributes == [])
-    #expect(sut.allergens == [])
-    #expect(sut.gallery == [])
-    #expect(sut.ingredientGroups == [])
-    #expect(sut.steps == [])
   }
 }

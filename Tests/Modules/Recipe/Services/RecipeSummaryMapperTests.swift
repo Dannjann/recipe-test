@@ -12,87 +12,63 @@ import Testing
 
 struct RecipeSummaryMapperTests {
   @Test
-  func toDomain_mapsACompleteRow() throws {
+  func toDomain_mapsEveryFieldAListRowRenders() throws {
     let sut = try #require(RecipeSummaryMapper.toDomain(from: .dummy()))
 
     #expect(sut.id == "rcp-001")
     #expect(sut.title == "Spaghetti alla Carbonara")
-    #expect(sut.shortDescription == "Roman pasta bound with egg yolk and pecorino.")
-    #expect(sut.heroImageURL?.absoluteString == "https://api.example.com/api/v1/images/carbonara.png")
+    #expect(sut.category == "Pasta")
+    #expect(sut.cuisine == "italian")
+    #expect(sut.mealType == "dinner")
     #expect(sut.totalTimeMinutes == 25)
+    #expect(sut.servings == 4)
     #expect(sut.difficulty == .medium)
-    #expect(sut.rating == 4.8)
-    #expect(sut.ratingCount == 2147)
-    #expect(sut.tags == ["quick", "classic"])
+    #expect(sut.isVegetarian == false)
+    #expect(sut.heroImageURL?.host() == "www.themealdb.com")
   }
 
   @Test
-  func toDomain_withoutAnID_returnsNil() {
+  func toDomain_withoutAnID_dropsTheRow() {
     #expect(RecipeSummaryMapper.toDomain(from: .dummy(id: nil)) == nil)
-  }
-
-  @Test
-  func toDomain_withAnEmptyID_returnsNil() {
     #expect(RecipeSummaryMapper.toDomain(from: .dummy(id: "")) == nil)
   }
 
   @Test
-  func toDomain_withoutATitle_returnsNil() {
+  func toDomain_withoutATitle_dropsTheRow() {
     #expect(RecipeSummaryMapper.toDomain(from: .dummy(title: nil)) == nil)
-  }
-
-  @Test
-  func toDomain_withAnEmptyTitle_returnsNil() {
     #expect(RecipeSummaryMapper.toDomain(from: .dummy(title: "")) == nil)
   }
 
-  /// Everything except id and title has a defined fallback. A row that carries only the
-  /// two required fields is still a usable list row.
+  /// A difficulty the app has no case for costs that one badge, not the row. Dropping the
+  /// row would hide a recipe because a vocabulary grew.
   @Test
-  func toDomain_withOnlyTheRequiredFields_fillsTheRest() throws {
-    let remote = RemoteRecipeSummary.dummy(
-      shortDescription: nil,
-      heroImageUrl: nil,
-      totalTimeMinutes: nil,
-      difficulty: nil,
-      rating: nil,
-      ratingCount: nil,
-      tags: nil
-    )
-
-    let sut = try #require(RecipeSummaryMapper.toDomain(from: remote))
-
-    #expect(sut.shortDescription == "")
-    #expect(sut.heroImageURL == nil)
-    #expect(sut.totalTimeMinutes == nil)
-    #expect(sut.difficulty == nil)
-    #expect(sut.rating == 0)
-    #expect(sut.ratingCount == 0)
-    #expect(sut.tags == [])
-  }
-
-  /// A difficulty the app has no case for must not cost the row. Today the fixture only
-  /// sends easy/medium/hard; a backend adding "expert" must degrade, not break.
-  @Test
-  func toDomain_withAnUnknownDifficulty_keepsTheRowAndDropsTheValue() throws {
-    let sut = try #require(RecipeSummaryMapper.toDomain(from: .dummy(difficulty: "expert")))
+  func toDomain_withAnUnknownDifficulty_keepsTheRowAndNilsTheBadge() throws {
+    let sut = try #require(RecipeSummaryMapper.toDomain(from: .dummy(difficulty: "impossible")))
 
     #expect(sut.difficulty == nil)
-    #expect(sut.id == "rcp-001")
   }
 
   @Test
-  func toDomain_withAnUnparseableHeroImageURL_keepsTheRow() throws {
-    let sut = try #require(RecipeSummaryMapper.toDomain(from: .dummy(heroImageUrl: "")))
+  func toDomain_withoutAVegetarianFlag_fallsBackToFalse() throws {
+    let sut = try #require(RecipeSummaryMapper.toDomain(from: .dummy(isVegetarian: nil)))
 
-    #expect(sut.heroImageURL == nil)
-    #expect(sut.id == "rcp-001")
+    #expect(sut.isVegetarian == false)
   }
 
-  @Test(arguments: [("easy", RecipeDifficulty.easy), ("medium", .medium), ("hard", .hard)])
-  func toDomain_mapsEveryKnownDifficulty(raw: String, expected: RecipeDifficulty) throws {
-    let sut = try #require(RecipeSummaryMapper.toDomain(from: .dummy(difficulty: raw)))
+  @Test
+  func toDomain_withAnUnusableHeroURL_keepsTheRow() throws {
+    let sut = try #require(RecipeSummaryMapper.toDomain(from: .dummy(heroImageUrl: nil)))
 
-    #expect(sut.difficulty == expected)
+    #expect(sut.heroImageURL == nil)
+  }
+
+  /// The facets the list filters on are open vocabularies, so an unrecognised value is
+  /// carried through as written rather than normalised or dropped.
+  @Test
+  func toDomain_carriesOpenFacetsThrough() throws {
+    let sut = try #require(RecipeSummaryMapper.toDomain(from: .dummy(category: "Brunch", cuisine: "cornish")))
+
+    #expect(sut.category == "Brunch")
+    #expect(sut.cuisine == "cornish")
   }
 }
