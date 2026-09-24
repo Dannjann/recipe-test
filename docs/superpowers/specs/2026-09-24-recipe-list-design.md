@@ -256,6 +256,12 @@ results view, and it is not persisted.
 
 Page size is 20.
 
+Worth stating plainly: the mock data holds 36 recipes across six categories, so a category
+tap returns about six rows and never reaches a second page. The pager is therefore proven by
+its tests and by the later "All recipes" and search entry points, not by tapping a category
+today. Nothing here is tuned to make the pager visible in a demo — a page size chosen to show
+off scrolling would be the product bending to the fixture.
+
 - `loadFirstPage()` requests `Page(index: 1, size: 20)`, replaces the rows, stores the meta,
   and sets `nextPage` to `meta.hasLoadedAllData ? nil : page.next`.
 - `loadNextPageIfNeeded(after:)` is called from every card's `.onAppear`. The **view model**
@@ -376,7 +382,10 @@ matching the prototype:
 
 - `RecipeCard` (grid) — square photograph, name, then time and servings.
 - `RecipeRow` (list) — thumbnail on the leading edge, name, `cuisine · category`, then time
-  and servings.
+  and servings. The fixture stores cuisine lowercased (`"italian"`) and category title-cased
+  (`"Pasta"`), while the prototype prints both capitalised, so `cuisineAndCategory` applies
+  `localizedCapitalized` to the cuisine. That is exactly the kind of derivation the view-model
+  rule exists to move out of a view and under a test.
 
 Both read from the same `RecipeCardViewModelProtocol`; the grid simply does not draw
 `cuisineAndCategory`.
@@ -450,15 +459,29 @@ A new `RecipeList.xcstrings`, keys in the project's dotted style:
 | `recipeList.facet.exclude` | Exclude: %@ |
 | `recipeList.facet.searchesSteps` | Search in steps |
 | `recipeList.facet.remove.accessibilityLabel` | Remove %@ |
-| `recipeList.cookingTime.minutes` | %lld min |
-| `recipeList.cookingTime.hours` | %lld hr |
-| `recipeList.cookingTime.hoursMinutes` | %lld hr %lld min |
 | `recipeList.card.servings.accessibilityLabel` | serves %lld |
 | `recipeList.viewMode.grid` | Grid |
 | `recipeList.viewMode.list` | List |
 | `recipeList.footer.loading.accessibilityLabel` | Loading more recipes |
 
 `recipeList.resultCount` is a plural variation in the catalog, not an `if count == 1` in Swift.
+
+Cooking time has no keys of its own. `RecipeDetailViewModel.cookingTimeText` already renders
+the prototype's `fmtTime` through `Duration.seconds(_:).formatted(.units(allowed: [.hours,
+.minutes], width: .abbreviated))`, which localizes the units itself; the card view model uses
+the same expression. Two formatters for one value, differing only in which strings a
+translator sees, is the failure this avoids.
+
+### `String` or `LocalizedStringResource`
+
+The project's rule, set by `RecipeDetailViewModel`: a value that is *pure copy* stays a
+`LocalizedStringResource`, so the view resolves it in its own environment and follows a locale
+override. A value that interpolates server data is resolved to a `String` in the view model,
+because the data is already fixed by the time the view model holds it.
+
+So `title`, `searchPlaceholder` and `resultCountText` are `String` — each splices in a category
+name, a search term or a count. The empty state's heading and detail, the toggle's two labels
+and "Clear all" are `LocalizedStringResource`.
 
 ## Testing
 
