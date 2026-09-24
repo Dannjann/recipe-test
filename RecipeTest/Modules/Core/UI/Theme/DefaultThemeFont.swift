@@ -12,18 +12,14 @@ import UIKit
 
 // Primary fonts are fonts that are most used by the app.
 // Usually applied to headlines.
-//
-// The base ships no bundled typeface — these resolve to the system font so a fresh
-// project runs unbranded. To brand an app, drop the font files into Resources/Fonts,
-// list them under UIAppFonts in Info.plist, and swap these bodies for `customFont(_:size:)`.
 
 struct DefaultThemeFont: ThemeFontProtocol {
   func primaryBold(ofSize size: CGFloat) -> UIFont {
-    .systemFont(ofSize: size, weight: .bold)
+    customFont("Unna-Bold", size: size)
   }
 
   func primaryRegular(ofSize size: CGFloat) -> UIFont {
-    .systemFont(ofSize: size, weight: .regular)
+    customFont("Unna-Regular", size: size)
   }
 }
 
@@ -34,14 +30,15 @@ struct DefaultThemeFont: ThemeFontProtocol {
 
 extension DefaultThemeFont {
   func secondaryBold(ofSize size: CGFloat) -> UIFont {
-    .systemFont(ofSize: size, weight: .bold)
+    customFont("AtkinsonHyperlegible-Bold", size: size)
   }
 
+  /// Atkinson Hyperlegible ships no semibold weight, so this resolves to bold.
   func secondarySemibold(ofSize size: CGFloat) -> UIFont {
-    .systemFont(ofSize: size, weight: .semibold)
+    customFont("AtkinsonHyperlegible-Bold", size: size)
   }
 
   func secondaryRegular(ofSize size: CGFloat) -> UIFont {
-    .systemFont(ofSize: size, weight: .regular)
+    customFont("AtkinsonHyperlegible-Regular", size: size)
   }
 }
