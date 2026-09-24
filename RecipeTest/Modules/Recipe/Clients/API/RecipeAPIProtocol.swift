@@ -16,8 +16,15 @@ import Foundation
 ///
 /// Speaks the wire's vocabulary — `Int` page numbers and remote DTOs. Translating the
 /// app's `Page` into `page` and `per_page` is the service's job, not this layer's.
+/// `RecipeQuery` crosses unchanged because it *is* wire vocabulary: it encodes itself.
 nonisolated protocol RecipeAPIProtocol: Sendable {
-  func getRecipes(page: Int, perPage: Int) async throws -> ([RemoteRecipeSummary], RemotePaginationMetaInfo)
+  func getRecipes(
+    query: RecipeQuery,
+    page: Int,
+    perPage: Int
+  ) async throws -> ([RemoteRecipeSummary], RemotePaginationMetaInfo)
 
   func getRecipe(id: String) async throws -> RemoteRecipe
+
+  func getCategories() async throws -> [RemoteRecipeCategory]
 }
