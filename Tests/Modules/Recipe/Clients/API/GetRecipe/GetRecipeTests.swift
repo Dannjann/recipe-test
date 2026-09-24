@@ -12,99 +12,59 @@ import Testing
 
 struct GetRecipeTests {
   @Test
-  func response200_decodesTheDetailFields() throws {
+  func response200_decodesTheWholeRecipe() throws {
     let sut = try #require(try makeSUT())
 
     #expect(sut.id == "rcp-001")
     #expect(sut.title == "Spaghetti alla Carbonara")
-    #expect(sut.fullDescription?.isEmpty == false)
-    #expect(sut.servings == 4)
-    #expect(sut.prepTimeMinutes == 10)
-    #expect(sut.cookTimeMinutes == 15)
-    #expect(sut.cuisine == "italian")
-    #expect(sut.mealType == "dinner")
-    #expect(sut.allergens == ["gluten", "eggs", "dairy"])
-    #expect(sut.dietaryAttributes == [])
-    #expect(sut.updatedAt == "2026-07-01T07:07:00.000Z")
+    #expect(sut.description?.isEmpty == false)
+    #expect(sut.gallery?.count == 3)
+    #expect(sut.steps?.count == 6)
+    #expect(sut.isVegetarian == false)
   }
 
+  /// Ingredients are a flat list of display strings now — no group wrapper, no numeric
+  /// quantity, no unit.
   @Test
-  func response200_decodesTheAuthorAndNutrition() throws {
+  func response200_decodesFlatIngredients() throws {
     let sut = try #require(try makeSUT())
 
-    let author = try #require(sut.author)
-    #expect(author.id == "aut-02")
-    #expect(author.name == "Tobias Lindqvist")
-    #expect(author.avatarUrl?.hasSuffix("author-aut-02.png") == true)
-
-    let nutrition = try #require(sut.nutrition)
-    #expect(nutrition.caloriesPerServing == 712)
-    #expect(nutrition.proteinGrams == 29.4)
-    #expect(nutrition.sodiumMilligrams == 980.0)
-  }
-
-  @Test
-  func response200_decodesTheGallery() throws {
-    let sut = try #require(try makeSUT())
-
-    let gallery = try #require(sut.gallery)
-    #expect(gallery.count == 2)
-    #expect(gallery.first?.id == "med-001-1")
-    #expect(gallery.first?.altText?.isEmpty == false)
-  }
-
-  @Test
-  func response200_decodesIngredientGroupsAndTheirIngredients() throws {
-    let sut = try #require(try makeSUT())
-
-    let groups = try #require(sut.ingredientGroups)
-    #expect(groups.count == 1)
-
-    let group = try #require(groups.first)
-    #expect(group.id == "grp-001-1")
-    // A single unnamed list: null means "this recipe has one list", not a missing value.
-    #expect(group.title == nil)
-
-    let ingredients = try #require(group.ingredients)
+    let ingredients = try #require(sut.ingredients)
     #expect(ingredients.count == 6)
 
     let first = try #require(ingredients.first)
     #expect(first.name == "Spaghetti")
-    #expect(first.quantity == 320.0)
-    #expect(first.unit == "gram")
-    #expect(first.isOptional == false)
-
-    let optional = try #require(ingredients.first { $0.name == "Black Pepper" })
-    #expect(optional.isOptional == true)
-    #expect(optional.quantity == nil)
-    #expect(optional.note == "as required")
+    #expect(first.quantityText == "320 g")
+    #expect(first.isMain == true)
   }
 
+  /// Most ingredients have no photograph, so a null here must decode rather than throw.
   @Test
-  func response200_decodesSteps() throws {
+  func response200_decodesANullIngredientImage() throws {
     let sut = try #require(try makeSUT())
 
-    let steps = try #require(sut.steps)
-    #expect(steps.count == 6)
-    #expect(steps.map(\.number) == [1, 2, 3, 4, 5, 6])
-
-    let first = try #require(steps.first)
-    #expect(first.id == "stp-001-1")
-    #expect(first.durationSeconds == 600)
-    #expect(first.imageUrl?.hasSuffix("step-1.png") == true)
-    #expect(steps.dropFirst().first?.imageUrl == nil)
+    #expect(sut.ingredients?.contains { $0.imageUrl == nil } == true)
   }
 
-  /// `author` and `nutrition` are the only two top-level fields the fixture ever sends
-  /// as null. A row that omits both must still decode.
+  /// Steps are plain strings, so payload order is display order.
   @Test
-  func response200Minimal_decodesWithNoAuthorOrNutrition() throws {
+  func response200_decodesStepsAsStrings() throws {
+    let sut = try #require(try makeSUT())
+
+    #expect(sut.steps?.first?.hasPrefix("Bring a large pan") == true)
+  }
+
+  /// Every property is optional, so a row carrying only the two required fields decodes
+  /// rather than throwing — that is what keeps one thin row from failing a whole page.
+  @Test
+  func response200_withOnlyTheRequiredFields_decodesTheRestAsNil() throws {
     let sut = try #require(try makeSUT(fixture: "GetRecipeTests_200_minimal"))
 
-    #expect(sut.id == "rcp-021")
-    #expect(sut.author == nil)
-    #expect(sut.nutrition == nil)
-    #expect(sut.title?.isEmpty == false)
+    #expect(sut.id == "rcp-036")
+    #expect(sut.title == "Vegan Chocolate Cake")
+    #expect(sut.ingredients == nil)
+    #expect(sut.steps == nil)
+    #expect(sut.gallery == nil)
   }
 }
 

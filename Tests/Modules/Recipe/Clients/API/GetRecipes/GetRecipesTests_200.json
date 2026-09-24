@@ -4,60 +4,35 @@
   "data": [
     {
       "id": "rcp-001",
-      "slug": "spaghetti-alla-carbonara",
       "title": "Spaghetti alla Carbonara",
-      "short_description": "Roman pasta bound with egg yolk and pecorino — never cream.",
-      "hero_image_url": "https://api.example.com/api/v1/images/spaghetti-alla-carbonara.png",
+      "category": "Pasta",
+      "cuisine": "italian",
+      "meal_type": "dinner",
       "total_time_minutes": 25,
+      "servings": 4,
       "difficulty": "medium",
-      "rating": 4.8,
-      "rating_count": 2147,
-      "tags": [
-        "quick",
-        "classic",
-        "five-ingredient"
-      ]
+      "is_vegetarian": false,
+      "hero_image_url": "https://www.themealdb.com/images/media/meals/llcbn01574260722.jpg"
     },
     {
       "id": "rcp-002",
-      "slug": "spicy-arrabiata-penne",
       "title": "Spicy Arrabiata Penne",
-      "short_description": "Angry red sauce: garlic, chilli and tomatoes, done in the time the pasta boils.",
-      "hero_image_url": "https://api.example.com/api/v1/images/spicy-arrabiata-penne.png",
+      "category": "Pasta",
+      "cuisine": "italian",
+      "meal_type": "dinner",
       "total_time_minutes": 25,
+      "servings": 4,
       "difficulty": "easy",
-      "rating": 4.5,
-      "rating_count": 1633,
-      "tags": [
-        "quick",
-        "spicy",
-        "weeknight",
-        "vegetarian"
-      ]
-    },
-    {
-      "id": "rcp-003",
-      "slug": "massaman-beef-curry",
-      "title": "Massaman Beef curry",
-      "short_description": "Slow-braised Thai curry with peanuts, potato and warm whole spices.",
-      "hero_image_url": "https://api.example.com/api/v1/images/massaman-beef-curry.png",
-      "total_time_minutes": 155,
-      "difficulty": "medium",
-      "rating": 4.7,
-      "rating_count": 892,
-      "tags": [
-        "slow-cooked",
-        "curry",
-        "make-ahead"
-      ]
+      "is_vegetarian": true,
+      "hero_image_url": "https://www.themealdb.com/images/media/meals/ustsqw1468250014.jpg"
     }
   ],
   "meta": {
     "total": 36,
-    "per_page": 3,
-    "from": 1,
-    "to": 3,
+    "per_page": 2,
     "current_page": 1,
-    "last_page": 12
+    "last_page": 18,
+    "from": 1,
+    "to": 2
   }
 }

@@ -10,6 +10,10 @@ import Foundation
 
 /// One row of the recipe list, as the API sends it.
 ///
+/// Decodes only what `RecipeSummary` carries. `GET recipes` returns whole rows —
+/// description, gallery, ingredients and steps included — and leaving them out here is
+/// what decides a list row's cost.
+///
 /// Every property is optional on purpose: a single missing or retyped field must cost
 /// one value, not the whole page. What the app actually requires is decided in
 /// `RecipeSummaryMapper`, which is the only place a `nil` here turns into a dropped row.
@@ -19,13 +23,13 @@ import Foundation
 /// renaming one of these to a nicer acronym casing would silently decode it as nil.
 nonisolated struct RemoteRecipeSummary: APIModel, Decodable, Equatable {
   let id: String?
-  let slug: String?
   let title: String?
-  let shortDescription: String?
-  let heroImageUrl: String?
+  let category: String?
+  let cuisine: String?
+  let mealType: String?
   let totalTimeMinutes: Int?
+  let servings: Int?
   let difficulty: String?
-  let rating: Double?
-  let ratingCount: Int?
-  let tags: [String]?
+  let isVegetarian: Bool?
+  let heroImageUrl: String?
 }
