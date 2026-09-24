@@ -31,14 +31,16 @@ struct LatestRecipesSection: View {
   }
 }
 
-#Preview {
-  LatestRecipesSection(
-    viewModel: MockHomeViewModel.loaded(),
-    onRecipeTap: { _ in }
-  )
-  .frame(
-    maxWidth: .infinity,
-    maxHeight: .infinity
-  )
-  .background(Color.themeColor(.surfacesBackground))
-}
+#if DEBUG
+  #Preview {
+    LatestRecipesSection(
+      viewModel: MockHomeViewModel.loaded(),
+      onRecipeTap: { _ in }
+    )
+    .frame(
+      maxWidth: .infinity,
+      maxHeight: .infinity
+    )
+    .background(Color.themeColor(.surfacesBackground))
+  }
+#endif

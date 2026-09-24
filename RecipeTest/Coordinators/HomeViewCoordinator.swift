@@ -8,8 +8,6 @@
 
 import SwiftUI
 
-/// The handlers are empty on purpose: their destinations do not exist yet, and wiring them
-/// now keeps adding one an edit to this file alone.
 struct HomeViewCoordinator: ViewCoordinator {
   @State private var viewModel: HomeViewModel
 
@@ -20,31 +18,39 @@ struct HomeViewCoordinator: ViewCoordinator {
   var body: some View {
     HomeView(
       viewModel: viewModel,
-      onSearchTap: handleSearchTap(),
-      onRecipeTap: handleRecipeTap(),
-      onCategoryTap: handleCategoryTap()
+      onSearchTap: handleSearchTap,
+      onRecipeTap: handleRecipeTap,
+      onCategoryTap: handleCategoryTap
     )
   }
 }
 
-// MARK: - Handlers
+// MARK: - Home Scene
 
 private extension HomeViewCoordinator {
-  func handleSearchTap() -> VoidResult {
-    {}
+  var handleSearchTap: VoidResult {
+    {
+      // TODO: Push the search scene once it exists
+    }
   }
 
-  func handleRecipeTap() -> SingleResult<String> {
-    { _ in }
+  var handleRecipeTap: SingleResult<String> {
+    { _ in
+      // TODO: Push the recipe detail scene once it exists
+    }
   }
 
-  func handleCategoryTap() -> SingleResult<RecipeCategory> {
-    { _ in }
+  var handleCategoryTap: SingleResult<RecipeCategory> {
+    { _ in
+      // TODO: Push the category listing scene once it exists
+    }
   }
 }
 
-#Preview {
-  NavigationStack {
-    HomeViewCoordinator()
+#if DEBUG
+  #Preview {
+    NavigationStack {
+      HomeViewCoordinator()
+    }
   }
-}
+#endif

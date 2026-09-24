@@ -19,18 +19,19 @@ struct LatestRecipeCard: View {
   @ScaledMetric(relativeTo: .body) private var height: CGFloat = LatestRecipeCard.baseHeight
 
   var body: some View {
-    Button {
-      onTap(recipe.id)
-    } label: {
-      photograph
-        .frame(
-          width: width,
-          height: height
-        )
-        .overlay(alignment: .bottom) { gradient }
-        .overlay(alignment: .bottomLeading) { title }
-        .clipShape(.rect(cornerRadius: 28))
-    }
+    Button(
+      action: { onTap(recipe.id) },
+      label: {
+        photograph
+          .frame(
+            width: width,
+            height: height
+          )
+          .overlay(alignment: .bottom) { gradient }
+          .overlay(alignment: .bottomLeading) { title }
+          .clipShape(.rect(cornerRadius: cornerRadius))
+      }
+    )
     .buttonStyle(.plain)
     .cardShadow()
     .accessibilityElement(children: .combine)
@@ -48,6 +49,21 @@ extension LatestRecipeCard {
 
   static var baseHeight: CGFloat {
     240
+  }
+}
+
+private extension LatestRecipeCard {
+  var cornerRadius: CGFloat {
+    28
+  }
+
+  var titleInset: CGFloat {
+    16
+  }
+
+  var titleLineLimit: Int? {
+    // Truncating is what a reader raised the text size to avoid.
+    dynamicTypeSize.isAccessibilitySize ? nil : 2
   }
 }
 
@@ -94,54 +110,55 @@ private extension LatestRecipeCard {
       .themeTextStyle(.bodyBold)
       .themeColor(.textWhite)
       .multilineTextAlignment(.leading)
-      // Truncating is what a reader raised the text size to avoid.
-      .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
-      .padding(16)
+      .lineLimit(titleLineLimit)
+      .padding(titleInset)
   }
 }
 
-#Preview("Card") {
-  LatestRecipeCard(
-    recipe: .dummy(),
-    onTap: { _ in }
-  )
-  .frame(
-    maxWidth: .infinity,
-    maxHeight: .infinity
-  )
-  .background(Color.themeColor(.surfacesBackground))
-}
+#if DEBUG
+  #Preview("Card") {
+    LatestRecipeCard(
+      recipe: .dummy(),
+      onTap: { _ in }
+    )
+    .frame(
+      maxWidth: .infinity,
+      maxHeight: .infinity
+    )
+    .background(Color.themeColor(.surfacesBackground))
+  }
 
-#Preview("No photograph") {
-  LatestRecipeCard(
-    recipe: .dummy(
-      title: "Pão de Queijo",
-      heroImageURL: nil
-    ),
-    onTap: { _ in }
-  )
-  .frame(
-    maxWidth: .infinity,
-    maxHeight: .infinity
-  )
-  .background(Color.themeColor(.surfacesBackground))
-}
+  #Preview("No photograph") {
+    LatestRecipeCard(
+      recipe: .dummy(
+        title: "Pão de Queijo",
+        heroImageURL: nil
+      ),
+      onTap: { _ in }
+    )
+    .frame(
+      maxWidth: .infinity,
+      maxHeight: .infinity
+    )
+    .background(Color.themeColor(.surfacesBackground))
+  }
 
-#Preview("Long title, AX5") {
-  LatestRecipeCard(
-    recipe: .dummy(
-      title: "Slow-Braised Beef Short Rib with Gremolata and Soft Polenta",
-      heroImageURL: nil
-    ),
-    onTap: { _ in }
-  )
-  .environment(
-    \.dynamicTypeSize,
-    .accessibility5
-  )
-  .frame(
-    maxWidth: .infinity,
-    maxHeight: .infinity
-  )
-  .background(Color.themeColor(.surfacesBackground))
-}
+  #Preview("Long title, AX5") {
+    LatestRecipeCard(
+      recipe: .dummy(
+        title: "Slow-Braised Beef Short Rib with Gremolata and Soft Polenta",
+        heroImageURL: nil
+      ),
+      onTap: { _ in }
+    )
+    .environment(
+      \.dynamicTypeSize,
+      .accessibility5
+    )
+    .frame(
+      maxWidth: .infinity,
+      maxHeight: .infinity
+    )
+    .background(Color.themeColor(.surfacesBackground))
+  }
+#endif

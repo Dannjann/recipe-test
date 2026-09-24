@@ -21,28 +21,46 @@ struct HomeSectionHeader: View {
       )
       .padding(
         .horizontal,
-        20
+        horizontalGutter
       )
       .padding(
         .top,
-        30
+        topInset
       )
       .padding(
         .bottom,
-        14
+        bottomInset
       )
       .accessibilityAddTraits(.isHeader)
   }
 }
 
-#Preview {
-  VStack(spacing: 0) {
-    HomeSectionHeader(title: .Home.homeLatestRecipesTitle)
-    HomeSectionHeader(title: .Home.homeCategoriesTitle)
+// MARK: - Getters
+
+private extension HomeSectionHeader {
+  var horizontalGutter: CGFloat {
+    20
   }
-  .frame(
-    maxWidth: .infinity,
-    maxHeight: .infinity
-  )
-  .background(Color.themeColor(.surfacesBackground))
+
+  var topInset: CGFloat {
+    30
+  }
+
+  var bottomInset: CGFloat {
+    14
+  }
 }
+
+#if DEBUG
+  #Preview {
+    VStack(spacing: 0) {
+      HomeSectionHeader(title: .Home.homeLatestRecipesTitle)
+      HomeSectionHeader(title: .Home.homeCategoriesTitle)
+    }
+    .frame(
+      maxWidth: .infinity,
+      maxHeight: .infinity
+    )
+    .background(Color.themeColor(.surfacesBackground))
+  }
+#endif

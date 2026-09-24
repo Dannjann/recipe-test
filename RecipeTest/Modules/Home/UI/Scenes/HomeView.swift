@@ -39,7 +39,7 @@ struct HomeView: View {
       }
       .padding(
         .bottom,
-        40
+        bottomInset
       )
     }
     .scrollIndicators(.hidden)
@@ -53,6 +53,30 @@ struct HomeView: View {
   }
 }
 
+// MARK: - Getters
+
+private extension HomeView {
+  var bottomInset: CGFloat {
+    40
+  }
+
+  var horizontalGutter: CGFloat {
+    20
+  }
+
+  var logoWidth: CGFloat {
+    112
+  }
+
+  var logoTopInset: CGFloat {
+    8
+  }
+
+  var logoBottomInset: CGFloat {
+    20
+  }
+}
+
 // MARK: - Subviews
 
 private extension HomeView {
@@ -60,79 +84,81 @@ private extension HomeView {
     Image(.bokkieBitesLogo)
       .resizable()
       .scaledToFit()
-      .frame(width: 112)
+      .frame(width: logoWidth)
       .padding(
         .leading,
-        20
+        horizontalGutter
       )
       .padding(
         .top,
-        8
+        logoTopInset
       )
       .padding(
         .bottom,
-        20
+        logoBottomInset
       )
       .accessibilityLabel(Text(.Home.homeLogoAccessibilityLabel))
       .accessibilityAddTraits(.isHeader)
   }
 }
 
-#Preview("Loaded") {
-  NavigationStack {
-    HomeView(
-      viewModel: MockHomeViewModel.loaded(),
-      onSearchTap: {},
-      onRecipeTap: { _ in },
-      onCategoryTap: { _ in }
-    )
+#if DEBUG
+  #Preview("Loaded") {
+    NavigationStack {
+      HomeView(
+        viewModel: MockHomeViewModel.loaded(),
+        onSearchTap: {},
+        onRecipeTap: { _ in },
+        onCategoryTap: { _ in }
+      )
+    }
   }
-}
 
-#Preview("Loading") {
-  NavigationStack {
-    HomeView(
-      viewModel: MockHomeViewModel.loading(),
-      onSearchTap: {},
-      onRecipeTap: { _ in },
-      onCategoryTap: { _ in }
-    )
+  #Preview("Loading") {
+    NavigationStack {
+      HomeView(
+        viewModel: MockHomeViewModel.loading(),
+        onSearchTap: {},
+        onRecipeTap: { _ in },
+        onCategoryTap: { _ in }
+      )
+    }
   }
-}
 
-#Preview("Recipes failed") {
-  NavigationStack {
-    HomeView(
-      viewModel: MockHomeViewModel.recipesFailed(),
-      onSearchTap: {},
-      onRecipeTap: { _ in },
-      onCategoryTap: { _ in }
-    )
+  #Preview("Recipes failed") {
+    NavigationStack {
+      HomeView(
+        viewModel: MockHomeViewModel.recipesFailed(),
+        onSearchTap: {},
+        onRecipeTap: { _ in },
+        onCategoryTap: { _ in }
+      )
+    }
   }
-}
 
-#Preview("Empty") {
-  NavigationStack {
-    HomeView(
-      viewModel: MockHomeViewModel.empty(),
-      onSearchTap: {},
-      onRecipeTap: { _ in },
-      onCategoryTap: { _ in }
-    )
+  #Preview("Empty") {
+    NavigationStack {
+      HomeView(
+        viewModel: MockHomeViewModel.empty(),
+        onSearchTap: {},
+        onRecipeTap: { _ in },
+        onCategoryTap: { _ in }
+      )
+    }
   }
-}
 
-#Preview("Loaded — AX3") {
-  NavigationStack {
-    HomeView(
-      viewModel: MockHomeViewModel.loaded(),
-      onSearchTap: {},
-      onRecipeTap: { _ in },
-      onCategoryTap: { _ in }
+  #Preview("Loaded — AX3") {
+    NavigationStack {
+      HomeView(
+        viewModel: MockHomeViewModel.loaded(),
+        onSearchTap: {},
+        onRecipeTap: { _ in },
+        onCategoryTap: { _ in }
+      )
+    }
+    .environment(
+      \.dynamicTypeSize,
+      .accessibility3
     )
   }
-  .environment(
-    \.dynamicTypeSize,
-    .accessibility3
-  )
-}
+#endif

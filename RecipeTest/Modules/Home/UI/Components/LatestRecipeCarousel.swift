@@ -14,7 +14,7 @@ struct LatestRecipeCarousel: View {
 
   var body: some View {
     ScrollView(.horizontal) {
-      LazyHStack(spacing: 14) {
+      LazyHStack(spacing: cardSpacing) {
         ForEach(recipes) { recipe in
           LatestRecipeCard(
             recipe: recipe,
@@ -23,10 +23,9 @@ struct LatestRecipeCarousel: View {
         }
       }
       .scrollTargetLayout()
-      // Paired with the negative padding below: room for cardShadow, which the scroll view clips.
       .padding(
         .vertical,
-        16
+        shadowBleed
       )
     }
     .scrollIndicators(.hidden)
@@ -34,25 +33,45 @@ struct LatestRecipeCarousel: View {
     // Not `.padding`: `.viewAligned` snaps to the content edge, which padding does not move.
     .contentMargins(
       .horizontal,
-      20,
+      horizontalGutter,
       for: .scrollContent
     )
     .padding(
       .vertical,
-      -16
+      -shadowBleed
     )
     .accessibilityLabel(Text(.Home.homeLatestRecipesTitle))
   }
 }
 
-#Preview {
-  LatestRecipeCarousel(
-    recipes: MockHomeViewModel.sampleRecipes,
-    onRecipeTap: { _ in }
-  )
-  .frame(
-    maxWidth: .infinity,
-    maxHeight: .infinity
-  )
-  .background(Color.themeColor(.surfacesBackground))
+// MARK: - Getters
+
+private extension LatestRecipeCarousel {
+  var cardSpacing: CGFloat {
+    14
+  }
+
+  var horizontalGutter: CGFloat {
+    20
+  }
+
+  /// Added inside the scroll view and taken back off outside it, so `cardShadow` has room the
+  /// scroll view would otherwise clip. The two uses must stay equal and opposite.
+  var shadowBleed: CGFloat {
+    16
+  }
 }
+
+#if DEBUG
+  #Preview {
+    LatestRecipeCarousel(
+      recipes: MockHomeViewModel.sampleRecipes,
+      onRecipeTap: { _ in }
+    )
+    .frame(
+      maxWidth: .infinity,
+      maxHeight: .infinity
+    )
+    .background(Color.themeColor(.surfacesBackground))
+  }
+#endif

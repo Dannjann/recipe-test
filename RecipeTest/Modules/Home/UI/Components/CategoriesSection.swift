@@ -29,14 +29,16 @@ struct CategoriesSection: View {
   }
 }
 
-#Preview {
-  CategoriesSection(
-    viewModel: MockHomeViewModel.loaded(),
-    onCategoryTap: { _ in }
-  )
-  .frame(
-    maxWidth: .infinity,
-    maxHeight: .infinity
-  )
-  .background(Color.themeColor(.surfacesBackground))
-}
+#if DEBUG
+  #Preview {
+    CategoriesSection(
+      viewModel: MockHomeViewModel.loaded(),
+      onCategoryTap: { _ in }
+    )
+    .frame(
+      maxWidth: .infinity,
+      maxHeight: .infinity
+    )
+    .background(Color.themeColor(.surfacesBackground))
+  }
+#endif

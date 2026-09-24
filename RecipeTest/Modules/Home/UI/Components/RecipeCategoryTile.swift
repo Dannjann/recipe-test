@@ -13,18 +13,19 @@ struct RecipeCategoryTile: View {
   let onTap: SingleResult<RecipeCategory>
 
   var body: some View {
-    Button {
-      onTap(category)
-    } label: {
-      VStack(spacing: 8) {
-        photograph
+    Button(
+      action: { onTap(category) },
+      label: {
+        VStack(spacing: contentSpacing) {
+          photograph
 
-        Text(category.name)
-          .themeTextStyle(.subheadlineSemibold)
-          .themeColor(.textPrimary)
-          .multilineTextAlignment(.center)
+          Text(category.name)
+            .themeTextStyle(.subheadlineSemibold)
+            .themeColor(.textPrimary)
+            .multilineTextAlignment(.center)
+        }
       }
-    }
+    )
     .buttonStyle(.plain)
     .accessibilityElement(children: .combine)
     .accessibilityLabel(Text(category.name))
@@ -37,6 +38,16 @@ struct RecipeCategoryTile: View {
 extension RecipeCategoryTile {
   static var baseWidth: CGFloat {
     104
+  }
+}
+
+private extension RecipeCategoryTile {
+  var contentSpacing: CGFloat {
+    8
+  }
+
+  var cornerRadius: CGFloat {
+    24
   }
 }
 
@@ -53,36 +64,38 @@ private extension RecipeCategoryTile {
       1,
       contentMode: .fit
     )
-    .clipShape(.rect(cornerRadius: 24))
+    .clipShape(.rect(cornerRadius: cornerRadius))
     .cardShadow()
   }
 }
 
-#Preview("Tile") {
-  RecipeCategoryTile(
-    category: .dummy(),
-    onTap: { _ in }
-  )
-  .frame(width: RecipeCategoryTile.baseWidth)
-  .frame(
-    maxWidth: .infinity,
-    maxHeight: .infinity
-  )
-  .background(Color.themeColor(.surfacesBackground))
-}
+#if DEBUG
+  #Preview("Tile") {
+    RecipeCategoryTile(
+      category: .dummy(),
+      onTap: { _ in }
+    )
+    .frame(width: RecipeCategoryTile.baseWidth)
+    .frame(
+      maxWidth: .infinity,
+      maxHeight: .infinity
+    )
+    .background(Color.themeColor(.surfacesBackground))
+  }
 
-#Preview("No photograph, long name") {
-  RecipeCategoryTile(
-    category: .dummy(
-      name: "Slow Cooker Dinners",
-      imageURL: nil
-    ),
-    onTap: { _ in }
-  )
-  .frame(width: RecipeCategoryTile.baseWidth)
-  .frame(
-    maxWidth: .infinity,
-    maxHeight: .infinity
-  )
-  .background(Color.themeColor(.surfacesBackground))
-}
+  #Preview("No photograph, long name") {
+    RecipeCategoryTile(
+      category: .dummy(
+        name: "Slow Cooker Dinners",
+        imageURL: nil
+      ),
+      onTap: { _ in }
+    )
+    .frame(width: RecipeCategoryTile.baseWidth)
+    .frame(
+      maxWidth: .infinity,
+      maxHeight: .infinity
+    )
+    .background(Color.themeColor(.surfacesBackground))
+  }
+#endif
