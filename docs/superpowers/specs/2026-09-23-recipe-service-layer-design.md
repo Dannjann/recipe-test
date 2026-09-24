@@ -1,55 +1,71 @@
-# Recipe service layer and DTO models
+# Recipe contract and service layer
 
 **Date:** 2026-09-23
+**Revised:** 2026-09-24 — reshaped to the Bokkie Bites prototype
 **Status:** Approved
-**Scope:** Backend only — no UI, no search, no filter
+**Scope:** Backend only — no UI, no view models, no routes
 
 ## Purpose
 
 `RecipeTest` is a demo app with no backend: every request is answered from
-`RecipeTest/Resources/MockData/recipes.json` through `MockURLProtocol`. The app
-currently has no feature module at all — `Modules/` holds only `Core` and `Shared`.
+`RecipeTest/Resources/MockData/` through `MockURLProtocol`. The first revision of this
+document specified a recipe service against a contract invented ahead of any design.
+The Bokkie Bites prototype (`B App/bokkie-bites-prototype.html`) has since settled what
+the app actually shows, and it is a much smaller contract than the one that shipped.
 
-This is the first one. It adds the chain a recipe list and a recipe detail screen
-will sit on:
+This revision reshapes the contract to the prototype and widens the service to cover
+every screen the prototype has, not just a list and a detail:
 
 ```
-ViewModel (later stage) -> RecipeService -> RecipeAPIProtocol -> APIClient -> MockURLProtocol -> recipes.json
+ViewModel (later stage) -> RecipeService -> RecipeAPIProtocol -> APIClient -> MockURLProtocol -> fixtures
 ```
 
-The code is written as production code. Only the transport is mocked — the service
-makes real requests through the real `APIClient`, and the fixture stands in for the
-server. Nothing in the service or model layer knows it is talking to a mock.
+The code stays production code. Only the transport is mocked — the service makes real
+requests through the real `APIClient`, and the fixtures stand in for the server.
+
+### What changed, and why
+
+The shipped contract carried 24 top-level fields. The prototype reads 12 of them. Nine
+fields are not merely unused — nothing in the product design will ever read them:
+`author`, `nutrition`, `allergens`, `tags`, `rating`, `rating_count`, `updated_at`,
+`slug`, `full_description`. Carrying a field the app never displays costs a DTO
+property, a domain property, a mapper branch, a fallback decision, and a test — and
+invites a screen to be designed around data the backend may not really have.
+
+Two structures also collapse. The prototype has no ingredient groups and no per-step
+metadata, so `ingredient_groups` flattens to `ingredients` and `steps` becomes a list of
+strings.
+
+Against that, the prototype needs three things the shipped contract has no room for: a
+`category` facet, a vegetarian flag, and real photographs.
 
 ### Success criteria
 
-- `RecipeService` fetches a paginated list of recipe summaries and a single recipe detail.
-- Domain models carry no knowledge of the API's JSON shape; a key rename in the
-  backend stops at a mapper.
+- Every screen in the prototype can be built against `RecipeServiceProtocol` without a
+  second data source or a client-side filter over a fully-downloaded collection.
+- Domain models carry no knowledge of the API's JSON shape; a key rename in the backend
+  stops at a mapper.
+- No field survives that no screen reads.
 - Every piece is unit-tested without a simulator, a network, or `URLSession`.
-- The module layout matches the team's established feature-module pattern, so the
-  next feature module is a copy of this one.
 
 ### Out of scope
 
-Search, filter, and the category facet those need are a later stage. Nothing here
-presumes their shape. No UI, no ViewModels, no routes.
+No UI, no view models, no routes. Favourites, shopping lists, and user accounts are not
+in the prototype and get no contract here.
 
 ## Architecture
 
-Four layers, each depending only on the one below it:
+Unchanged in shape — four layers, each depending only on the one below it:
 
 | Layer | Type | Knows about |
 |---|---|---|
 | Service | `RecipeService` | domain models, `RecipeAPIProtocol` |
-| Mappers | `RecipeSummaryMapper`, `RecipeMapper` | remote DTOs and domain models — the only place both are visible |
+| Mappers | `RecipeSummaryMapper`, `RecipeMapper`, `RecipeCategoryMapper` | remote DTOs and domain models — the only place both are visible |
 | API client | `APIClient+Recipe` | resource paths, query parameters, remote DTOs |
 | Transport | `APIClient` (Core, unchanged) | HTTP, the response envelope |
 
-The API protocol is owned by the feature, not by Core. `APIClient` conforms to it in
-an extension. This is what gives tests a seam: `RecipeService` depends on
-`any RecipeAPIProtocol`, so a test injects `MockRecipeAPI` and never touches
-`URLSession`.
+The API protocol stays owned by the feature. `APIClient` conforms to it in an extension,
+which is what gives `RecipeService` a seam a test can substitute.
 
 ### File layout
 
@@ -61,334 +77,384 @@ RecipeTest/Modules/Recipe/
   Models/
     Remote/
       RemoteRecipeSummary.swift
-      RemoteRecipe.swift
+      RemoteRecipe.swift          + RemoteRecipeIngredient
+      RemoteRecipeCategory.swift
     Domain/
       RecipeSummary.swift
-      Recipe.swift
+      Recipe.swift                + RecipeIngredient
+      RecipeCategory.swift
       RecipeListPage.swift
       RecipeDifficulty.swift
-      RecipeAuthor.swift
-      RecipeNutrition.swift
-      RecipeMedia.swift
-      RecipeIngredientGroup.swift
-      RecipeStep.swift
+      RecipeQuery.swift           + RecipeServings, RecipeSort
   Services/
     RecipeServiceProtocol.swift
     RecipeService.swift
     RecipeServiceError.swift
     RecipeSummaryMapper.swift
     RecipeMapper.swift
+    RecipeCategoryMapper.swift
 ```
 
-Two deliberate deviations from the one-type-per-file rule: `RemoteRecipe.swift`
-holds the detail payload's six nested DTOs (`RemoteRecipeAuthor`,
-`RemoteRecipeNutrition`, `RemoteRecipeMedia`, `RemoteIngredientGroup`,
-`RemoteIngredient`, `RemoteRecipeStep`) alongside `RemoteRecipe`. They are field
-lists with no behaviour and are only ever read together. And
-`RecipeIngredientGroup.swift` holds `RecipeIngredient` too, since an ingredient only
-exists inside a group. Every other domain type gets its own file.
+**Deleted:** `RecipeAuthor.swift`, `RecipeNutrition.swift`, `RecipeMedia.swift`,
+`RecipeStep.swift`, `RecipeIngredientGroup.swift`, and the six nested DTOs inside
+`RemoteRecipe.swift`.
 
-All app-target types carry an explicit `nonisolated` — the app targets build with
-`SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, which is why every existing Core type is
-annotated. The test targets default to `nonisolated` and need no annotation.
+`RecipeIngredient` lives in `Recipe.swift` and `RemoteRecipeIngredient` in
+`RemoteRecipe.swift` — an ingredient exists only inside a recipe, and the pair is only
+ever read together. `RecipeServings` and `RecipeSort` live in `RecipeQuery.swift` for
+the same reason. Every other type gets its own file.
 
-## Models
+All app-target types carry an explicit `nonisolated`: the app target builds with
+`SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`.
 
-### Remote DTOs
+## The recipe contract
 
-`APIModel, Decodable, Equatable`, every property optional. `APIModel` supplies the
-snake_case-converting decoder, so no `CodingKeys` are needed. Optionality is the
-house rule: one malformed or missing field must not fail a whole page.
+One row of `recipes.json`, and the shape both recipe endpoints answer with:
 
-`RemoteRecipeSummary` decodes only the fields a list row needs:
+| Field | Type | Prototype | Notes |
+|---|---|---|---|
+| `id` | String | `id` | |
+| `title` | String | `name` | |
+| `description` | String | `desc` | was `short_description`; `full_description` dropped |
+| `category` | String | `cat` | new facet — see below |
+| `cuisine` | String | `cui` | |
+| `meal_type` | String | — | retained by explicit decision, though the prototype has no screen for it |
+| `total_time_minutes` | Int | `time` | `prep_`/`cook_` dropped |
+| `servings` | Int | `serv` | |
+| `difficulty` | String | `diff` | `easy` / `medium` / `hard` |
+| `is_vegetarian` | Bool | `veg` | replaces `dietary_attributes` |
+| `hero_image_url` | String | card photo | |
+| `gallery` | `[String]` | carousel | bare URLs; was `[{id,url,alt_text}]` |
+| `ingredients` | `[{quantity_text, name, image_url, is_main}]` | `ing` | flattened out of `ingredient_groups` |
+| `steps` | `[String]` | `steps` | was `[{id,number,text,image_url,duration_seconds}]` |
 
-```
-id, slug, title, shortDescription, heroImageUrl, totalTimeMinutes,
-difficulty, rating, ratingCount, tags
-```
+**Removed entirely:** `slug`, `full_description`, `prep_time_minutes`,
+`cook_time_minutes`, `tags`, `dietary_attributes`, `allergens`, `rating`,
+`rating_count`, `updated_at`, `author`, `nutrition`, every ingredient-group wrapper, and
+every nested `id` / `unit` / `note` / `is_optional` / `number` / `duration_seconds` /
+`alt_text`.
 
-`RemoteRecipe` decodes the whole row: the summary fields plus `fullDescription`,
-`servings`, `prepTimeMinutes`, `cookTimeMinutes`, `cuisine`, `mealType`,
-`dietaryAttributes`, `allergens`, `updatedAt`, `author`, `nutrition`, `gallery`,
-`ingredientGroups`, `steps`.
+### Two deliberate deviations from the prototype
 
-`updatedAt` decodes as `String?` and is parsed in the mapper, not by a decoder date
-strategy — the house rule for timestamps. With a decoder strategy, one unparseable
-timestamp throws and costs the whole row; in the mapper it costs one field. No new
-formatter is needed:
-`DateFormatter.iso8601` in `Extensions/Foundation/DateFormatters` is
-`yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ`, which matches the fixture's
-`2026-07-01T07:07:00.000Z` exactly.
+**`meal_type` is kept.** The prototype has no meal-type screen; the field is retained by
+explicit decision so a later stage has the facet available. It is the one field in the
+contract that no current screen reads.
 
-### Domain models
+**`image_url` sits on each ingredient.** The prototype keys a shared photo map by
+ingredient name (`PH_I`) to render the "Main ingredients" carousel. Denormalising that
+onto the ingredient costs one field and saves a fourth endpoint plus a join on a
+free-text name — a join that silently renders nothing when a name does not match.
 
-Non-optional wherever the app requires a value. Both are `Equatable, Identifiable`.
+### Ingredients
 
-`RecipeSummary`: `id: String`, `title: String`, `shortDescription: String`,
-`heroImageURL: URL?`, `totalTimeMinutes: Int?`, `difficulty: RecipeDifficulty?`,
-`rating: Double`, `ratingCount: Int`, `tags: [String]`.
+`quantity_text` is a display string (`320 g`, `1 tsp`, `½ cup`, `to taste`), not a
+number and a unit. The prototype prints it verbatim and never does arithmetic on it, and
+the source data cannot support arithmetic anyway: 120 of 370 ingredients have no unit,
+21 have no quantity, and the `note` column is free text ranging from `chopped` to
+`/4½oz`.
 
-`slug` is decoded by the DTO but not carried into the domain — nothing routes or
-looks up by slug, and the detail endpoint keys off `id`. It is there so the field is
-already covered when a deep-link stage needs it.
+This is the change that loses information. Nine recipes have titled ingredient groups
+(`For the sauce`, `For the dough`, `For the béchamel`). Flattening preserves ingredient
+order but discards those titles. The prototype has no grouped-ingredient UI to show them
+in, so they have nowhere to go.
 
-`Recipe`: the summary fields plus `fullDescription: String`, `servings: Int?`,
-`prepTimeMinutes: Int?`, `cookTimeMinutes: Int?`, `cuisine: String?`,
-`mealType: String?`, `dietaryAttributes: [String]`, `allergens: [String]`,
-`updatedAt: Date?`, `author: RecipeAuthor?`, `nutrition: RecipeNutrition?`,
-`gallery: [RecipeMedia]`, `ingredientGroups: [RecipeIngredientGroup]`,
-`steps: [RecipeStep]`.
+`is_main` marks the ingredients the detail screen's "Main ingredients" carousel shows —
+substantive ingredients only, never pantry staples (salt, pepper, oil, water, sugar),
+capped at six per recipe.
 
-`author` and `nutrition` are the only two top-level fixture fields that are ever
-`null`, so they are the only two optional relations.
+### Facets
 
-`RecipeListPage`: `recipes: [RecipeSummary]` and `meta: PaginationMetaInfo`. The meta
-is carried through rather than flattened so a pager gets
-`PaginationMetaInfo.hasLoadedAllData` for free.
+`difficulty` becomes `RecipeDifficulty` (`easy`, `medium`, `hard`): closed, three values
+across all 36 rows, and it drives a UI badge. An unrecognised value maps to `nil`.
 
-Supporting domain types: `RecipeAuthor(id, name, avatarURL, profileURL)`,
-`RecipeNutrition(caloriesPerServing, proteinGrams, carbohydrateGrams, fatGrams,
-fibreGrams, sodiumMilligrams)`, `RecipeMedia(id, url, altText)`,
-`RecipeIngredientGroup(id, title, ingredients)` with
-`RecipeIngredient(id, name, quantity, unit, note, isOptional)` in the same file — the
-ingredient exists only inside a group — and
-`RecipeStep(id, number, text, imageURL, durationSeconds)`.
+`category` is the prototype's browse axis — `Meal`, `Rice`, `Snacks`, `Desserts`,
+`Vegan`, `Pasta` — and stays a `String` in the domain. It looks closed, but it is a
+merchandising vocabulary the content team owns, not a property of a recipe: the six
+values mix dish type with diet, and the set will move. `GET categories` returns the live
+vocabulary, so nothing in the app needs a compile-time case list.
 
-Group `title` is `String?`: a single-group recipe leaves it `null` in the fixture,
-which means "this recipe has one unnamed list", not a missing value.
+`cuisine` and `meal_type` stay `String` for the same reason.
 
-### Facet fields
+## Query model
 
-Split deliberately:
-
-- `difficulty` becomes `RecipeDifficulty: String` (`easy`, `medium`, `hard`). Closed,
-  three values across all 36 fixture rows, and it drives a UI badge. An unrecognised
-  value maps to `nil`, not a crash.
-- `cuisine`, `mealType`, `tags`, `dietaryAttributes` and `allergens` stay `String`.
-  These are open vocabularies. An enum would have to drop values it does not
-  recognise, and silently dropping an entry from an allergen list is an actively
-  harmful failure. They become enums when the filter stage lands and defines the
-  facet vocabulary — that stage owns the decision, not this one.
-
-Ingredient `unit` also stays `String` for the same reason (16 distinct values in the
-fixture, and the list is open).
-
-## One Core change
-
-`APIClient+ModelDecoding.swift` currently exposes a single method:
+Every list surface in the prototype — Home's "Latest", the category tiles, the cuisine
+list, search results, and the search overlay's suggestions — is the same query against
+the same collection. One endpoint, parameterised:
 
 ```swift
-func decodeRemoteModelWithMeta<RemoteModel, RemoteMetaModel, DomainModel, MetaModel>(
-  _ apiResponse: APIResponse,
-  thenMapUsing mapper: ...,
-  metaMapper: ...
-) throws -> (DomainModel, MetaModel)
-```
-
-It decodes *and* maps in one call, which puts mapping in the client layer where the
-house pattern keeps it in `Services/…Mapper`. It has no callers anywhere in the
-repository. Replace it with the pair the feature layer actually needs:
-
-```swift
-nonisolated extension APIClient {
-  func decodeModel<T: Decodable>(_ response: APIResponse) throws -> T
-  func decodeModelWithMeta<T: Decodable, M: Decodable>(_ response: APIResponse) throws -> (T, M)
+nonisolated struct RecipeQuery: APIRequestParameters, Equatable {
+  var searchText: String?
+  var category: String?
+  var cuisine: String?
+  var isVegetarian: Bool?
+  var servings: RecipeServings?
+  var includeIngredients: [String]
+  var excludeIngredients: [String]
+  var searchesSteps: Bool
+  var sort: RecipeSort?
 }
 ```
 
-Both throw `APIClientError.dataNotFound(_:)` when the payload is absent — naming the
-type that was expected, which `AppError.unknown` cannot — and both route failures through
-`onError` before rethrowing, matching what the existing method does.
+`APIRequestParameters` is the house protocol for exactly this — "methods that have more
+than two non-Closure parameters" — and it supplies the snake_case-converting encoder, so
+the wire names fall out of the property names with no hand-written mapping.
+
+`RecipeQuery.empty` is the unfiltered query. A nil facet is absent from the query string
+rather than sent empty, so `GET recipes` with no filters stays a bare
+`recipes?page=1&per_page=10`.
+
+```swift
+nonisolated enum RecipeServings: String, Equatable, CaseIterable {
+  case one = "1"
+  case two = "2"
+  case four = "4"
+  case sixOrMore = "6+"
+}
+```
+
+`servings` is an enum, not an `Int`, because the prototype's fourth option is `6+` — a
+lower bound, not a value. The raw values are the wire strings, so encoding is free.
+
+```swift
+nonisolated enum RecipeSort: String, Equatable { case latest }
+```
+
+Only one ordering exists. `sort=latest` means fixture order, which the fixture stores
+newest-first. Nothing else can define it — `updated_at` is gone, and the prototype's
+`LATEST` is six hand-picked ids.
 
 ## API layer
 
 ```swift
 nonisolated protocol RecipeAPIProtocol: Sendable {
-  func getRecipes(page: Int, perPage: Int) async throws -> ([RemoteRecipeSummary], RemotePaginationMetaInfo)
+  func getRecipes(
+    query: RecipeQuery,
+    page: Int,
+    perPage: Int
+  ) async throws -> ([RemoteRecipeSummary], RemotePaginationMetaInfo)
+
   func getRecipe(id: String) async throws -> RemoteRecipe
+
+  func getCategories() async throws -> [RemoteRecipeCategory]
 }
 ```
 
-`Int` rather than `Page` at this boundary: the API layer speaks the wire's language,
-and translating `Page` into `page`/`per_page` is the service's job.
+`Int` page numbers rather than `Page`: this layer speaks the wire's language, and
+translating `Page` into `page`/`per_page` is the service's job. `RecipeQuery` crosses the
+boundary unchanged because it *is* wire vocabulary — it encodes itself.
 
 `APIClient+Recipe` conforms:
 
-- `getRecipes` — `GET recipes`, parameters `["page": page, "per_page": perPage]`,
-  `URLEncoding.default`, then `decodeModelWithMeta`.
-- `getRecipe` — `GET recipes/{id}`, no parameters, then `decodeModel`.
+- `getRecipes` — `GET recipes`, `URLEncoding.default`, parameters built by merging the
+  encoded query with `page`/`per_page`, then `decodeModelWithMeta`.
+- `getRecipe` — `GET recipes/{id}`, then `decodeModel`.
+- `getCategories` — `GET categories`, then `decodeModel`.
 
-Both use the existing `httpRequestHeaders()`. There is no auth in this project.
+Arrays encode as repeated keys (`include_ingredients=garlic&include_ingredients=onion`)
+and booleans as `true`/`false`, which the mock router reads with `queryItems.filter`.
+
+This needs an explicit `URLEncoding(arrayEncoding: .noBrackets, boolEncoding: .literal)`.
+`URLEncoding.default` is `.brackets` + `.numeric`, which would send
+`include_ingredients[]=garlic` and `is_vegetarian=1` — neither of which the router
+matches, so both filters would silently pass every row. The router accepts `1`/`0` as
+well as `true`/`false` so the two sides cannot drift apart again.
 
 ## Service layer
 
 ```swift
 nonisolated protocol RecipeServiceProtocol: AppServiceProtocol, Sendable {
-  func getRecipes(page: Page) async throws -> RecipeListPage
+  func getRecipes(query: RecipeQuery, page: Page) async throws -> RecipeListPage
   func getRecipe(id: String) async throws -> Recipe
-}
-
-final nonisolated class RecipeService: RecipeServiceProtocol {
-  init(api: any RecipeAPIProtocol, onError: @escaping SendableErrorResult)
+  func getCategories() async throws -> [RecipeCategory]
 }
 ```
 
-`getRecipes(page:)` sends `page.index` and `page.size`, then maps with
+`getRecipes` sends `page.index` and `page.size` and maps with
 `compactMap(RecipeSummaryMapper.toDomain(from:))`. A row missing a required field is
-dropped from the page, not fatal — one bad row must not cost the user the other
-nine.
+dropped from the page, not fatal.
 
-`getRecipe(id:)` maps with `RecipeMapper.toDomain(from:)` and throws
-`RecipeServiceError.unmappableRecipe(id:)` when the row cannot be mapped. A detail screen
-with no recipe has nothing to show, so there is no partial result to degrade to. The case
-is named rather than `AppError.unknown` so a caller can tell a backend contract break from
-every other unhandled failure, and it carries the id that broke.
+`getRecipe` throws `RecipeServiceError.unmappableRecipe(id:)` when the row cannot be
+mapped. A detail screen with no recipe has nothing to show, so there is no partial result
+to degrade to.
 
-Errors from the API layer propagate unchanged. `APIClient` already reports those to its
-own `onError` (and so to `MonitoringService`), so the service does not report them a
-second time. It does report what it raises itself: a payload that decoded cleanly but
-could not be mapped never reaches the client's reporting, so without the service's own
-`onError` a contract break would surface as a failed screen and no signal anywhere.
+`getCategories` `compactMap`s, like the list: a malformed category tile is one missing
+tile, not a failed Home screen.
+
+Errors from the API layer propagate unchanged — `APIClient` already reports those to its
+own `onError`. The service reports only what it raises itself: a payload that decoded
+cleanly but could not be mapped never reaches the client's reporting.
 
 ### Mappers
 
-`enum RecipeSummaryMapper { static func toDomain(from: RemoteRecipeSummary) -> RecipeSummary? }`
-and `enum RecipeMapper { static func toDomain(from: RemoteRecipe) -> Recipe? }`, each
-with private helpers for the nested types. Caseless enums, static methods, no state.
+Caseless enums with static methods, no state:
+`RecipeSummaryMapper.toDomain(from:) -> RecipeSummary?`,
+`RecipeMapper.toDomain(from:) -> Recipe?`,
+`RecipeCategoryMapper.toDomain(from:) -> RecipeCategory?`.
 
-Required fields are `id` and `title`; absent either, the mapper returns `nil`.
-Everything else falls back: `shortDescription` to `""`, `tags`/`allergens`/`gallery`/
-`ingredientGroups`/`steps` to `[]`, `rating`/`ratingCount` to `0`, optional
-scalars stay optional. `steps` are sorted by `number` so display order does not
-depend on the array's order in the payload.
+Required fields are `id` and `title` (`id` and `name` for a category); absent either, the
+mapper returns `nil`. Everything else falls back: `description` to `""` (detail only),
+`gallery`/`ingredients`/`steps` to `[]`, `isVegetarian` and `isMain` to `false`,
+`recipeCount` to `0`, optional scalars stay optional.
 
-### Container wiring
+`RemoteRecipeSummary` decodes only what `RecipeSummary` carries — it does not decode
+`description`, `gallery`, `ingredients` or `steps`, even though `GET recipes` returns
+rows that contain them. The mock router serves whole fixture rows; the DTO is what
+decides a list row's cost.
 
-```swift
-private(set) lazy var recipeService: RecipeServiceProtocol = {
-  let monitoring = monitoring
+Step ordering is no longer the mapper's problem — steps are a string array, so payload
+order *is* display order.
 
-  return RecipeService(
-    api: api,
-    onError: { error in
-      monitoring.logError(error)
-    }
-  )
-}()
-```
-
-in `AppContainer`, replacing the commented-out `catalogService` example. Lazy, as
-every other service there is. `monitoring` is resolved into a local for the same reason
-`api` does it: the closure is `@Sendable` and the service is nonisolated, so capturing
-`self` would reach main-actor state from off the main actor.
-
-## Demo transport
-
-`MockEndpoint` gains two cases:
+### Domain models
 
 ```swift
-case recipes            // fixtureName "recipes", isPaginated true
-case recipe(id: String) // fixtureName "recipes", isPaginated false
+nonisolated struct RecipeSummary: Equatable, Identifiable {
+  let id: String
+  let title: String
+  let heroImageURL: URL?
+  let category: String?
+  let cuisine: String?
+  let mealType: String?
+  let totalTimeMinutes: Int?
+  let servings: Int?
+  let difficulty: RecipeDifficulty?
+  let isVegetarian: Bool
+}
 ```
 
-matched in `MockEndpoint.match(path:method:)`: a trailing `recipes` component is the
-list; `recipes/{id}` is the detail. Detail keys off `id` (`rcp-001`), not `slug`.
+The split rule: **the summary carries the row's identity, its photograph and its facets;
+the detail adds the prose and the three collections.** That is why `category`, `cuisine`
+and `servings` are here — the prototype's list row prints `cuisine · category` and its
+meta strip prints servings, and a cell that had to fetch a detail to render its own
+subtitle would defeat the split. It is also why `description` is *not* here: no list
+surface in the prototype renders it, and the one screen that does already fetches the
+whole recipe.
 
-`MockAPIRouter` gains a single-row lookup. Today it only slices arrays. A new
-`selectsSingleRow` path finds the row whose `id` matches, envelopes it as a JSON
-object rather than an array, and returns a 404 envelope when no row matches —
-the same discipline the existing unmatched-path branch uses, so a wrong id fails the
-way it would against a real backend.
+```swift
+nonisolated struct Recipe: Equatable, Identifiable {
+  // the summary's fields, plus:
+  let description: String
+  let gallery: [URL]
+  let ingredients: [RecipeIngredient]
+  let steps: [String]
+}
 
-`failureMode` continues to short-circuit both endpoints.
+nonisolated struct RecipeIngredient: Equatable, Identifiable {
+  let id: String        // synthesised: "\(recipeID)-\(index)"
+  let quantityText: String
+  let name: String
+  let imageURL: URL?
+  let isMain: Bool
+}
+```
+
+Ingredient ids are synthesised by the mapper from the recipe id and the array index. The
+contract dropped the stored ids, but a SwiftUI `ForEach` still needs stable identity, and
+position within a recipe is stable.
+
+```swift
+nonisolated struct RecipeCategory: Equatable, Identifiable {
+  let id: String
+  let name: String
+  let imageURL: URL?
+  let recipeCount: Int
+}
+```
+
+`recipeCount` is served rather than derived: the Home grid and the search overlay both
+print "*n* recipes", and a client cannot count what pagination has not fetched.
+
+`RecipeListPage` is unchanged — `recipes: [RecipeSummary]` and `meta: PaginationMetaInfo`.
+
+## Images
+
+The fixture's image URLs today point at `https://api.example.com/api/v1/images/…`, which
+`MockAPIRouter` answers with a generated flat colour tile. That is the app's entire visual
+identity at the moment, and it is the wrong one.
+
+Real photographs replace it:
+
+- **Hero** — each recipe's own photograph from TheMealDB
+  (`https://www.themealdb.com/images/media/meals/….jpg`). All 36 titles match a TheMealDB
+  record exactly, which is almost certainly where this fixture came from, so every recipe
+  gets a photograph of the actual dish.
+- **Gallery** — the hero plus two further food photographs per recipe, drawn from the
+  prototype's own Unsplash pool (113 ids across `PH_R`, `PH_I` and `PH_C`). Each id is
+  used at most once across the whole fixture; 72 are needed.
+- **Ingredients** — the prototype's `PH_I` photograph for that ingredient where one
+  exists, `null` otherwise. A missing ingredient photo is a placeholder, not a failure.
+
+Every URL is checked to return `200` before it lands in the fixture.
+
+This needs one change outside the feature. `AppContainer.bootstrap()` currently installs
+`MockURLProtocol` into Kingfisher's downloader so that images are mocked too; with real
+URLs that would intercept every photograph and 404 it. The installation is removed, and
+`MockEndpoint.image(seed:)` along with `MockAPIRouter.imageData(seed:)` and
+`stableHash(_:)` are deleted — after this change nothing requests a generated image, and
+`MockAPIRouter` no longer needs to import `UIKit`.
+
+Recipe data stays mocked; photographs come off the network.
+
+## Mock transport
+
+`MockAPIRouter` today only paginates. It now has to filter, or none of the prototype's
+screens behave: browsing a category, searching, and every filter chip are all query
+parameters that the router currently ignores, which would return the full collection to
+every one of them.
+
+`MockEndpoint` gains `case categories` (fixture `categories`, not paginated) and loses
+`case image`.
+
+Filtering runs against the fixture rows before pagination, in this order:
+
+1. `category`, `cuisine` — exact, case-insensitive
+2. `is_vegetarian` — when `true`, keep only rows whose flag is true; absent means no filter
+3. `servings` — `1`/`2`/`4` exact, `6+` means `>= 6`
+4. `include_ingredients` — every term must substring-match some ingredient name
+5. `exclude_ingredients` — no term may substring-match any ingredient name
+6. `q` — substring match against title, description, category, cuisine and ingredient
+   names; when `search_steps=true`, step text as well
+
+All matching is case-insensitive and diacritic-insensitive, so `pao` finds `Pão`.
+
+`sort=latest` is fixture order, so it is a no-op the router accepts and ignores. Accepting
+it matters: an unrecognised parameter must not change the result set.
+
+Pagination then slices the filtered rows, so `meta.total` reports matches rather than the
+collection size — which is what the prototype's "*n* recipes" count needs.
+
+`failureMode` continues to short-circuit every endpoint.
 
 ## Testing
 
 Test-driven: each suite is written and seen to fail before the code it covers exists.
 
-### The mock, and why it is shaped this way
-
-The hand-rolled API mock this team has used elsewhere works, but its structure does
-not scale: around thirty flat stored properties on one class; a `lastRequestedX`
-field written by two different methods, so one call's assertion can be satisfied by
-another call; a forty-line hand-maintained `reset()` that silently rots when a
-property is added; a single `errorToReturn` shared by every endpoint, so one call
-cannot fail while another succeeds; and per-endpoint escape hatches — a page lookup
-table, a handler closure, a lock guarding one method — bolted on one at a time.
-
-Replace all of that with one reusable recorder, one instance per endpoint:
-
-```swift
-// Tests/Mocks/Support/MockAPICall.swift
-final class MockAPICall<Request, Response>: @unchecked Sendable {
-  var requests: [Request] { get }        // callCount, lastRequest, wasCalled derived
-  func returns(_ response: Response)
-  func fails(with error: any Error)
-  func responds(_ handler: @escaping (Request) async throws -> Response)
-  func invoke(_ request: Request) async throws -> Response
-}
-```
-
-```swift
-// Tests/Mocks/Modules/Recipe/Clients/API/MockRecipeAPI.swift
-final class MockRecipeAPI: RecipeAPIProtocol {
-  struct RecipesRequest: Equatable { let page: Int; let perPage: Int }
-
-  let recipes = MockAPICall<RecipesRequest, ([RemoteRecipeSummary], RemotePaginationMetaInfo)>(
-    returning: ([], .dummy())
-  )
-  let recipe = MockAPICall<String, RemoteRecipe>(returning: .dummy())
-
-  func getRecipes(page: Int, perPage: Int) async throws -> ([RemoteRecipeSummary], RemotePaginationMetaInfo) {
-    try await recipes.invoke(RecipesRequest(page: page, perPage: perPage))
-  }
-
-  func getRecipe(id: String) async throws -> RemoteRecipe {
-    try await recipe.invoke(id)
-  }
-}
-```
-
-What this buys: each endpoint's stub and its recorded calls live together; two
-endpoints cannot overwrite each other's last request; one endpoint can fail while
-another succeeds; the per-call handler is there from the start rather than
-retrofitted; the one lock lives in one reusable place; and there is no `reset()` at
-all, because a test builds a fresh mock. At the call site:
-
-```swift
-api.recipes.returns(([.dummy(id: "rcp-001")], .dummy(total: 1)))
-#expect(api.recipes.lastRequest == .init(page: 1, perPage: 10))
-```
-
-Mocks live in `Tests/Mocks/`, not a top-level `Mocks/` folder. `Tests` is a
-`PBXFileSystemSynchronizedRootGroup` in the project, so files dropped inside it join
-the target automatically; a new top-level folder would belong to no group and compile
-into nothing.
-
-### Dummy factories
-
-`.dummy(...)` static factories with defaulted parameters for `RemoteRecipeSummary`,
-`RemoteRecipe`, `RecipeSummary` and `Recipe`, following
-`DummyRemotePaginationMetaInfo`. In `Tests/Mocks/Modules/Recipe/Models/`.
-
-### Suites
+The `MockAPICall` recorder and the `MockRecipeAPI` shape from the first revision are
+unchanged and carry over. `MockRecipeAPI` gains a third call recorder for `getCategories`,
+and `MockRecipeAPI.recipes` takes `RecipesRequest { query, page, perPage }`.
 
 | Suite | Covers |
 |---|---|
-| `GetRecipesTests` + `GetRecipesTests_200.json` | `RemoteRecipeSummary` decoding, snake_case keys, pagination meta |
-| `GetRecipeTests` + `GetRecipeTests_200.json` | full `RemoteRecipe` decoding — nested groups, steps, null author and nutrition |
+| `GetRecipesTests` | `RemoteRecipeSummary` decoding, snake_case keys, pagination meta |
+| `GetRecipeTests` | full `RemoteRecipe` decoding — flat ingredients, string steps, gallery |
+| `GetCategoriesTests` | `RemoteRecipeCategory` decoding |
+| `RecipeQueryTests` | encodes to the expected query items; empty query encodes to nothing; `6+` survives the round trip |
 | `RecipeSummaryMapperTests` | required-field drops, fallbacks, difficulty mapping, unknown difficulty to `nil` |
-| `RecipeMapperTests` | nested mapping, empty gallery, missing nutrition, step ordering by `number` |
-| `RecipeServiceTests` | `Page` translated to `page`/`per_page`, malformed rows dropped, unmappable detail throws, API errors propagate |
-| `MockAPIRouterTests` | detail lookup by id, 404 on unknown id, a page past the end is empty |
+| `RecipeMapperTests` | ingredient mapping and synthesised ids, empty gallery, missing images |
+| `RecipeCategoryMapperTests` | required-field drops, count fallback |
+| `RecipeServiceTests` | `Page` translated to `page`/`per_page`, query forwarded, malformed rows dropped, unmappable detail throws, API errors propagate |
+| `MockAPIRouterTests` | every filter above, filters combining, `meta.total` reflects matches, detail by id, 404 on unknown id, page past the end is empty |
 
-Fixtures follow the existing convention: `<SuiteName>_<statusCode>.json`, loaded by
+`MockAPIRouterTests` carries the most new weight: the router is now the thing standing in
+for the backend's query engine, and a filter that silently does nothing would look exactly
+like a screen with no results.
+
+Fixtures follow the existing convention — `<SuiteName>_<statusCode>.json`, loaded by
 `Fixture.apiResponse(_:)`, living next to the suite.
 
-No `MockRecipeService` yet. Nothing consumes `RecipeServiceProtocol` until the
-ViewModel stage, and a mock with no caller is a guess at what that stage needs.
+No `MockRecipeService` yet. Nothing consumes `RecipeServiceProtocol` until the view model
+stage, and a mock with no caller is a guess at what that stage needs.
 
 ## Verification
 
-`xcodebuild test` on the `RecipeTest` scheme, plus SwiftLint and SwiftFormat clean,
-before the work is called done.
+`xcodebuild test` on the `RecipeTest` scheme, plus SwiftLint and SwiftFormat clean, before
+the work is called done.
