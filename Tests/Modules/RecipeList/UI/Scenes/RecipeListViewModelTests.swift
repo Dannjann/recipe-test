@@ -393,20 +393,36 @@ struct RecipeListViewModelFacetTests {
     #expect(service.recipes.lastRequest?.query.category == "Vegan")
   }
 
+  /// The removal happens *inside* the second page's response, so the page is provably still
+  /// in flight when the query changes under it. Racing the two with `async let` would leave
+  /// the interleaving to the scheduler, and the test would pass or fail by luck.
   @Test
   func remove_whileAPageIsInFlight_discardsThatPage() async {
-    let service = RecipeListPageFactory.twoPageService()
+    let service = MockRecipeService()
+    let removal = Reentry()
     let sut = RecipeListViewModelFactory.make(
       request: .all(query: RecipeQuery(isVegetarian: true)),
       service: service
     )
-    await sut.loadFirstPage()
 
-    async let paging: Void = sut.loadNextPageIfNeeded(after: "rcp-001")
-    await sut.remove(facet: .vegetarian(true))
-    await paging
+    service.recipes.responds { request in
+      if request.page.index == 2, await removal.isFirstTime() {
+        await sut.remove(facet: .vegetarian(true))
+      }
+
+      return RecipeListPageFactory.page(
+        ids: [request.page.index == 1 ? "rcp-001" : "rcp-002"],
+        total: 40,
+        currentPage: request.page.index,
+        lastPage: 2
+      )
+    }
+
+    await sut.loadFirstPage()
+    await sut.loadNextPageIfNeeded(after: "rcp-001")
 
     #expect(sut.recipes.value?.map(\.id) == ["rcp-001"])
+    #expect(sut.facetChips.isEmpty)
   }
 
   @Test
