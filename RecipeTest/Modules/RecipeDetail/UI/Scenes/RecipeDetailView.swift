@@ -20,8 +20,8 @@ struct RecipeDetailView: View {
   var body: some View {
     scrollView
       .background(Color.themeColor(.surfacesBackground))
-      .navigationTitle(navigationTitle)
       .navigationBarTitleDisplayMode(.inline)
+      .toolbar { titleItem }
       .toolbarBackgroundVisibility(
         toolbarBackgroundVisibility,
         for: .navigationBar
@@ -53,10 +53,14 @@ private extension RecipeDetailView {
     78
   }
 
-  /// Empty until the recipe's own name has gone: two copies of it on screen at once is what
-  /// the fade exists to avoid.
-  var navigationTitle: String {
-    isTitleOffscreen ? viewModel.title : ""
+  /// Transparent until the recipe's own name has gone: two copies of it on screen at once is
+  /// what the fade exists to avoid.
+  var titleOpacity: Double {
+    isTitleOffscreen ? 1 : 0
+  }
+
+  var titleLineLimit: Int {
+    1
   }
 
   var toolbarBackgroundVisibility: Visibility {
@@ -67,6 +71,22 @@ private extension RecipeDetailView {
 // MARK: - Subviews
 
 private extension RecipeDetailView {
+  /// Styled here rather than left to `navigationTitle`: this screen's bar does not pick up
+  /// the title attributes `UINavigationBar.applyThemeAppearance` installs, so the name
+  /// rendered in the system font while the list's own title rendered in the app's.
+  @ToolbarContentBuilder
+  var titleItem: some ToolbarContent {
+    ToolbarItem(placement: .principal) {
+      Text(viewModel.title)
+        .themeTextStyle(.title2)
+        .themeColor(.textPrimary)
+        .lineLimit(titleLineLimit)
+        .opacity(titleOpacity)
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityHidden(!isTitleOffscreen)
+    }
+  }
+
   var scrollView: some View {
     ScrollView(.vertical) {
       VStack(
