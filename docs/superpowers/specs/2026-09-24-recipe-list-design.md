@@ -85,12 +85,14 @@ another one.
 
 Two consequences worth stating, because they are the point of the trial:
 
-- `SectionState` on this screen carries `[any RecipeCardViewModelProtocol]`, not
-  `[RecipeSummary]`. Domain-to-presentation mapping happens once per page inside the view
+- `SectionState` on this screen carries `[RecipeCardViewModel]`, not `[RecipeSummary]`. Domain-to-presentation mapping happens once per page inside the view
   model, not on every `body` evaluation — which is what keeps a `LazyVGrid` of several hundred
   cards cheap.
-- A card view model is **not** `@Observable`. It has no mutable state, and the macro would buy
-  nothing but overhead. When a card gains a favourite toggle, that is when it earns the macro.
+- A card view model is a **`nonisolated struct`**, not an `@Observable` class. `SectionState`
+  constrains its value to `Equatable`, and a struct over a `Hashable` `RecipeSummary` gets that
+  synthesised — which also gives SwiftUI a correct diff and allocates nothing per row. There is
+  no mutable state here to observe; when a card gains a favourite toggle, that is when it earns
+  the macro and the reference type.
 
 ## Architecture
 
@@ -119,6 +121,7 @@ RecipeTest/Modules/RecipeList/
       RecipeListFooter.swift
       RecipeCard.swift
       RecipeRow.swift
+      RecipeCardMetadata.swift
       RecipeCardViewModel.swift
       RecipeCardViewModelProtocol.swift
       RecipeFacetChipRow.swift
@@ -226,22 +229,31 @@ pushing one is the whole reuse story.
 
 ```swift
 @MainActor
-protocol RecipeListViewModelProtocol: AnyObject {
+protocol RecipeListViewModelProtocol: AnyObject, Observable {
   var title: String { get }
   var searchPlaceholder: String { get }
-  var recipes: SectionState<[any RecipeCardViewModelProtocol]> { get }
-  var facetChips: [any RecipeFacetChipViewModelProtocol] { get }
-  var showsClearAllFacets: Bool { get }
+
+  var recipes: SectionState<[RecipeCardViewModel]> { get }
   var resultCountText: String? { get }
+
+  var facetChips: [RecipeFacetChipViewModel] { get }
+  var showsClearAllChips: Bool { get }
+
+  var emptyTitle: LocalizedStringResource { get }
+  var emptyDetail: LocalizedStringResource? { get }
+  var showsClearFiltersButton: Bool { get }
+
   var isLoadingNextPage: Bool { get }
   var nextPageError: String? { get }
-  var viewMode: RecipeListViewMode { get set }
+
+  var viewMode: RecipeListViewMode { get }
 
   func loadFirstPage() async
   func loadNextPageIfNeeded(after cardID: String) async
   func retryNextPage() async
   func remove(facet: RecipeQueryFacet) async
   func clearFacets() async
+  func select(viewMode: RecipeListViewMode)
 }
 ```
 
@@ -249,8 +261,14 @@ Private alongside: the mutable `request`, `nextPage: Page?`, the last `Paginatio
 and a generation counter — the same cancellation guard `HomeViewModel` and
 `RecipeDetailViewModel` already use.
 
-`viewMode` is the one settable property: the toggle writes it, nothing else reads it but the
-results view, and it is not persisted.
+The concrete `RecipeCardViewModel` and `RecipeFacetChipViewModel` appear here rather than
+their protocols because `SectionState` requires `Equatable` and an array of existentials is
+not. Nothing is lost: the card and chip *views* still depend on the protocols, so each previews
+against a mock of its own.
+
+`viewMode` is read-only with a `select(viewMode:)` input rather than a settable property. That
+keeps the screen on the project's callback style and spares every view a `@Bindable` over an
+existential. It is not persisted — leaving the list forgets it.
 
 ### Paging
 
@@ -291,8 +309,7 @@ the toggle alone rather than a flickering "0 recipes".
 ### The card and chip view models
 
 ```swift
-@MainActor
-protocol RecipeCardViewModelProtocol: AnyObject, Identifiable {
+nonisolated protocol RecipeCardViewModelProtocol: Identifiable {
   var id: String { get }
   var title: String { get }
   var imageURL: URL? { get }
@@ -303,8 +320,7 @@ protocol RecipeCardViewModelProtocol: AnyObject, Identifiable {
   var summary: RecipeSummary { get }
 }
 
-@MainActor
-protocol RecipeFacetChipViewModelProtocol: AnyObject, Identifiable {
+nonisolated protocol RecipeFacetChipViewModelProtocol: Identifiable {
   var id: RecipeQueryFacet { get }
   var label: String { get }
   var removeAccessibilityLabel: String { get }
@@ -327,7 +343,7 @@ label and symbol name supplied by the toggle's own getters.
 
 ```swift
 nonisolated enum RecipeQueryFacet: Hashable {
-  case vegetarian
+  case vegetarian(Bool)
   case servings(RecipeServings)
   case include(String)
   case exclude(String)
@@ -336,6 +352,10 @@ nonisolated enum RecipeQueryFacet: Hashable {
 ```
 
 with three pure helpers on `RecipeQuery`: `activeFacets`, `removing(_:)`, `clearingFacets()`.
+
+.vegetarian carries its value because `isVegetarian` is `Bool?` and the encoder deliberately
+keeps `false` — "a filter the user set, not an absence". A bare case could not tell a
+vegetarian-only list from a non-vegetarian-only one, and would label one of the two wrongly.
 
 `category` and `searchText` are deliberately **not** facets. Both are already the screen's
 title, and a chip that removes the category would leave the list showing everything under a
@@ -450,6 +470,7 @@ A new `RecipeList.xcstrings`, keys in the project's dotted style:
 | `recipeList.searchPlaceholder.all` | Search recipes or ingredients |
 | `recipeList.resultCount` | %lld recipes *(plural: one → %lld recipe)* |
 | `recipeList.empty.title` | No recipes match your filters |
+| `recipeList.empty.noResults.title` | No recipes here yet |
 | `recipeList.empty.detail` | Try removing a filter or searching for something else. |
 | `recipeList.empty.clearFilters` | Clear filters |
 | `recipeList.facets.clearAll` | Clear all |
