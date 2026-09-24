@@ -47,25 +47,7 @@ nonisolated extension SectionState {
   func recovering(from error: any Error) -> SectionState {
     guard !error.isCancellation else { return self }
 
-    return .failed(Self.failureDetail(for: error))
-  }
-}
-
-// MARK: - Helpers
-
-private nonisolated extension SectionState {
-  /// An error that describes itself with the generic heading would print the same sentence
-  /// twice, since `SectionStateView` already shows that heading as the failure's title.
-  static func failureDetail(for error: any Error) -> String? {
-    guard let appError = error as? AppError else {
-      return error.localizedDescription
-    }
-
-    guard !appError.isDescribedByGenericHeading else {
-      return nil
-    }
-
-    return appError.localizedDescription
+    return .failed(error.failureDetail)
   }
 }
 
