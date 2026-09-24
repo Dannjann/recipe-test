@@ -8,29 +8,16 @@
 
 import Foundation
 
+/// Stores no text of its own: the overlay hands this screen a new query without rebuilding it,
+/// and a stored copy would leave the pill advertising the search before last.
 final class SearchRecipeListViewModel: RecipeListViewModel {
-  private let searchText: String
-
-  init(
-    searchText: String,
-    query: RecipeQuery,
-    recipeService: RecipeServiceProtocol
-  ) {
-    self.searchText = searchText
-
-    super.init(
-      query: query,
-      recipeService: recipeService
-    )
-  }
-
   // MARK: - Overrides
 
   override var title: String {
     String(localized: .RecipeList.recipeListTitleSearchResults)
   }
 
-  override var searchPlaceholder: String {
-    String(localized: .RecipeList.recipeListSearchPlaceholderSearch(searchText))
+  override var scopedSearchPlaceholder: String {
+    String(localized: .RecipeList.recipeListSearchPlaceholderAll)
   }
 }

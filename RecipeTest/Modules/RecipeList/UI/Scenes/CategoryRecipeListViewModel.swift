@@ -30,7 +30,7 @@ final class CategoryRecipeListViewModel: RecipeListViewModel {
     categoryName
   }
 
-  override var searchPlaceholder: String {
+  override var scopedSearchPlaceholder: String {
     String(localized: .RecipeList.recipeListSearchPlaceholderCategory(categoryName))
   }
 }
