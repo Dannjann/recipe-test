@@ -18,7 +18,7 @@ struct RecipeListViewModelTests {
       "rcp-001",
       "rcp-002",
     ]))
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
 
     await sut.loadFirstPage()
 
@@ -28,7 +28,7 @@ struct RecipeListViewModelTests {
   @Test
   func loadFirstPage_asksForTwentyRowsOfTheRequestsOwnQuery() async {
     let service = MockRecipeService()
-    let sut = RecipeListViewModelFactory.make(
+    let sut = RecipeListViewModelTestFactory.make(
       request: .category(.dummy(name: "Desserts")),
       service: service
     )
@@ -45,7 +45,7 @@ struct RecipeListViewModelTests {
   @Test
   func loadFirstPage_noRows_isEmptyRatherThanLoadedWithNothing() async {
     let service = MockRecipeService(recipes: RecipeListPageFactory.page(ids: []))
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
 
     await sut.loadFirstPage()
 
@@ -56,7 +56,7 @@ struct RecipeListViewModelTests {
   func loadFirstPage_fails_reportsTheFailure() async {
     let service = MockRecipeService()
     service.recipes.fails(with: AppError.unknown)
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
 
     await sut.loadFirstPage()
 
@@ -66,7 +66,7 @@ struct RecipeListViewModelTests {
   @Test
   func loadFirstPage_cancelled_keepsThePreviousState() async {
     let service = MockRecipeService(recipes: RecipeListPageFactory.page(ids: ["rcp-001"]))
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
     let loaded = sut.recipes
     service.recipes.fails(with: CancellationError())
@@ -83,7 +83,7 @@ struct RecipeListViewModelTests {
       total: 36,
       lastPage: 2
     ))
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
 
     await sut.loadFirstPage()
 
@@ -96,7 +96,7 @@ struct RecipeListViewModelTests {
       ids: ["rcp-001"],
       total: 1
     ))
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
 
     await sut.loadFirstPage()
 
@@ -105,14 +105,14 @@ struct RecipeListViewModelTests {
 
   @Test
   func resultCountText_beforeAnythingLoads_isNil() {
-    #expect(RecipeListViewModelFactory.make().resultCountText == nil)
+    #expect(RecipeListViewModelTestFactory.make().resultCountText == nil)
   }
 
   @Test
   func resultCountText_afterAFailure_isNil() async {
     let service = MockRecipeService()
     service.recipes.fails(with: AppError.unknown)
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
 
     await sut.loadFirstPage()
 
@@ -121,28 +121,28 @@ struct RecipeListViewModelTests {
 
   @Test
   func title_aCategory_isTheCategorysOwnName() {
-    let sut = RecipeListViewModelFactory.make(request: .category(.dummy(name: "Desserts")))
+    let sut = RecipeListViewModelTestFactory.make(request: .category(.dummy(name: "Desserts")))
 
     #expect(sut.title == "Desserts")
   }
 
   @Test
   func title_aSearch_readsSearchResults() {
-    let sut = RecipeListViewModelFactory.make(request: .search("adobo"))
+    let sut = RecipeListViewModelTestFactory.make(request: .search("adobo"))
 
     #expect(sut.title == "Search results")
   }
 
   @Test
   func title_everything_readsAllRecipes() {
-    #expect(RecipeListViewModelFactory.make(request: .all()).title == "All recipes")
+    #expect(RecipeListViewModelTestFactory.make(request: .all()).title == "All recipes")
   }
 
   @Test
   func searchPlaceholder_scopesItselfToWhatTheListIsOf() {
-    let category = RecipeListViewModelFactory.make(request: .category(.dummy(name: "Desserts")))
-    let search = RecipeListViewModelFactory.make(request: .search("pho"))
-    let all = RecipeListViewModelFactory.make(request: .all())
+    let category = RecipeListViewModelTestFactory.make(request: .category(.dummy(name: "Desserts")))
+    let search = RecipeListViewModelTestFactory.make(request: .search("pho"))
+    let all = RecipeListViewModelTestFactory.make(request: .all())
 
     #expect(category.searchPlaceholder == "Search Desserts")
     #expect(search.searchPlaceholder == "“pho”")
@@ -152,7 +152,7 @@ struct RecipeListViewModelTests {
   @Test
   func loadFirstPageIfNeeded_onASecondAppearance_keepsThePagesAlreadyLoaded() async {
     let service = RecipeListPageFactory.twoPageService()
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPageIfNeeded()
     await sut.loadNextPageIfNeeded(after: "rcp-001")
     let callsBeforeReturning = service.recipes.callCount
@@ -167,7 +167,7 @@ struct RecipeListViewModelTests {
   func loadFirstPageIfNeeded_afterAFailure_triesAgain() async {
     let service = MockRecipeService()
     service.recipes.fails(with: AppError.unknown)
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPageIfNeeded()
     service.recipes.returns(RecipeListPageFactory.page(ids: ["rcp-001"]))
 
@@ -178,7 +178,7 @@ struct RecipeListViewModelTests {
 
   @Test
   func viewModeSegments_markOnlyTheSelectedMode() {
-    let sut = RecipeListViewModelFactory.make()
+    let sut = RecipeListViewModelTestFactory.make()
 
     #expect(sut.viewModeSegments.map(\.mode) == [.grid, .list])
     #expect(sut.viewModeSegments.filter(\.isSelected).map(\.mode) == [.grid])
@@ -191,7 +191,7 @@ struct RecipeListViewModelTests {
   @Test
   func select_viewMode_asksForNothing() async {
     let service = RecipeListPageFactory.twoPageService()
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
     let callsBeforeToggling = service.recipes.callCount
 
@@ -203,7 +203,7 @@ struct RecipeListViewModelTests {
 
   @Test
   func viewMode_startsOnTheGridAndFollowsTheToggle() {
-    let sut = RecipeListViewModelFactory.make()
+    let sut = RecipeListViewModelTestFactory.make()
 
     #expect(sut.viewMode == .grid)
 
@@ -224,7 +224,7 @@ struct RecipeListViewModelPagingTests {
       total: 6,
       lastPage: 1
     ))
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
 
     await sut.loadNextPageIfNeeded(after: "rcp-001")
@@ -235,7 +235,7 @@ struct RecipeListViewModelPagingTests {
   @Test
   func loadNextPageIfNeeded_atTheTail_appendsTheNextPage() async {
     let service = RecipeListPageFactory.twoPageService()
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
 
     await sut.loadNextPageIfNeeded(after: "rcp-001")
@@ -249,7 +249,7 @@ struct RecipeListViewModelPagingTests {
       "rcp-001",
       "rcp-009",
     ])
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
 
     await sut.loadNextPageIfNeeded(after: "rcp-001")
@@ -263,7 +263,7 @@ struct RecipeListViewModelPagingTests {
       "rcp-001",
       "rcp-002",
     ])
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
 
     await sut.loadNextPageIfNeeded(after: "rcp-001")
@@ -274,7 +274,7 @@ struct RecipeListViewModelPagingTests {
   @Test
   func loadNextPageIfNeeded_whileAPageIsInFlight_makesNoSecondRequest() async {
     let service = RecipeListPageFactory.twoPageService()
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
     let reentry = Reentry()
 
@@ -299,7 +299,7 @@ struct RecipeListViewModelPagingTests {
   @Test
   func loadNextPageIfNeeded_aPageOfNothingNew_stopsThePagerRatherThanStranding() async {
     let service = RecipeListPageFactory.twoPageService(secondPageIDs: ["rcp-001"])
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
     await sut.loadNextPageIfNeeded(after: "rcp-001")
     let callsAfterTheDuplicatePage = service.recipes.callCount
@@ -316,7 +316,7 @@ struct RecipeListViewModelPagingTests {
   func loadNextPageIfNeeded_supersededMidFlight_leavesNoSpinner() async {
     let service = MockRecipeService()
     let supersede = Reentry()
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
 
     service.recipes.responds { request in
       if request.page.index == 2, await supersede.isFirstTime() {
@@ -340,7 +340,7 @@ struct RecipeListViewModelPagingTests {
   @Test
   func loadNextPageIfNeeded_fails_keepsTheRowsAndReportsTheFailure() async {
     let service = RecipeListPageFactory.twoPageService()
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
     service.recipes.fails(with: AppError.noInternetConnection)
 
@@ -354,7 +354,7 @@ struct RecipeListViewModelPagingTests {
   @Test
   func loadNextPageIfNeeded_afterAFailure_doesNotRetryByItself() async {
     let service = RecipeListPageFactory.twoPageService()
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
     service.recipes.fails(with: AppError.noInternetConnection)
     await sut.loadNextPageIfNeeded(after: "rcp-001")
@@ -368,7 +368,7 @@ struct RecipeListViewModelPagingTests {
   @Test
   func retryNextPage_asksForTheSamePageAgainAndClearsTheError() async {
     let service = RecipeListPageFactory.twoPageService()
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
     service.recipes.fails(with: AppError.noInternetConnection)
     await sut.loadNextPageIfNeeded(after: "rcp-001")
@@ -389,7 +389,7 @@ struct RecipeListViewModelPagingTests {
   @Test
   func loadNextPageIfNeeded_cancelled_leavesNoErrorAndNoSpinner() async {
     let service = RecipeListPageFactory.twoPageService()
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
     service.recipes.fails(with: CancellationError())
 
@@ -403,7 +403,7 @@ struct RecipeListViewModelPagingTests {
   @Test
   func loadNextPageIfNeeded_theLastPage_stopsThePager() async {
     let service = RecipeListPageFactory.twoPageService()
-    let sut = RecipeListViewModelFactory.make(service: service)
+    let sut = RecipeListViewModelTestFactory.make(service: service)
     await sut.loadFirstPage()
     await sut.loadNextPageIfNeeded(after: "rcp-001")
     let callsAfterPageTwo = service.recipes.callCount
@@ -420,7 +420,7 @@ struct RecipeListViewModelPagingTests {
 struct RecipeListViewModelFacetTests {
   @Test
   func facetChips_areDerivedFromTheRequestsQuery() {
-    let sut = RecipeListViewModelFactory.make(request: .all(query: RecipeQuery(
+    let sut = RecipeListViewModelTestFactory.make(request: .all(query: RecipeQuery(
       isVegetarian: true,
       servings: .four
     )))
@@ -430,15 +430,15 @@ struct RecipeListViewModelFacetTests {
 
   @Test
   func facetChips_aCategoryOnlyRequest_hasNone() {
-    let sut = RecipeListViewModelFactory.make(request: .category(.dummy(name: "Desserts")))
+    let sut = RecipeListViewModelTestFactory.make(request: .category(.dummy(name: "Desserts")))
 
     #expect(sut.facetChips.isEmpty)
   }
 
   @Test
   func showsClearAllChips_onlyOnceMoreThanOneFacetIsSet() {
-    let one = RecipeListViewModelFactory.make(request: .all(query: RecipeQuery(isVegetarian: true)))
-    let several = RecipeListViewModelFactory.make(request: .all(query: RecipeQuery(
+    let one = RecipeListViewModelTestFactory.make(request: .all(query: RecipeQuery(isVegetarian: true)))
+    let several = RecipeListViewModelTestFactory.make(request: .all(query: RecipeQuery(
       isVegetarian: true,
       servings: .two
     )))
@@ -450,7 +450,7 @@ struct RecipeListViewModelFacetTests {
   @Test
   func remove_reloadsFromPageOneWithoutThatFacet() async {
     let service = MockRecipeService()
-    let sut = RecipeListViewModelFactory.make(
+    let sut = RecipeListViewModelTestFactory.make(
       request: .all(query: RecipeQuery(
         isVegetarian: true,
         servings: .two
@@ -470,7 +470,7 @@ struct RecipeListViewModelFacetTests {
   @Test
   func clearFacets_dropsThemAllAndKeepsTheCategory() async {
     let service = MockRecipeService()
-    let sut = RecipeListViewModelFactory.make(
+    let sut = RecipeListViewModelTestFactory.make(
       request: .all(query: RecipeQuery(
         category: "Vegan",
         isVegetarian: true,
@@ -490,7 +490,7 @@ struct RecipeListViewModelFacetTests {
   func remove_whileAPageIsInFlight_discardsThatPage() async {
     let service = MockRecipeService()
     let removal = Reentry()
-    let sut = RecipeListViewModelFactory.make(
+    let sut = RecipeListViewModelTestFactory.make(
       request: .all(query: RecipeQuery(isVegetarian: true)),
       service: service
     )
@@ -517,7 +517,7 @@ struct RecipeListViewModelFacetTests {
 
   @Test
   func emptyCopy_withFacetsSet_blamesTheFilters() {
-    let sut = RecipeListViewModelFactory.make(request: .all(query: RecipeQuery(isVegetarian: true)))
+    let sut = RecipeListViewModelTestFactory.make(request: .all(query: RecipeQuery(isVegetarian: true)))
 
     #expect(String(localized: sut.emptyTitle) == "No recipes match your filters")
     #expect(sut.emptyDetail != nil)
@@ -526,7 +526,7 @@ struct RecipeListViewModelFacetTests {
 
   @Test
   func emptyCopy_withNoFacets_doesNotBlameAFilterNobodySet() {
-    let sut = RecipeListViewModelFactory.make(request: .category(.dummy(name: "Desserts")))
+    let sut = RecipeListViewModelTestFactory.make(request: .category(.dummy(name: "Desserts")))
 
     #expect(String(localized: sut.emptyTitle) == "No recipes here yet")
     #expect(sut.emptyDetail == nil)
@@ -548,32 +548,15 @@ actor Reentry {
 }
 
 @MainActor
-enum RecipeListViewModelFactory {
+enum RecipeListViewModelTestFactory {
   static func make(
     request: RecipeListRequest = .all(),
     service: RecipeServiceProtocol = MockRecipeService()
   ) -> RecipeListViewModel {
-    switch request.title {
-    case let .category(name):
-      CategoryRecipeListViewModel(
-        categoryName: name,
-        query: request.query,
-        recipeService: service
-      )
-
-    case let .search(text):
-      SearchRecipeListViewModel(
-        searchText: text,
-        query: request.query,
-        recipeService: service
-      )
-
-    case .all:
-      RecipeListViewModel(
-        query: request.query,
-        recipeService: service
-      )
-    }
+    RecipeListViewModelFactory.make(
+      request: request,
+      recipeService: service
+    )
   }
 }
 

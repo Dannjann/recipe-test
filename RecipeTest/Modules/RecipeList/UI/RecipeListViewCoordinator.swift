@@ -17,8 +17,8 @@ struct RecipeListViewCoordinator: ViewCoordinator {
     request: RecipeListRequest,
     recipeService: RecipeServiceProtocol = AppContainer.shared.recipeService
   ) {
-    _viewModel = State(initialValue: Self.viewModel(
-      for: request,
+    _viewModel = State(initialValue: RecipeListViewModelFactory.make(
+      request: request,
       recipeService: recipeService
     ))
   }
@@ -29,37 +29,6 @@ struct RecipeListViewCoordinator: ViewCoordinator {
       onSearchTap: handleSearchTap(),
       onRecipeTap: handleRecipeTap()
     )
-  }
-}
-
-// MARK: - Scene
-
-private extension RecipeListViewCoordinator {
-  static func viewModel(
-    for request: RecipeListRequest,
-    recipeService: RecipeServiceProtocol
-  ) -> RecipeListViewModel {
-    switch request.title {
-    case let .category(name):
-      CategoryRecipeListViewModel(
-        categoryName: name,
-        query: request.query,
-        recipeService: recipeService
-      )
-
-    case let .search(text):
-      SearchRecipeListViewModel(
-        searchText: text,
-        query: request.query,
-        recipeService: recipeService
-      )
-
-    case .all:
-      RecipeListViewModel(
-        query: request.query,
-        recipeService: recipeService
-      )
-    }
   }
 }
 
