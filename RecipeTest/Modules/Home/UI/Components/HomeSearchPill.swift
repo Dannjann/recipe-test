@@ -12,6 +12,8 @@ import SwiftUI
 struct HomeSearchPill: View {
   let onTap: VoidResult
 
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
   @ScaledMetric(relativeTo: .body) private var height: CGFloat = 56
 
   var body: some View {
@@ -23,7 +25,7 @@ struct HomeSearchPill: View {
         Text(.Home.homeSearchPlaceholder)
           .themeTextStyle(.bodyRegular)
           .themeColor(.textPrimary)
-          .lineLimit(1)
+          .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
       }
       .frame(
         maxWidth: .infinity,
