@@ -24,6 +24,10 @@ line_length:
   ignores_comments: true
   warning: 120
   error: 180
+# The team's naming convention — module prefix + role + `Protocol` suffix — legitimately
+# runs past the 40-character default.
+type_name:
+  max_length: 45
 vertical_whitespace:
   max_empty_lines: 2
 
