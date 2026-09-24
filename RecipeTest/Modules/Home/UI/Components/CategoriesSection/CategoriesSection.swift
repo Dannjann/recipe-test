@@ -19,13 +19,14 @@ struct CategoriesSection: View {
       state: viewModel.categories,
       minHeight: minHeight,
       emptyMessage: .Home.homeCategoriesEmpty,
-      onRetryTap: { Task { await viewModel.loadCategories() } }
-    ) { categories in
-      RecipeCategoryGrid(
-        categories: categories,
-        onCategoryTap: onCategoryTap
-      )
-    }
+      onRetryTap: { Task { await viewModel.loadCategories() } },
+      content: { categories in
+        RecipeCategoryGrid(
+          categories: categories,
+          onCategoryTap: onCategoryTap
+        )
+      }
+    )
   }
 }
 

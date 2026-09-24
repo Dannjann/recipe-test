@@ -59,7 +59,7 @@ private extension RecipeCategoryTile {
     CachedAsyncImage(url: category.imageURL) {
       Color.themeColor(.surfacesBackground3)
     }
-    .aspectRatio(contentMode: .fill)
+    .scaledToFill()
     .frame(maxWidth: .infinity)
     .aspectRatio(
       1,

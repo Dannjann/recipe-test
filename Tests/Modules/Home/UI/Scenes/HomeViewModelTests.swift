@@ -110,7 +110,7 @@ struct HomeViewModelTests {
 
     let observed = StateBox()
     service.recipes.responds { _ in
-      await observed.record(sut.latestRecipes)
+      observed.record(sut.latestRecipes)
 
       return RecipeListPage(
         recipes: [.dummy()],
@@ -130,7 +130,7 @@ struct HomeViewModelTests {
 
     let observed = StateBox()
     service.recipes.responds { _ in
-      await observed.record(sut.latestRecipes)
+      observed.record(sut.latestRecipes)
 
       return RecipeListPage(
         recipes: [.dummy()],

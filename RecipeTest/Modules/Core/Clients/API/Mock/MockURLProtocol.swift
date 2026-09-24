@@ -7,25 +7,32 @@
 //
 
 import Foundation
+import Synchronization
 
 /// Intercepts requests below Alamofire and answers them from bundled JSON.
 ///
 /// Everything above this class runs unmodified — header construction, status-code
 /// handling, `APIResponse` envelope decoding and error mapping all behave exactly as they
 /// would against a real server. Only the socket is missing.
-final nonisolated class MockURLProtocol: URLProtocol {
+///
+/// `@unchecked Sendable` because `URLProtocol` is not: `URLSession` builds instances and
+/// calls into them from its own queues regardless. Everything this subclass adds is either
+/// immutable or behind the mutex below.
+final nonisolated class MockURLProtocol: URLProtocol, @unchecked Sendable {
   /// Set once at launch, before any request is issued. `nonisolated(unsafe)` because
   /// `URLProtocol` is configured at the class level and `URLSession` builds instances on
   /// its own queues; the value is written once during bootstrap and only read thereafter.
   nonisolated(unsafe) static var router = MockAPIRouter()
 
-  private var isCancelled = false
+  /// Written by `stopLoading()` on whichever queue `URLSession` cancels from, read by the
+  /// delayed delivery on a background queue.
+  private let isCancelled = Mutex(false)
 
-  override class func canInit(with request: URLRequest) -> Bool {
+  override static func canInit(with request: URLRequest) -> Bool {
     true
   }
 
-  override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+  override static func canonicalRequest(for request: URLRequest) -> URLRequest {
     request
   }
 
@@ -38,14 +45,14 @@ final nonisolated class MockURLProtocol: URLProtocol {
     let deadline: DispatchTime = .now() + .milliseconds(latency.milliseconds)
 
     DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: deadline) { [weak self] in
-      guard let self, !isCancelled else { return }
+      guard let self, !isCancelled.withLock({ $0 }) else { return }
 
       deliver(using: router)
     }
   }
 
   override func stopLoading() {
-    isCancelled = true
+    isCancelled.withLock { $0 = true }
   }
 }
 

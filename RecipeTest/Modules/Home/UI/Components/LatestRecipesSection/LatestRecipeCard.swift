@@ -74,7 +74,7 @@ private extension LatestRecipeCard {
     CachedAsyncImage(url: recipe.heroImageURL) {
       Color.themeColor(.surfacesBackground3)
     }
-    .aspectRatio(contentMode: .fill)
+    .scaledToFill()
     .frame(
       width: width,
       height: height

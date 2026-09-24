@@ -46,6 +46,14 @@ nonisolated struct MockAPIRouter: Sendable {
     case malformedFixture(String)
   }
 
+  /// What a request resolved to — everything the transport needs to build an
+  /// `HTTPURLResponse` and hand back a body.
+  struct Response: Sendable {
+    let status: Int
+    let body: Data
+    let contentType: String
+  }
+
   let configuration: Configuration
   private let bundle: Bundle
 
@@ -61,44 +69,41 @@ nonisolated struct MockAPIRouter: Sendable {
 // MARK: - Methods
 
 nonisolated extension MockAPIRouter {
-  func response(for request: URLRequest) throws -> (status: Int, body: Data, contentType: String) {
+  func response(for request: URLRequest) throws -> Response {
     guard
       let url = request.url,
       let endpoint = MockEndpoint.match(path: url.path, method: request.httpMethod ?? "GET")
     else {
-      let path = request.url?.path ?? "-"
-      let body = try envelope(status: 404, message: "No mock registered for \(path)", data: nil, meta: nil)
-
-      return (404, body, "application/json")
+      return try unroutedResponse(path: request.url?.path ?? "-")
     }
 
+    if let forced = try forcedResponse(for: endpoint, url: url) {
+      return forced
+    }
+
+    return try fixtureResponse(for: endpoint, url: url)
+  }
+}
+
+// MARK: - Routing
+
+private nonisolated extension MockAPIRouter {
+  /// The response the configured failure mode demands, or `nil` when the fixture should
+  /// answer normally.
+  func forcedResponse(for endpoint: MockEndpoint, url: URL) throws -> Response? {
     switch configuration.failureMode {
     case .serverError:
-      let body = try envelope(status: 500, message: "Mocked server error", data: nil, meta: nil)
-      return (500, body, endpoint.contentType)
+      try serverErrorResponse(contentType: endpoint.contentType)
 
     case .empty:
-      // "No rows" for a request that addresses one resource means that resource is not
-      // there. An empty array would hand the caller something it cannot decode.
-      if let rowID = endpoint.fixtureRowID {
-        let body = try envelope(status: 404, message: "No recipe with id \(rowID)", data: nil, meta: nil)
-        return (404, body, endpoint.contentType)
-      }
-
-      let perPage = intQuery("per_page", from: url) ?? 10
-      let body = try envelope(
-        status: 200,
-        message: "OK",
-        data: [],
-        meta: meta(total: 0, perPage: perPage, currentPage: 1, sliceCount: 0)
-      )
-
-      return (200, body, endpoint.contentType)
+      try emptyResponse(for: endpoint, url: url)
 
     case .none:
-      break
+      nil
     }
+  }
 
+  func fixtureResponse(for endpoint: MockEndpoint, url: URL) throws -> Response {
     guard let fixtureName = endpoint.fixtureName else {
       throw RouterError.missingFixture(String(describing: endpoint))
     }
@@ -106,34 +111,163 @@ nonisolated extension MockAPIRouter {
     let all = try fixtureRows(named: fixtureName)
     let rows = endpoint.isFilterable ? filtered(all, for: url) : all
 
-    // A detail endpoint: one row out of the collection fixture, enveloped as an object
-    // rather than an array. An id nothing matches is a 404, exactly as a real backend
-    // would answer it.
     if let rowID = endpoint.fixtureRowID {
-      guard let row = rows.first(where: { $0["id"] as? String == rowID }) else {
-        let body = try envelope(status: 404, message: "No recipe with id \(rowID)", data: nil, meta: nil)
-        return (404, body, endpoint.contentType)
-      }
-
-      return try (200, envelope(status: 200, message: "OK", data: row, meta: nil), endpoint.contentType)
+      return try detailResponse(
+        rowID: rowID,
+        in: rows,
+        contentType: endpoint.contentType
+      )
     }
 
     guard endpoint.isPaginated else {
-      return try (200, envelope(status: 200, message: "OK", data: rows, meta: nil), endpoint.contentType)
+      return try collectionResponse(rows: rows, contentType: endpoint.contentType)
     }
 
+    return try pageResponse(
+      rows: rows,
+      url: url,
+      contentType: endpoint.contentType
+    )
+  }
+}
+
+// MARK: - Responses
+
+private nonisolated extension MockAPIRouter {
+  func unroutedResponse(path: String) throws -> Response {
+    let body = try envelope(
+      status: 404,
+      message: "No mock registered for \(path)",
+      data: nil,
+      meta: nil
+    )
+
+    return Response(
+      status: 404,
+      body: body,
+      contentType: "application/json"
+    )
+  }
+
+  func serverErrorResponse(contentType: String) throws -> Response {
+    let body = try envelope(
+      status: 500,
+      message: "Mocked server error",
+      data: nil,
+      meta: nil
+    )
+
+    return Response(
+      status: 500,
+      body: body,
+      contentType: contentType
+    )
+  }
+
+  /// "No rows" for a request that addresses one resource means that resource is not
+  /// there. An empty array would hand the caller something it cannot decode.
+  func emptyResponse(for endpoint: MockEndpoint, url: URL) throws -> Response {
+    if let rowID = endpoint.fixtureRowID {
+      return try missingRowResponse(rowID: rowID, contentType: endpoint.contentType)
+    }
+
+    let perPage = intQuery("per_page", from: url) ?? 10
+    let body = try envelope(
+      status: 200,
+      message: "OK",
+      data: [],
+      meta: meta(
+        total: 0,
+        perPage: perPage,
+        currentPage: 1,
+        sliceCount: 0
+      )
+    )
+
+    return Response(
+      status: 200,
+      body: body,
+      contentType: endpoint.contentType
+    )
+  }
+
+  /// One row out of the collection fixture, enveloped as an object rather than an array.
+  /// An id nothing matches is a 404, exactly as a real backend would answer it.
+  func detailResponse(rowID: String, in rows: [[String: Any]], contentType: String) throws -> Response {
+    guard let row = rows.first(where: { $0["id"] as? String == rowID }) else {
+      return try missingRowResponse(rowID: rowID, contentType: contentType)
+    }
+
+    let body = try envelope(
+      status: 200,
+      message: "OK",
+      data: row,
+      meta: nil
+    )
+
+    return Response(
+      status: 200,
+      body: body,
+      contentType: contentType
+    )
+  }
+
+  func collectionResponse(rows: [[String: Any]], contentType: String) throws -> Response {
+    let body = try envelope(
+      status: 200,
+      message: "OK",
+      data: rows,
+      meta: nil
+    )
+
+    return Response(
+      status: 200,
+      body: body,
+      contentType: contentType
+    )
+  }
+
+  func pageResponse(rows: [[String: Any]], url: URL, contentType: String) throws -> Response {
     let page = intQuery("page", from: url) ?? 1
     let perPage = intQuery("per_page", from: url) ?? 10
-    let slice = paginate(rows, page: page, perPage: perPage)
+    let slice = paginate(
+      rows,
+      page: page,
+      perPage: perPage
+    )
 
     let body = try envelope(
       status: 200,
       message: "OK",
       data: slice,
-      meta: meta(total: rows.count, perPage: perPage, currentPage: page, sliceCount: slice.count)
+      meta: meta(
+        total: rows.count,
+        perPage: perPage,
+        currentPage: page,
+        sliceCount: slice.count
+      )
     )
 
-    return (200, body, endpoint.contentType)
+    return Response(
+      status: 200,
+      body: body,
+      contentType: contentType
+    )
+  }
+
+  func missingRowResponse(rowID: String, contentType: String) throws -> Response {
+    let body = try envelope(
+      status: 404,
+      message: "No recipe with id \(rowID)",
+      data: nil,
+      meta: nil
+    )
+
+    return Response(
+      status: 404,
+      body: body,
+      contentType: contentType
+    )
   }
 }
 
@@ -153,170 +287,11 @@ private nonisolated extension MockAPIRouter {
 
     return rows
   }
-}
 
-// MARK: - Filtering
-
-/// The query parameters the recipe collection can be narrowed by.
-///
-/// Parsed once per request so the filters below read as predicates rather than as
-/// repeated query-string digging.
-private nonisolated struct RecipeFilters {
-  let category: String?
-  let cuisine: String?
-  let isVegetarian: Bool?
-  let servings: String?
-  let includedIngredients: [String]
-  let excludedIngredients: [String]
-  let searchText: String?
-  let searchesSteps: Bool
-
-  init(url: URL) {
-    let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
-
-    func values(_ name: String) -> [String] {
-      items.filter { $0.name == name }.compactMap(\.value).filter { !$0.isEmpty }
-    }
-
-    category = values("category").first
-    cuisine = values("cuisine").first
-    isVegetarian = values("is_vegetarian").first.flatMap(Self.flag)
-    servings = values("servings").first
-    includedIngredients = values("include_ingredients")
-    excludedIngredients = values("exclude_ingredients")
-    searchText = values("search_text").first
-    searchesSteps = values("searches_steps").first.flatMap(Self.flag) ?? false
-  }
-
-  /// Accepts both spellings a URL encoder might produce, and returns nil for anything
-  /// else — an unrecognised *value* must be ignored like an unrecognised parameter, not
-  /// silently become a filter for the opposite rows.
-  private static func flag(_ value: String) -> Bool? {
-    switch value.lowercased() {
-    case "true", "1":
-      true
-
-    case "false", "0":
-      false
-
-    default:
-      nil
-    }
-  }
-}
-
-private nonisolated extension MockAPIRouter {
-  /// The prototype's serving filter offers 1, 2, 4 and "6+"; the last is a lower bound.
-  static var servingsLowerBoundMarker: String {
-    "6+"
-  }
-
-  static var servingsLowerBound: Int {
-    6
-  }
-
-  /// Stands in for the backend's query engine. A parameter this does not recognise is
-  /// ignored rather than treated as "match nothing" — an unknown parameter must never
-  /// silently empty a screen.
-  ///
-  /// `sort=latest` needs no branch: the fixture is already stored newest-first, so
-  /// accepting and ignoring it is the correct behaviour.
   func filtered(_ rows: [[String: Any]], for url: URL) -> [[String: Any]] {
-    let filters = RecipeFilters(url: url)
+    let filter = MockRecipeFilter(url: url)
 
-    return rows
-      .filter { matchesFacets($0, against: filters) }
-      .filter { matchesIngredients($0, against: filters) }
-      .filter { matchesSearch($0, against: filters) }
-  }
-
-  func matchesFacets(_ row: [String: Any], against filters: RecipeFilters) -> Bool {
-    if let category = filters.category, !equals(row["category"], expected: category) {
-      return false
-    }
-
-    if let cuisine = filters.cuisine, !equals(row["cuisine"], expected: cuisine) {
-      return false
-    }
-
-    if let vegetarian = filters.isVegetarian, row["is_vegetarian"] as? Bool != vegetarian {
-      return false
-    }
-
-    if let servings = filters.servings, !matchesServings(row, expected: servings) {
-      return false
-    }
-
-    return true
-  }
-
-  /// The prototype's fourth serving option is a bound rather than a value, so it is
-  /// matched separately. A value that is neither the bound nor a number is ignored — the
-  /// same promise this type makes about an unrecognised parameter name.
-  func matchesServings(_ row: [String: Any], expected servings: String) -> Bool {
-    let count = row["servings"] as? Int ?? 0
-
-    if servings == Self.servingsLowerBoundMarker {
-      return count >= Self.servingsLowerBound
-    }
-
-    guard let wanted = Int(servings) else {
-      return true
-    }
-
-    return count == wanted
-  }
-
-  /// Every included term must appear, and no excluded term may.
-  func matchesIngredients(_ row: [String: Any], against filters: RecipeFilters) -> Bool {
-    guard !filters.includedIngredients.isEmpty || !filters.excludedIngredients.isEmpty else {
-      return true
-    }
-
-    let names = ingredientNames(in: row)
-
-    func mentions(_ term: String) -> Bool {
-      names.contains { $0.contains(fold(term)) }
-    }
-
-    return filters.includedIngredients.allSatisfy(mentions)
-      && !filters.excludedIngredients.contains(where: mentions)
-  }
-
-  func matchesSearch(_ row: [String: Any], against filters: RecipeFilters) -> Bool {
-    guard let search = filters.searchText.map(fold) else {
-      return true
-    }
-
-    var haystack = ["title", "description", "category", "cuisine"]
-      .compactMap { row[$0] as? String }
-      .map(fold)
-
-    haystack += ingredientNames(in: row)
-
-    if filters.searchesSteps {
-      haystack += (row["steps"] as? [String] ?? []).map(fold)
-    }
-
-    return haystack.contains { $0.contains(search) }
-  }
-
-  func ingredientNames(in row: [String: Any]) -> [String] {
-    (row["ingredients"] as? [[String: Any]] ?? [])
-      .compactMap { $0["name"] as? String }
-      .map(fold)
-  }
-
-  func equals(_ stored: Any?, expected wanted: String) -> Bool {
-    (stored as? String).map { fold($0) == fold(wanted) } ?? false
-  }
-
-  /// Case- and diacritic-insensitive, so `jamon` finds `jamón`.
-  ///
-  /// Deliberately locale-independent: under a Turkish locale `.current` would fold `I` to
-  /// a dotless `ı`, and a search for `Italian` would stop matching `italian`.
-  func fold(_ value: String) -> String {
-    value.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+    return rows.filter(filter.matches)
   }
 }
 
