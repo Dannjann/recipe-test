@@ -93,6 +93,8 @@ extension AppContainer {
   /// Called once from the app delegate. Everything it touches is lazy, so this is where
   /// you decide what is eagerly constructed at launch.
   func bootstrap() {
+    UINavigationBar.applyThemeAppearance()
+
     // Debug builds only. A release build leaves every context disabled, so nothing a
     // developer logs while working can follow the app into the App Store — see the
     // matching privacy marker in `DebugLogger.log`.
