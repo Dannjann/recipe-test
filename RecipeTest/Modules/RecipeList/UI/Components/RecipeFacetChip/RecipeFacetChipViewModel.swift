@@ -22,10 +22,11 @@ nonisolated extension RecipeFacetChipViewModel {
   /// `RecipeServings.rawValue` is already the display string — "1", "2", "4", "6+".
   var label: String {
     switch facet {
-    case let .vegetarian(isVegetarian):
-      isVegetarian
-        ? String(localized: .RecipeList.recipeListFacetVegetarian)
-        : String(localized: .RecipeList.recipeListFacetNotVegetarian)
+    case .vegetarian(true):
+      String(localized: .RecipeList.recipeListFacetVegetarian)
+
+    case .vegetarian(false):
+      String(localized: .RecipeList.recipeListFacetNotVegetarian)
 
     case let .servings(servings):
       String(localized: .RecipeList.recipeListFacetServings(servings.rawValue))
